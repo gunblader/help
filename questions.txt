@@ -1,3 +1,8 @@
 Questions about project:
 
-Will we have to worry about race conditions when implementing process_wait()?
+process_wait / process.c
+	Will we have to worry about race conditions when implementing process_wait()?
+
+process_execute / process.c
+	should we parse both the fn_copy and filename in process.c?
+	how to pass args to start_process?
