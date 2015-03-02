@@ -1,0 +1,3 @@
+Questions about project:
+
+Will we have to worry about race conditions when implementing process_wait()?

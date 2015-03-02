@@ -470,6 +470,13 @@ init_thread (struct thread *t, const char *name, int priority)
   t->stack = (uint8_t *) t + PGSIZE;
   t->priority = priority;
   t->magic = THREAD_MAGIC;
+  //update the pointer to all_list
+  //#Adam Drove Here
+  t->all_list_pt = &all_list;
+  t->killed_by_kernel = false;
+  t->entered_process_wait = false;
+  //#End Adam Driving
+
   list_push_back (&all_list, &t->allelem);
 }
 

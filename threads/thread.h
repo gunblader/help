@@ -91,6 +91,12 @@ struct thread
     uint8_t *stack;                     /* Saved stack pointer. */
     int priority;                       /* Priority. */
     struct list_elem allelem;           /* List element for all threads list. */
+    
+    // #Kenneth drove here
+    struct list *all_list_pt;           /* Pointer to head of all_list */
+    bool killed_by_kernel;              /* Used to determine if thread killed by kernel */
+    bool entered_process_wait;          /* Set to true if successfully enters process wait */
+    // #End Kenneth driving
 
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
@@ -108,6 +114,8 @@ struct thread
    If true, use multi-level feedback queue scheduler.
    Controlled by kernel command-line option "-o mlfqs". */
 extern bool thread_mlfqs;
+//list of all threads
+
 
 void thread_init (void);
 void thread_start (void);
