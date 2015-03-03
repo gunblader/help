@@ -489,7 +489,7 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
 /* Create a minimal stack by mapping a zeroed page at the top of
    user virtual memory. */
     static bool
-    setup_stack (void **esp, char *cmdline UNUSED) 
+    setup_stack (void **esp, char *cmdline) 
     {
       uint8_t *kpage;
       bool success = false;
@@ -516,14 +516,16 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
           char *save_ptr = NULL;
           char *token = NULL; 
           int count = 0;
-          char **args = (char *)palloc_get_page(PAL_USER | PAL_ZERO);
+          char * args[256];
+          //char **args = (char *)palloc_get_page(PAL_USER | PAL_ZERO);
           char *front_of_args_page = args;
           for (token = strtok_r (cmdline_copy, " ", &save_ptr); token != NULL; token = strtok_r (NULL, " ", &save_ptr)){
-            printf("length of token: %d\n", strlen(token));
-            printf("args[count] = 0x%x\n", args[count]);
-            memcpy(*args[count], token, (strlen(token) * size(*token)) );
+            //printf("length of token: %d\n", strlen(token));
+            args[count] = token;
+            //memcpy(args, token, ((strlen(token) + 1) * sizeof(*token)) );
+            //printf("args[count] = %s\n", args[count]);
             // *args = token;
-            args++;
+            //(*args)++;
             count++;
           }
 
@@ -531,33 +533,71 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
           int i = count-1;
           int args_length;
           char *myesp = (char *) *esp;
+
+          // Make an array that holds the addresses of args
+          int args_addresses [count];
+          
           // printf("addr args[1]: 0x%x\n", &args[i]);
           printf("args[i]: %s\n", args[i]);
-          while(i >= 0 && args[i] != NULL){ //THIS IS THE BITCH
+          while(i >= 0 && args[i] != NULL){ 
             printf("*****************<2>\n");
-            ASSERT(0);
+            //ASSERT(0);
             args_length = strlen(args[i]);
-            myesp -= args_length;
-            memcpy(myesp, args[i], args_length);
+            myesp -= args_length + 1;
+            memcpy(myesp, args[i], args_length + 1);
+
+            // store the addresses into args_addresses
+            args_addresses[i] = myesp;
             i--;
           }
-          //push pointer to args
+
+          // #Jacob Drove Here
+          // get the word alignment
+          // 4 - (# chars % 4)
+          uint8_t word_align = count % 4;
+          i = count - 1;
+
+                    // push word_align onto stack
           myesp--;
-          *myesp = args;
+          *myesp = word_align;
 
-          //push count of args
-          myesp--;
-          *myesp = count + 1;
+          myesp -= 4;
 
-          //push return value
-          myesp--;
-          *myesp = 0;
+          while(i >= 0 && args[i] != NULL)
+          {
+
+            myesp -= 4;
+            *((int *)myesp) = args_addresses[i];
+            i--;
+
+          }
+          // #End Jacob Driving
+
+          // push the null pointer sentinel
+          // myesp -= 4;
+          // *myesp = 0;
+
+          // push pointer to args
+          myesp -= 4;
+          *((int *)myesp) = myesp + 4;
 
 
+
+          // push count of args
+          myesp -= 4;
+          *((int *)myesp) = count;
+
+          // push return value
+         myesp -= 4;
+          *((int *)myesp) = 0;
+
+          *esp = myesp;
+
+          //ASSERT(0);
           //print the stack after pushing 
           // printf();
           hex_dump (*esp, *esp, PHYS_BASE-*esp, 1);
-          palloc_free_page(front_of_args_page);
+          //palloc_free_page(front_of_args_page);
 
 
         } 
