@@ -2,7 +2,24 @@ Questions about project:
 
 process_wait / process.c
 	Will we have to worry about race conditions when implementing process_wait()?
+		no, not modifying any saved data. should be fine in this function
+	Returning status?
+		can be anything. there is no predefined list or enum to tell us what to pass. Our goal is only to pass what is sent in exit to process_execute and print it
 
 process_execute / process.c
 	should we parse both the fn_copy and filename in process.c?
+		pass args to setup stack and parse there
+		Dont have to parse both fn_copy and filename. Filename is used in thread_create to name the thread and that's it. 
+		**always copy string before tokenizing it **
 	how to pass args to start_process?
+		leave cmdline alone and send it to load which calls setup_stack(). From there, we can pass it to setup_stack() and parse in setup_stack(). 
+
+process.c functions
+	how should we test these functions? use asserts, printf, etc?
+		use backtrace and asserts, prints to see whats going on
+
+setup_stack / process.c
+	wtf is going on with memcpy()??
+	null pointer sentinel??
+
+

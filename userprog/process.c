@@ -27,48 +27,38 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
    before process_execute() returns.  Returns the new process's
    thread id, or TID_ERROR if the thread cannot be created. */
    tid_t
-   process_execute (const char *file_name) 
+   process_execute (const char *cmdline) 
    {
-    char *fn_copy;
+    //initialize to NULL to prevent memory leaks
+    char *fn_copy = NULL;
     tid_t tid;
-    char *token, *save_ptr;
-    char **args;
+    char *save_ptr;
+    char *file_name;
 
-  /* Make a copy of FILE_NAME.
+  /* Make a copy of cmdline.
      Otherwise there's a race between the caller and load(). */
     fn_copy = palloc_get_page (0);
     if (fn_copy == NULL)
       return TID_ERROR;
-    strlcpy (fn_copy, file_name, PGSIZE);
+    strlcpy (fn_copy, cmdline, PGSIZE);
 
-    //#Adam driving here
-    //Parse the file_name into file name and args to pass
-   for (token = strtok_r (file_name, " ", &save_ptr); token != NULL;
-        token = strtok_r (NULL, " ", &save_ptr)){
-      *args++ = token;
-   }
+    //#Adam driving
+    //get the file name from the cmdline sent to this function
+    file_name = strtok_r (cmdline, " ", &save_ptr);
 
   /* Create a new thread to execute FILE_NAME. */
-    tid = thread_create (args[0], PRI_DEFAULT, start_process, fn_copy);
+    tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
     if (tid == TID_ERROR)
       palloc_free_page (fn_copy); 
     return tid;
-
-    //parse this bitch
-    //call start_process(parsed bitch)
-    // #Jacob driving here
-   // char s[] = "  String to  tokenize. ";
-     // printf ("'%s'\n", token);
-
-
   }
 
 /* A thread function that loads a user process and starts it
    running. */
   static void
-  start_process (void *file_name_)
+  start_process (void *cmdline_)
   {
-    char *file_name = file_name_;
+    char *cmdline = cmdline_;
     struct intr_frame if_;
     bool success;
 
@@ -77,10 +67,10 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
     if_.gs = if_.fs = if_.es = if_.ds = if_.ss = SEL_UDSEG;
     if_.cs = SEL_UCSEG;
     if_.eflags = FLAG_IF | FLAG_MBS;
-    success = load (file_name, &if_.eip, &if_.esp);
+    success = load (cmdline, &if_.eip, &if_.esp);
 
   /* If load failed, quit. */
-    palloc_free_page (file_name);
+    palloc_free_page (cmdline);
     if (!success) 
       thread_exit ();
 
@@ -113,8 +103,8 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
 
 
     // #Kenneth drove here
-    struct list_elem *e;
-    struct thread *child_thread;
+    struct list_elem *e = NULL;
+    struct thread *child_thread = NULL;
     struct thread *cur = thread_current();
 
     // Run a for loop that gets a pointer to a list of all the threads
@@ -134,13 +124,11 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
 
     child_thread->entered_process_wait = true;
 
-    // ASSERT(0);
     // #Jacob Drove here
     // Check the TID of the thread to make sure it has not been terminated
     // Run indefinitely until the thread is terminated.
     if(child_thread->status != THREAD_DYING)
     {
-
       while(child_thread->status != THREAD_DYING) // busy wait
       {
 
@@ -256,7 +244,7 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
 #define PF_W 2          /* Writable. */
 #define PF_R 4          /* Readable. */
 
-  static bool setup_stack (void **esp);
+  static bool setup_stack (void **esp, char *cmdline);
   static bool validate_segment (const struct Elf32_Phdr *, struct file *);
   static bool load_segment (struct file *file, off_t ofs, uint8_t *upage,
     uint32_t read_bytes, uint32_t zero_bytes,
@@ -267,14 +255,20 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
    and its initial stack pointer into *ESP.
    Returns true if successful, false otherwise. */
    bool
-   load (const char *file_name, void (**eip) (void), void **esp) 
+   load (const char *cmdline, void (**eip) (void), void **esp) 
    {
     struct thread *t = thread_current ();
     struct Elf32_Ehdr ehdr;
     struct file *file = NULL;
     off_t file_ofs;
     bool success = false;
+
+    //#Adam driving here
     int i;
+    char *cmdline_copy = palloc_get_page (0);
+    char *cmd_copy_page_pt = cmdline_copy;
+    char *name;
+    char *save_ptr;
 
   /* Allocate and activate page directory. */
     t->pagedir = pagedir_create ();
@@ -282,11 +276,16 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
       goto done;
     process_activate ();
 
+    // #Adam driving here
+    strlcpy (cmdline_copy, cmdline, PGSIZE);
+    name = strtok_r (cmdline_copy, " ", &save_ptr);
+
+    
   /* Open executable file. */
-    file = filesys_open (file_name);
+    file = filesys_open (name);
     if (file == NULL) 
     {
-      printf ("load: %s: open failed\n", file_name);
+      printf ("load: %s: open failed\n", cmdline);
       goto done; 
     }
 
@@ -299,7 +298,7 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
       || ehdr.e_phentsize != sizeof (struct Elf32_Phdr)
       || ehdr.e_phnum > 1024) 
     {
-      printf ("load: %s: error loading executable\n", file_name);
+      printf ("load: %s: error loading executable\n", cmdline);
       goto done; 
     }
 
@@ -363,7 +362,7 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
     }
 
   /* Set up stack. */
-    if (!setup_stack (esp))
+    if (!setup_stack (esp, cmdline))
       goto done;
 
   /* Start address. */
@@ -373,6 +372,8 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
 
     done:
   /* We arrive here whether the load is successful or not. */
+
+    palloc_free_page (cmd_copy_page_pt);
     file_close (file);
     return success;
   }
@@ -488,20 +489,84 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
 /* Create a minimal stack by mapping a zeroed page at the top of
    user virtual memory. */
     static bool
-    setup_stack (void **esp) 
+    setup_stack (void **esp, char *cmdline UNUSED) 
     {
       uint8_t *kpage;
       bool success = false;
+      
+      //#Adam driving here
+      char *cmdline_copy = palloc_get_page (0);
+      char *cmd_copy_page_pt = cmdline_copy;
+      strlcpy (cmdline_copy, cmdline, PGSIZE);
+
 
       kpage = palloc_get_page (PAL_USER | PAL_ZERO);
       if (kpage != NULL) 
       {
         success = install_page (((uint8_t *) PHYS_BASE) - PGSIZE, kpage, true);
         if (success)
-          *esp = PHYS_BASE; 
+        {
+          *esp = PHYS_BASE;
+
+
+          //#Adam driving here
+          printf("PHYS_BASE: 0x%x\n", *esp);
+          //stack is set up so we need to set up the stack now
+          //parse cmdline
+          char *save_ptr = NULL;
+          char *token = NULL; 
+          int count = 0;
+          char **args = (char *)palloc_get_page(PAL_USER | PAL_ZERO);
+          char *front_of_args_page = args;
+          for (token = strtok_r (cmdline_copy, " ", &save_ptr); token != NULL; token = strtok_r (NULL, " ", &save_ptr)){
+            printf("length of token: %d\n", strlen(token));
+            printf("args[count] = 0x%x\n", args[count]);
+            memcpy(*args[count], token, (strlen(token) * size(*token)) );
+            // *args = token;
+            args++;
+            count++;
+          }
+
+          //push onto stack
+          int i = count-1;
+          int args_length;
+          char *myesp = (char *) *esp;
+          // printf("addr args[1]: 0x%x\n", &args[i]);
+          printf("args[i]: %s\n", args[i]);
+          while(i >= 0 && args[i] != NULL){ //THIS IS THE BITCH
+            printf("*****************<2>\n");
+            ASSERT(0);
+            args_length = strlen(args[i]);
+            myesp -= args_length;
+            memcpy(myesp, args[i], args_length);
+            i--;
+          }
+          //push pointer to args
+          myesp--;
+          *myesp = args;
+
+          //push count of args
+          myesp--;
+          *myesp = count + 1;
+
+          //push return value
+          myesp--;
+          *myesp = 0;
+
+
+          //print the stack after pushing 
+          // printf();
+          hex_dump (*esp, *esp, PHYS_BASE-*esp, 1);
+          palloc_free_page(front_of_args_page);
+
+
+        } 
         else
           palloc_free_page (kpage);
       }
+      // if(success)
+        //setup stack
+      // palloc_free_page();
       return success;
     }
 
