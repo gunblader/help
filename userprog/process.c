@@ -510,7 +510,6 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
 
 
           //#Adam driving here
-          printf("PHYS_BASE: 0x%x\n", *esp);
           //stack is set up so we need to set up the stack now
           //parse cmdline
           char *save_ptr = NULL;
@@ -519,13 +518,9 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
           char * args[256];
           //char **args = (char *)palloc_get_page(PAL_USER | PAL_ZERO);
           char *front_of_args_page = args;
-          for (token = strtok_r (cmdline_copy, " ", &save_ptr); token != NULL; token = strtok_r (NULL, " ", &save_ptr)){
-            //printf("length of token: %d\n", strlen(token));
+          for (token = strtok_r (cmdline_copy, " ", &save_ptr); token != NULL; token = strtok_r (NULL, " ", &save_ptr))
+          {
             args[count] = token;
-            //memcpy(args, token, ((strlen(token) + 1) * sizeof(*token)) );
-            //printf("args[count] = %s\n", args[count]);
-            // *args = token;
-            //(*args)++;
             count++;
           }
 
@@ -538,14 +533,13 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
           int args_addresses [count];
           
           // printf("addr args[1]: 0x%x\n", &args[i]);
-          printf("args[i]: %s\n", args[i]);
-          while(i >= 0 && args[i] != NULL){ 
-            printf("*****************<2>\n");
+          while(i >= 0 && args[i] != NULL)
+          { 
             //ASSERT(0);
             args_length = strlen(args[i]);
             myesp -= args_length + 1;
             memcpy(myesp, args[i], args_length + 1);
-
+            //printf("0x%x %s\t char[%i]\n", myesp, *args[i], i);
             // store the addresses into args_addresses
             args_addresses[i] = myesp;
             i--;
@@ -554,28 +548,29 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
           // #Jacob Drove Here
           // get the word alignment
           // 4 - (# chars % 4)
-          uint8_t word_align = count % 4;
+          uint8_t word_align = (uintptr_t)myesp % 4;
+          while(word_align)
+          {
+            myesp--;
+            //*myesp = (uint8_t)0;
+            // myesp -= 4;
+            word_align--;
+          }
+
           i = count - 1;
 
-                    // push word_align onto stack
-          myesp--;
-          *myesp = word_align;
-
+          // push word_align onto stack
+          // myesp--;
+          // *myesp = word_align;
           myesp -= 4;
 
           while(i >= 0 && args[i] != NULL)
           {
-
             myesp -= 4;
             *((int *)myesp) = args_addresses[i];
             i--;
-
           }
           // #End Jacob Driving
-
-          // push the null pointer sentinel
-          // myesp -= 4;
-          // *myesp = 0;
 
           // push pointer to args
           myesp -= 4;
@@ -593,19 +588,13 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
 
           *esp = myesp;
 
-          //ASSERT(0);
           //print the stack after pushing 
-          // printf();
           hex_dump (*esp, *esp, PHYS_BASE-*esp, 1);
           //palloc_free_page(front_of_args_page);
-
-
         } 
         else
           palloc_free_page (kpage);
       }
-      // if(success)
-        //setup stack
       // palloc_free_page();
       return success;
     }

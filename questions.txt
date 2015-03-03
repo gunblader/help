@@ -19,7 +19,6 @@ process.c functions
 		use backtrace and asserts, prints to see whats going on
 
 setup_stack / process.c
-	wtf is going on with memcpy()??
-	null pointer sentinel??
+	word_align??
 
 
