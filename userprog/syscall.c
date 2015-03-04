@@ -20,7 +20,67 @@ syscall_init (void)
 static void
 syscall_handler (struct intr_frame *f UNUSED) 
 {
-	//thread_exit();
+  printf ("system call!\n");
+  if(f->esp == SYS_HALT)
+  {
+    shutdown_power_off();
+  }
+  if(f->esp == SYS_EXIT)
+  {
+    void exit (int status) 
+    { 
+
+      thread_current();
+    }
+  }
+  if(f->esp == SYS_EXEC)
+  {
+    
+    pid_t exec (const char *file);
+
+  }
+  if(f->esp == SYS_WAIT)
+  {
+    int wait (pid_t);
+  }
+  if(f->esp == SYS_CREATE)
+  {
+    bool create (const char *file, unsigned initial_size);
+  }
+  if(f->esp == SYS_REMOVE)
+  {
+
+  }
+  if(f->esp == SYS_OPEN)
+  {
+
+  }
+  if(f->esp == SYS_FILESIZE)
+  {
+
+  }
+  if(f->esp == SYS_READ)
+  {
+
+  }
+  if(f->esp == SYS_WRITE)
+  {
+
+  }
+  if(f->esp == SYS_SEEK)
+  {
+
+  }
+  if(f->esp == SYS_TELL)
+  {
+
+  }
+  if(f->esp == SYS_CLOSE)
+  {
+
+  }
+
+  thread_exit ();
 }
 
 
