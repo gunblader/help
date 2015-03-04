@@ -21,5 +21,12 @@ process.c functions
 setup_stack / process.c
 	word_align??
 
-syscall.c / exit()
-	
+
+
+
+
+syscall.c
+	1. Best place to implement "access user memory"?
+	2. Do we need to call the system calls ourselves or are they called from syscall_handler?
+	3. Are we supposed to eventually uncomment UNUSED? Should we access the stack in there using the interrupt frame? Does syscall_init ever get called or is it just a template used to base all our other calls on that?
+	4. Which pointer should we use to access args off the stack inside syscall_handler?
