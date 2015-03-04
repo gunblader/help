@@ -20,18 +20,34 @@ syscall_init (void)
 static void
 syscall_handler (struct intr_frame *f UNUSED) 
 {
+  // grab esp from f
+  // check if it is valid by checking these conditions: 
+  // 1. a null pointer
+  // 2. a pointer to unmapped virtual memory, 
+  // 3. a pointer to kernel virtual address space
+  struct thread *cur = f->esp;
+  if (lookup_page(cur->pagedir, stack_pointer, false) == NULL || cur == NULL
+    || 3 )
+  {
+    //terminating the offending process and freeing its resources
+    process_exit()
+  }
+  else
+  {
+    // continue with correct system call
+
+  }
+
+
   printf ("system call!\n");
   if(f->esp == SYS_HALT)
   {
-    shutdown_power_off();
+    halt();
   }
   if(f->esp == SYS_EXIT)
   {
-    void exit (int status) 
-    { 
-
-      thread_current();
-    }
+    //need to send status to exit
+    exit();
   }
   if(f->esp == SYS_EXEC)
   {

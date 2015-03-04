@@ -27,6 +27,16 @@ setup_stack / process.c
 
 syscall.c
 	1. Best place to implement "access user memory"?
+		create a function and call it in syscall_handler. **They'll take off points if we don't use a function and copy and paste the validating code multiple times
 	2. Do we need to call the system calls ourselves or are they called from syscall_handler?
+		system call functions are called from within syscall_handler after we get the system call number
 	3. Are we supposed to eventually uncomment UNUSED? Should we access the stack in there using the interrupt frame? Does syscall_init ever get called or is it just a template used to base all our other calls on that?
+		we are using the frame that is passed to us. UNUSED was just to get rid of the warning before we actually implemented this function
 	4. Which pointer should we use to access args off the stack inside syscall_handler?
+		esp that is in the bottom couple lines of the frame struct
+	5. Use lookup_page() to verify pointer? should be NULL if the page doesn't exist because it hasn't been mapped. What is *PD(page directory)?
+		lookup_page() will be used to validate the page. The PD argument is thread specific. The second argument is whatever pointer we're trying to dereference and want to check the validity of. 
+	6. Are we verifying actual pointer to frame or frame pointer saved inside of frame?
+		Verifying the pointer inside of frame
+
+	***for each frame sent to use, we have to validate all of the data sent to us. this data changes depending on the system call that is being called***
