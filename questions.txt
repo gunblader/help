@@ -36,7 +36,9 @@ syscall.c
 		esp that is in the bottom couple lines of the frame struct
 	5. Use lookup_page() to verify pointer? should be NULL if the page doesn't exist because it hasn't been mapped. What is *PD(page directory)?
 		lookup_page() will be used to validate the page. The PD argument is thread specific. The second argument is whatever pointer we're trying to dereference and want to check the validity of. 
-	6. Are we verifying actual pointer to frame or frame pointer saved inside of frame?
+	6. Are we verifying actual pointer to frame or stack pointer saved inside of frame?
 		Verifying the pointer inside of frame
 
 	***for each frame sent to use, we have to validate all of the data sent to us. this data changes depending on the system call that is being called***
+
+		eax will be the status generally, there are other cases
