@@ -475,6 +475,8 @@ init_thread (struct thread *t, const char *name, int priority)
   t->all_list_pt = &all_list;
   t->killed_by_kernel = false;
   t->entered_process_wait = false;
+  list_init (&t->child_threads);
+  t->exit_status = 0;
   //#End Adam Driving
 
   list_push_back (&all_list, &t->allelem);
@@ -574,6 +576,19 @@ schedule (void)
   if (cur != next)
     prev = switch_threads (cur, next);
   thread_schedule_tail (prev);
+}
+// #Kenneth driving here
+struct thread* get_thread(tid_t tid){
+  struct list_elem *e;
+  for (e = list_begin (&all_list); e != list_end (&all_list);
+       e = list_next (e))
+    {
+      struct thread *t = list_entry (e, struct thread, allelem);
+      if(t->tid == tid){
+        return t;
+      }
+    }
+    return NULL;
 }
 
 /* Returns a tid to use for a new thread. */

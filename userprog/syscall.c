@@ -1,6 +1,6 @@
 #include "userprog/syscall.h"
 #include <stdio.h>
-#include <sys/types.h>
+// #include <sys/types.h>
 #include <syscall-nr.h>
 #include "threads/interrupt.h"
 #include "threads/thread.h"
@@ -9,7 +9,7 @@
 #include "threads/vaddr.h"
 #include "pagedir.h"
 
-//typedef int pid_t;
+typedef int pid_t;
 
 bool verify_user(void *user_esp);
 static void syscall_handler (struct intr_frame *);
@@ -42,14 +42,14 @@ bool verify_user(void *user_esp){
   // 2. a pointer to unmapped virtual memory, 
   // 3. a pointer to kernel virtual address space
   struct thread *cur = thread_current();
-  if (lookup_page(cur->pagedir, user_esp, false) == NULL ||
-   user_esp == NULL || is_kernel_vaddr(user_esp))
-  {
-    return false;
-  }
-  return true;
+  // if (pagedir_get_page(cur->pagedir, user_esp) == NULL ||
+  //  user_esp == NULL || is_kernel_vaddr(user_esp))
+  // {
+  //   return false;
+  // }
+  // return true;
 
-//  return !(lookup_page(cur->pagedir, user_esp, false) == NULL || user_esp == NULL || is_kernel_vaddr(user_esp));
+ return !(user_esp == NULL || is_kernel_vaddr(user_esp) || pagedir_get_page(cur->pagedir, user_esp) == NULL);
 }
 
 
@@ -69,6 +69,11 @@ syscall_handler (struct intr_frame *f UNUSED)
 
   // #Kenneth drove here
   pid_t exec_pid = -1;
+  char *file;
+  void *buffer;
+  unsigned size;
+  int fd;
+  unsigned position;
   switch(*(int *)user_esp){
     case SYS_HALT:
       halt();
@@ -82,7 +87,7 @@ syscall_handler (struct intr_frame *f UNUSED)
     case SYS_EXEC:
       //get the char * off the stack
       user_esp += 4;
-      char *cmdLine = (char *)user_esp;
+      char *cmdLine = *(char *)user_esp;
       exec_pid = exec(cmdLine);
       break;
     // #Jacob Drove Here
@@ -91,71 +96,69 @@ syscall_handler (struct intr_frame *f UNUSED)
       pid_t temp_pid = *(pid_t *)user_esp;
       wait(temp_pid);
       break;
-
-
+    //#Kenneth Drove here
+    case SYS_CREATE:
+      user_esp += 4;
+      file = *(char *)user_esp;
+      user_esp += 4;
+      size = *(unsigned *)user_esp;
+      create(file, size);
+      break;
+    case SYS_REMOVE:
+      user_esp += 4;
+      file = *(char *)user_esp;
+      remove(file);
+      break;
+    case SYS_OPEN:
+      user_esp += 4;
+      file = *(char *)user_esp;
+      open(file);
+      break;
+      // #Adam driving here
+    case SYS_FILESIZE:
+      user_esp += 4;
+      fd = *(int *)user_esp;
+      filesize(fd);
+      break;
+    case SYS_READ:
+      user_esp += 4;
+      fd = *(int *)user_esp;
+      user_esp += 4;
+      buffer = *(int *)user_esp;
+      user_esp += 4;
+      size = *(unsigned *)user_esp;
+      read(fd, buffer, size);
+      break;
+    case SYS_WRITE:
+      user_esp += 4;
+      fd = *(int *)user_esp;
+      user_esp += 4;
+      buffer = *(int *)user_esp;
+      user_esp += 4;
+      size = *(unsigned *)user_esp;
+      write(fd, buffer, size);
+      break;
+    case SYS_SEEK:
+      user_esp += 4;
+      fd = *(int *)user_esp;
+      user_esp += 4;
+      position = *(unsigned *)user_esp;
+      seek(fd, position);
+      break;
+    case SYS_TELL:
+      user_esp += 4;
+      fd = *(int *)user_esp;
+      tell (fd);
+      break;
+    case SYS_CLOSE:
+      user_esp += 4;
+      fd = *(int *)user_esp;
+      close (fd);
+      break;
     default:
+
       break;
   }//END OF SWITCH CASE
-
-
-  //#Paul drove here
-  // //printf ("system call!\n");
-  // if(*user_esp == SYS_HALT)
-  // {
-  //   halt();
-  // }
-  // //
-  // if(*user_esp == SYS_EXIT)
-  // {
-  //   //need to send status to exit
-  //   exit();
-  // }
-  // if(*user_esp == SYS_EXEC)
-  // {
-    
-  //   pid_t exec (const char *file);
-
-  // }
-  // if(*user_esp == SYS_WAIT)
-  // {
-  //   int wait (pid_t);
-  // }
-  // if(*user_esp == SYS_CREATE)
-  // {
-  //   bool create (const char *file, unsigned initial_size);
-  // }
-  // if(*user_esp == SYS_REMOVE)
-  // {
-
-  // }
-  // if(*user_esp == SYS_OPEN)
-  // {
-
-  // }
-  // if(*user_esp == SYS_FILESIZE)
-  // {
-
-  // }
-  // if(*user_esp == SYS_READ)
-  // {
-
-  // }
-  // if(*user_esp == SYS_WRITE)
-  // {
-
-  // }
-  // if(*user_esp == SYS_SEEK)
-  // {
-
-  // }
-  // if(*user_esp == SYS_TELL)
-  // {
-
-  // }
-  // if(*user_esp == SYS_CLOSE)
-  // {
-
-  // }
 
   // thread_exit ();
 }
@@ -176,7 +179,11 @@ void halt (void)
     Conventionally, a status of 0 indicates success and nonzero values indicate errors. */
 void exit (int status UNUSED)
 {
-
+  // #Kenneth drove here
+  //set the status of the child to be returned to the parent
+  thread_current()->exit_status = status;
+  //clear the page of the child process
+  process_exit();
 }
 
 /*  Runs the executable whose name is given in cmd_line, passing any given 
@@ -188,15 +195,31 @@ void exit (int status UNUSED)
 pid_t exec (const char *cmd_line UNUSED)
 {
 	//#Kenneth Drove here
-	process_execute(cmd_line);
+  // SYNCHRONIZATION MUST BE IMPLEMENTED HERE
+	pid_t pid = (pid_t) process_execute(cmd_line);
 
-	return -1;
+	return pid;
 }
 
  /* Waits for a child process pid and retrieves the child's exit status. */
-int wait (pid_t pid UNUSED)
+int wait (pid_t pid)
 {
-	return -1;
+  if(pid not direct child of current thread)
+    /* possibly have a list in thread struct that holds the direct children
+       of that thread. We can add children to this list at the end of exec()*/
+    return -1;
+  // if(parent already called wait on pid before)
+    /* Maybe have a boolean flag in struct thread that is updated in the child thread
+     whenever we enter wait. */
+    // return -1;
+
+  int status;
+  status = process_wait((int) pid);
+  // if(status == -1)
+  //   exit(status);
+  
+  return status;
+
 }
 
 /* Creates a new file called file initially initial_size bytes in size. 

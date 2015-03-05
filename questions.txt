@@ -42,3 +42,21 @@ syscall.c
 	***for each frame sent to use, we have to validate all of the data sent to us. this data changes depending on the system call that is being called***
 
 		eax will be the status generally, there are other cases
+
+
+3/5 syscall_handler / syscall.c
+	1. When accessing char pointers off the user stack, should we dereference the void esp pointer first?
+
+	2. How to pass void pointers to functions?
+
+	3. Generally, can you explain why we need synchronization and how to use it?
+
+	4. What does it mean to use process_wait() in the context of wait()?
+
+	process_wait / process.c
+	1. How do we tell if the child was killed by a kernel exception?
+
+-verify
+-user_esp
+-child_list
+-pid_t cast

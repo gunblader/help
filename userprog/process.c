@@ -48,6 +48,7 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
 
   /* Create a new thread to execute FILE_NAME. */
     tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
+
     if (tid == TID_ERROR)
       palloc_free_page (fn_copy); 
     return tid;
@@ -137,7 +138,15 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
     }
     else
       return -1;
-    }// end process_wait
+
+    // while(child_thread->status != THREAD_DYING){
+    //   if(child_thread->killed_by_kernel){
+    //     return -1;
+    //   }
+    //   //otherwise, keep waiting
+    // }
+    // return child_thread->exit_status;
+   }// end process_wait
 
 /* Free the current process's resources. */
     void
