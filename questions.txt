@@ -45,18 +45,45 @@ syscall.c
 
 
 3/5 syscall_handler / syscall.c
-	1. When accessing char pointers off the user stack, should we dereference the void esp pointer first?
-
+	1. When accessing char pointers off the user stack, should we dereference the void esp pointer first? 
+		Possibly change this to an integer pointer and just do user_esp++.
+		
 	2. How to pass void pointers to functions?
-
+		cast void pointer to char * for buffer
 	3. Generally, can you explain why we need synchronization and how to use it?
+		Use between functions that need order. i.e. read and write, create before open etc.
 
 	4. What does it mean to use process_wait() in the context of wait()?
+		Exactly like how we are doing it.
 
 	process_wait / process.c
 	1. How do we tell if the child was killed by a kernel exception?
+		Inside of thread_exit() check if it was killed by the kernel. We have to figure out how to do that.
+		
 
 -verify
+	need to verify all pointer values
 -user_esp
+	
 -child_list
+	
 -pid_t cast
+
+***Need to handle case when child dies before parent adds child to list
+
+**use semaphore to eliminate busy wait; call up in thread_exit() and call down in process_wait() - use something to tell if child died
+
+**have to deal with orphan children, child not being added to parent list of children, 
+
+**can use global semaphore for file system calls to restrict access to them
+ 
+
+** locks = mutual exclusion; semaphores = order of events matter
+
+
+3/5 #2 process.c
+	1. where to declare and initialize the semaphore?
+
+** keep around a list of dead children until they are reaped or their parent has been killed (the pointer to the parent is null). initialize the list of dead children in init_thread() function. 
+
+** in thread_exit() check the list of children in child_list, and set the child's parent_ptr to NULL

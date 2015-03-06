@@ -298,9 +298,13 @@ thread_exit (void)
   /* Remove thread from all threads list, set our status to dying,
      and schedule another process.  That process will destroy us
      when it calls thread_schedule_tail(). */
+
   intr_disable ();
   list_remove (&thread_current()->allelem);
   thread_current ()->status = THREAD_DYING;
+  //this will only get set to true if the kernel killed the current thread
+  //our syscall exit doesn't call this
+  thread_current()->killed_by_kernel = true;
   schedule ();
   NOT_REACHED ();
 }
@@ -480,6 +484,7 @@ init_thread (struct thread *t, const char *name, int priority)
   //#End Adam Driving
 
   list_push_back (&all_list, &t->allelem);
+  sema_init(t->sema_wait_process, 0);
 }
 
 /* Allocates a SIZE-byte frame at the top of thread T's stack and
@@ -578,7 +583,8 @@ schedule (void)
   thread_schedule_tail (prev);
 }
 // #Kenneth driving here
-struct thread* get_thread(tid_t tid){
+struct thread*
+get_thread(tid_t tid){
   struct list_elem *e;
   for (e = list_begin (&all_list); e != list_end (&all_list);
        e = list_next (e))

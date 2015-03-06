@@ -18,9 +18,11 @@
 #include "threads/thread.h"
 #include "threads/vaddr.h"
 #include <list.h>
+#include "threads/synch.h"
 
 static thread_func start_process NO_RETURN;
 static bool load (const char *cmdline, void (**eip) (void), void **esp);
+// static struct semaphore;
 
 /* Starts a new thread running a user program loaded from
    FILENAME.  The new thread may be scheduled (and may even exit)
@@ -48,9 +50,13 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
 
   /* Create a new thread to execute FILE_NAME. */
     tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
-
     if (tid == TID_ERROR)
       palloc_free_page (fn_copy); 
+    //add to the cur threads child_list
+    // #Kenneth Drove here
+    struct thread *parent = thread_current();
+    struct thread *child = get_thread(tid);
+    list_push_back(&parent->child_threads, &child->childelem);
     return tid;
   }
 
@@ -97,12 +103,6 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
    int
    process_wait (tid_t child_tid) 
    {
-
-    // while(1){
-
-    // }
-
-
     // #Kenneth drove here
     struct list_elem *e = NULL;
     struct thread *child_thread = NULL;
@@ -128,13 +128,13 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
     // #Jacob Drove here
     // Check the TID of the thread to make sure it has not been terminated
     // Run indefinitely until the thread is terminated.
+    // else
+    //   return -1;
+
     if(child_thread->status != THREAD_DYING)
     {
-      while(child_thread->status != THREAD_DYING) // busy wait
-      {
-
-      }
-      return 0;
+      sema_down(child_thread->sema_wait_process);
+      return child_thread->exit_status;
     }
     else
       return -1;

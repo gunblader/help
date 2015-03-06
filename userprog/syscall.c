@@ -49,7 +49,7 @@ bool verify_user(void *user_esp){
   // }
   // return true;
 
- return !(user_esp == NULL || is_kernel_vaddr(user_esp) || pagedir_get_page(cur->pagedir, user_esp) == NULL);
+ return !(user_esp == NULL || !is_user_vaddr(user_esp) || pagedir_get_page(cur->pagedir, user_esp) == NULL);
 }
 
 
@@ -60,7 +60,7 @@ syscall_handler (struct intr_frame *f UNUSED)
 {
   // grab esp from f
   //#Adam Drove Here
-  void *user_esp = f->esp;
+  int *user_esp = f->esp;
   if(!verify_user(user_esp)){
     //terminating the offending process and freeing its resources
     //thread_exit() vs process_exit()?
@@ -80,78 +80,78 @@ syscall_handler (struct intr_frame *f UNUSED)
       break;
     case SYS_EXIT:
       //get the first arg off the stack
-      user_esp += 4;
+      user_esp++;
       int status = *(int *)user_esp;
       exit(status);
       break;
     case SYS_EXEC:
       //get the char * off the stack
-      user_esp += 4;
+      user_esp++;
       char *cmdLine = *(char *)user_esp;
       exec_pid = exec(cmdLine);
       break;
     // #Jacob Drove Here
     case SYS_WAIT:
-      user_esp += 4;
+      user_esp++;
       pid_t temp_pid = *(pid_t *)user_esp;
       wait(temp_pid);
       break;
     //#Kenneth Drove here
     case SYS_CREATE:
-      user_esp += 4;
+      user_esp++;
       file = *(char *)user_esp;
-      user_esp += 4;
+      user_esp++;
       size = *(unsigned *)user_esp;
       create(file, size);
       break;
     case SYS_REMOVE:
-      user_esp += 4;
+      user_esp++;
       file = *(char *)user_esp;
       remove(file);
       break;
     case SYS_OPEN:
-      user_esp += 4;
+      user_esp++;
       file = *(char *)user_esp;
       open(file);
       break;
       // #Adam driving here
     case SYS_FILESIZE:
-      user_esp += 4;
+      user_esp++;
       fd = *(int *)user_esp;
       filesize(fd);
       break;
     case SYS_READ:
-      user_esp += 4;
+      user_esp++;
       fd = *(int *)user_esp;
-      user_esp += 4;
-      buffer = *(int *)user_esp;
-      user_esp += 4;
+      user_esp++;
+      buffer = *(char *)user_esp;
+      user_esp++;
       size = *(unsigned *)user_esp;
       read(fd, buffer, size);
       break;
     case SYS_WRITE:
-      user_esp += 4;
+      user_esp++;
       fd = *(int *)user_esp;
-      user_esp += 4;
-      buffer = *(int *)user_esp;
-      user_esp += 4;
+      user_esp++;
+      buffer = *(char *)user_esp;
+      user_esp++;
       size = *(unsigned *)user_esp;
       write(fd, buffer, size);
       break;
     case SYS_SEEK:
-      user_esp += 4;
+      user_esp++;
       fd = *(int *)user_esp;
-      user_esp += 4;
+      user_esp++;
       position = *(unsigned *)user_esp;
       seek(fd, position);
       break;
     case SYS_TELL:
-      user_esp += 4;
+      user_esp++;
       fd = *(int *)user_esp;
       tell (fd);
       break;
     case SYS_CLOSE:
-      user_esp += 4;
+      user_esp++;
       fd = *(int *)user_esp;
       close (fd);
       break;
@@ -196,7 +196,7 @@ pid_t exec (const char *cmd_line UNUSED)
 {
 	//#Kenneth Drove here
   // SYNCHRONIZATION MUST BE IMPLEMENTED HERE
-	pid_t pid = (pid_t) process_execute(cmd_line);
+	pid_t pid = process_execute(cmd_line);
 
 	return pid;
 }
@@ -214,7 +214,7 @@ int wait (pid_t pid)
     // return -1;
 
   int status;
-  status = process_wait((int) pid);
+  status = process_wait(pid);
   // if(status == -1)
   //   exit(status);
   
