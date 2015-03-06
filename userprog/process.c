@@ -111,8 +111,8 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
     // Run a for loop that gets a pointer to a list of all the threads
     // to compare the TID of the thread.
     // printf("hello\n");
-    for(e = list_begin(cur->all_list_pt); e != list_end(cur->all_list_pt); e = list_next(e)){
-      struct thread *t = list_entry(e, struct thread, allelem);
+    for(e = list_begin(cur->child_threads); e != list_end(cur->child_threads); e = list_next(e)){
+      struct thread *t = list_entry(e, struct thread, childelem);
       if(t->tid == child_tid){
         child_thread = t;
         break;

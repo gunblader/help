@@ -204,10 +204,6 @@ pid_t exec (const char *cmd_line UNUSED)
  /* Waits for a child process pid and retrieves the child's exit status. */
 int wait (pid_t pid)
 {
-  if(pid not direct child of current thread)
-    /* possibly have a list in thread struct that holds the direct children
-       of that thread. We can add children to this list at the end of exec()*/
-    return -1;
   // if(parent already called wait on pid before)
     /* Maybe have a boolean flag in struct thread that is updated in the child thread
      whenever we enter wait. */

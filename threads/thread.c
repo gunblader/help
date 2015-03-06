@@ -182,6 +182,9 @@ thread_create (const char *name, int priority,
 
   /* Initialize thread. */
   init_thread (t, name, priority);
+  //sets the parent thread (current) for the child (t)
+  t->parent = thread_current();
+  //END
   tid = t->tid = allocate_tid ();
 
   /* Prepare thread for first run by initializing its stack.
@@ -304,7 +307,7 @@ thread_exit (void)
   thread_current ()->status = THREAD_DYING;
   //this will only get set to true if the kernel killed the current thread
   //our syscall exit doesn't call this
-  thread_current()->killed_by_kernel = true;
+  //thread_current()->killed_by_kernel = true;
   schedule ();
   NOT_REACHED ();
 }
@@ -481,6 +484,7 @@ init_thread (struct thread *t, const char *name, int priority)
   t->entered_process_wait = false;
   list_init (&t->child_threads);
   t->exit_status = 0;
+
   //#End Adam Driving
 
   list_push_back (&all_list, &t->allelem);

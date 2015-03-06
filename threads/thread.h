@@ -99,6 +99,7 @@ struct thread
     int exit_status;                    /* Holds the exit status of this process */
     struct list child_threads;          /* List to hold all direct child threads of this thread */
     struct list_elem childelem;
+    struct thread *parent;
     // #End Kenneth driving
 
     /* Shared between thread.c and synch.c. */
