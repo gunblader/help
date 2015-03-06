@@ -44,12 +44,14 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
       return TID_ERROR;
     strlcpy (fn_copy, cmdline, PGSIZE);
 
-    //#Adam driving
+    // #Adam driving
     //get the file name from the cmdline sent to this function
     file_name = strtok_r (cmdline, " ", &save_ptr);
 
   /* Create a new thread to execute FILE_NAME. */
     tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
+    sema_down(&thread_current()->sema_thread_create);
+
     if (tid == TID_ERROR)
       palloc_free_page (fn_copy); 
     //add to the cur threads child_list
@@ -65,6 +67,7 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
   static void
   start_process (void *cmdline_)
   {
+    sema_up(&thread_current()->parent->sema_thread_create);
     char *cmdline = cmdline_;
     struct intr_frame if_;
     bool success;
@@ -108,10 +111,8 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
     struct thread *child_thread = NULL;
     struct thread *cur = thread_current();
 
-    // Run a for loop that gets a pointer to a list of all the threads
-    // to compare the TID of the thread.
-    // printf("hello\n");
-    for(e = list_begin(cur->child_threads); e != list_end(cur->child_threads); e = list_next(e)){
+    // Get the child tid of the current thread
+    for(e = list_begin(&cur->child_threads); e != list_end(&cur->child_threads); e = list_next(e)){
       struct thread *t = list_entry(e, struct thread, childelem);
       if(t->tid == child_tid){
         child_thread = t;
@@ -133,11 +134,15 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
 
     if(child_thread->status != THREAD_DYING)
     {
-      sema_down(child_thread->sema_wait_process);
+      sema_down(&child_thread->sema_wait_process);
       return child_thread->exit_status;
     }
-    else
+    else if (child_thread->error_happened)
+    {
       return -1;
+    }
+    else
+      return child_thread->exit_status;
 
     // while(child_thread->status != THREAD_DYING){
     //   if(child_thread->killed_by_kernel){

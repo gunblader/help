@@ -4,6 +4,7 @@
 #include <debug.h>
 #include <list.h>
 #include <stdint.h>
+#include "synch.h"
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -101,6 +102,11 @@ struct thread
     struct list_elem childelem;
     struct thread *parent;
     // #End Kenneth driving
+    bool error_happened = true;
+    bool is_zombie;
+
+    struct semaphore sema_wait_process;
+    struct semaphore sema_thread_create;
 
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */

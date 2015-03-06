@@ -87,3 +87,5 @@ syscall.c
 ** keep around a list of dead children until they are reaped or their parent has been killed (the pointer to the parent is null). initialize the list of dead children in init_thread() function. 
 
 ** in thread_exit() check the list of children in child_list, and set the child's parent_ptr to NULL
+
+**we want 

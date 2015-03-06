@@ -305,9 +305,8 @@ thread_exit (void)
   intr_disable ();
   list_remove (&thread_current()->allelem);
   thread_current ()->status = THREAD_DYING;
-  //this will only get set to true if the kernel killed the current thread
-  //our syscall exit doesn't call this
-  //thread_current()->killed_by_kernel = true;
+  if(thread_current()->error_happened)
+      sema_up(&thread_current()->sema_wait_process);
   schedule ();
   NOT_REACHED ();
 }
@@ -487,8 +486,11 @@ init_thread (struct thread *t, const char *name, int priority)
 
   //#End Adam Driving
 
+  sema_init(&t->sema_wait_process, 0);
+  // ASSERT(0);
+  sema_init(&t->sema_thread_create, 0);
   list_push_back (&all_list, &t->allelem);
-  sema_init(t->sema_wait_process, 0);
+
 }
 
 /* Allocates a SIZE-byte frame at the top of thread T's stack and
