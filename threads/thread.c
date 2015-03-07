@@ -24,6 +24,10 @@
    that are ready to run but not actually running. */
 static struct list ready_list;
 
+/* List of all child threads (no matter the parent) whose parents have died. They
+   will be reaped later on. */
+static struct list orphan_list;
+
 /* List of all processes.  Processes are added to this list
    when they are first scheduled and removed when they exit. */
 static struct list all_list;
@@ -92,6 +96,7 @@ thread_init (void)
   lock_init (&tid_lock);
   list_init (&ready_list);
   list_init (&all_list);
+  list_init (&orphan_list);
 
   /* Set up a thread structure for the running thread. */
   initial_thread = running_thread ();
@@ -303,10 +308,22 @@ thread_exit (void)
      when it calls thread_schedule_tail(). */
 
   intr_disable ();
-  list_remove (&thread_current()->allelem);
-  thread_current ()->status = THREAD_DYING;
-  if(thread_current()->error_happened)
-      sema_up(&thread_current()->sema_wait_process);
+  struct thread *cur = thread_current();
+  list_remove (&cur->allelem);
+  cur->status = THREAD_DYING;
+  if(!cur->called_exit)
+      cur->exit_status = -1;
+
+  /* To handle orphans, we loop through this thread's "child_list" (if there are any)
+     and then add them to the orphan_list */
+  // struct list_elem *e;
+  // for(e = list_begin(&cur->child_threads); e != list_end(&cur->child_threads); 
+  //   e = list_next(e)){
+  //     struct thread *t = list_entry(e, struct thread, childelem);
+  //     list_push_back(&orphan_list, &t->orphanelem);
+  // }
+
+  sema_up(&thread_current()->sema_wait_process);
   schedule ();
   NOT_REACHED ();
 }
@@ -483,6 +500,7 @@ init_thread (struct thread *t, const char *name, int priority)
   t->entered_process_wait = false;
   list_init (&t->child_threads);
   t->exit_status = 0;
+  t->called_exit = false;
 
   //#End Adam Driving
 

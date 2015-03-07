@@ -64,7 +64,7 @@ syscall_handler (struct intr_frame *f UNUSED)
   if(!verify_user(user_esp)){
     //terminating the offending process and freeing its resources
     //thread_exit() vs process_exit()?
-    thread_current()->error_happened = false;
+    //thread_current()->error_happened = false;
     thread_exit();
   }
 
@@ -184,6 +184,7 @@ void exit (int status UNUSED)
   //set the status of the child to be returned to the parent
   thread_current()->exit_status = status;
   //clear the page of the child process
+  thread_current()->called_exit = true;
   process_exit();
 }
 
@@ -212,9 +213,9 @@ int wait (pid_t pid)
 
   int status;
   status = process_wait(pid);
-  // if(status == -1)
-  //   exit(status);
-  
+  /* maybe sema_up here and sema down inside thread_exit() before we
+     schedule and destroy the child thread. */
+
   return status;
 
 }
@@ -254,13 +255,13 @@ int filesize (int fd UNUSED)
  (due to a condition other than end of file). fd 0 reads from the keyboard using 
  input_getc() */
 int read (int fd UNUSED, void *buffer UNUSED, unsigned size UNUSED){
-  int count = 0;
-  int i;
-  filesys_open (const char *name)
-  for(i = 0; i < fd; i++0)
-  {
-    (char *)buffer[i] = 
-  }
+  // int count = 0;
+  // int i;
+  // filesys_open (const char *name);
+  // for(i = 0; i < fd; i++0)
+  // {
+  //   (char *)buffer[i] = 
+  // }
 	return -1;
 }
 
@@ -278,7 +279,7 @@ int write (int fd UNUSED, const void *buffer UNUSED, unsigned size UNUSED){
   int i;
   char *printf_buff = (char *)buffer;
   for(i = 0; printf_buff[i] != '/0'; i++)
-  printf(">>>>>>Command Line: %s/n", printf_buff[i]);
+    printf(">>>>>>Command Line: %s/n", printf_buff[i]);
 	return -1;
 }
 

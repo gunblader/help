@@ -107,6 +107,12 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
    process_wait (tid_t child_tid) 
    {
     // #Kenneth drove here
+
+    // while(1){
+
+    // }
+
+    
     struct list_elem *e = NULL;
     struct thread *child_thread = NULL;
     struct thread *cur = thread_current();
@@ -136,10 +142,6 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
     {
       sema_down(&child_thread->sema_wait_process);
       return child_thread->exit_status;
-    }
-    else if (child_thread->error_happened)
-    {
-      return -1;
     }
     else
       return child_thread->exit_status;

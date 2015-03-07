@@ -89,3 +89,10 @@ syscall.c
 ** in thread_exit() check the list of children in child_list, and set the child's parent_ptr to NULL
 
 **we want 
+
+3/7 
+	1. Is the parent the current thread in the thread_create() function?
+
+	2. Race Condition between thread_exit and process_wait: we delete the child thread before we have a chance to return the child_thread's exit_status. Does thread_exit() actually destroy child's thread_struct()?
+
+	3. If a parent is killed and we have orphans, how should we handle those? Do they return an exit status or just run to completion? If they return an exit status, where do they return it?
