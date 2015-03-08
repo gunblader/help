@@ -176,6 +176,7 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
          directory, or our active page directory will be one
          that's been freed (and cleared). */
          cur->pagedir = NULL;
+         printf("Thread %s set its pagedir to %d inside of process_exit()\n", cur->name, cur->pagedir);
          pagedir_activate (NULL);
          pagedir_destroy (pd);
        }

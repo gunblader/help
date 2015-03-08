@@ -58,6 +58,7 @@ void verify_user(void *user_esp){
   //   return false;
   // }
   // return true;
+  printf("Checking thread %s in verify_user. pagedir: %d\n", cur->name, cur->pagedir);
 
   if(user_esp == NULL || !is_user_vaddr(user_esp) ||
   pagedir_get_page(cur->pagedir, user_esp) == NULL){
@@ -82,7 +83,6 @@ syscall_handler (struct intr_frame *f UNUSED)
   verify_user(user_esp);
 
   // #Kenneth drove here
-  pid_t exec_pid = -1;
   char *file;
   void *buffer;
   unsigned size;
@@ -97,18 +97,23 @@ syscall_handler (struct intr_frame *f UNUSED)
       break;
     case SYS_EXIT:
       //get argc off stack
+      printf("Called Exit.\n");
       user_esp++;
       verify_user(user_esp);
       //check number of args
       result = check_num_args(*user_esp, 1);
       if(result)
       {
+        printf("Not right amount of args\n");
         exit(0);
+        // thread_exit()
         break;
       }
+      printf("outside of if\n");
       user_esp++;
       verify_user(user_esp);
       int status = *(int *)user_esp;
+      printf("status: %i\n", status);
       exit(status);
       break;
     case SYS_EXEC:
@@ -127,7 +132,7 @@ syscall_handler (struct intr_frame *f UNUSED)
       argv++;
       verify_user(*argv);
       char *cmdLine = *(char *)user_esp;
-      exec_pid = exec(cmdLine);
+      f->eax = exec(cmdLine);
       break;
     // #Jacob Drove Here
     case SYS_WAIT:
@@ -135,7 +140,7 @@ syscall_handler (struct intr_frame *f UNUSED)
       verify_user(user_esp);
       check_num_args(*user_esp, 1);
       pid_t temp_pid = *(pid_t *)user_esp;
-      wait(temp_pid);
+      f->eax = wait(temp_pid);
       break;
     //#Kenneth Drove here
     case SYS_CREATE:
@@ -148,7 +153,7 @@ syscall_handler (struct intr_frame *f UNUSED)
       user_esp++;
       verify_user(user_esp);
       size = *(unsigned *)user_esp;
-      create(file, size);
+      f->eax = create(file, size);
       break;
     case SYS_REMOVE:
       user_esp++;
@@ -157,7 +162,7 @@ syscall_handler (struct intr_frame *f UNUSED)
 
 
       file = *(char *)user_esp;
-      remove(file);
+      f->eax = remove(file);
       break;
     case SYS_OPEN:
       user_esp++;
@@ -165,7 +170,7 @@ syscall_handler (struct intr_frame *f UNUSED)
       check_num_args(*user_esp, 1);
 
       file = *(char *)user_esp;
-      open(file);
+      f->eax = open(file);
       break;
       // #Adam driving here
     case SYS_FILESIZE:
@@ -175,7 +180,7 @@ syscall_handler (struct intr_frame *f UNUSED)
 
 
       fd = *(int *)user_esp;
-      filesize(fd);
+      f->eax = filesize(fd);
       break;
     case SYS_READ:
       user_esp++;
@@ -190,7 +195,7 @@ syscall_handler (struct intr_frame *f UNUSED)
       user_esp++;
       verify_user(user_esp);
       size = *(unsigned *)user_esp;
-      read(fd, buffer, size);
+      f->eax = read(fd, buffer, size);
       break;
     case SYS_WRITE:
       user_esp++;
@@ -204,6 +209,7 @@ syscall_handler (struct intr_frame *f UNUSED)
         user_esp++;
         //this is argv[0]
         argv = *user_esp;
+        //printf("argv: %s\n", argv);
         //this is argv[1]
         argv;
         int argvsize = strlen((char *)argv) * sizeof(char);
@@ -226,7 +232,7 @@ syscall_handler (struct intr_frame *f UNUSED)
       verify_user(*argv);
       size = *(int *)argv;
 
-      write(fd, buffer, size);
+      f->eax = write(fd, buffer, size);
       break;
     case SYS_SEEK:
       user_esp++;
@@ -245,7 +251,7 @@ syscall_handler (struct intr_frame *f UNUSED)
       check_num_args(*user_esp, 1);
 
       fd = *(int *)user_esp;
-      tell (fd);
+      f->eax = tell (fd);
       break;
     case SYS_CLOSE:
       user_esp++;
@@ -279,12 +285,15 @@ void halt (void)
     Conventionally, a status of 0 indicates success and nonzero values indicate errors. */
 void exit (int status UNUSED)
 {
+  printf("<1>\n");
   // #Kenneth drove here
   //set the status of the child to be returned to the parent
   thread_current()->exit_status = status;
   //clear the page of the child process
   thread_current()->called_exit = true;
   process_exit();
+  //thread_exit();
+  printf("<2>\n");
 }
 
 /*  Runs the executable whose name is given in cmd_line, passing any given 

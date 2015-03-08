@@ -308,6 +308,7 @@ thread_exit (void)
      when it calls thread_schedule_tail(). */
 
   intr_disable ();
+  printf("<3>\n");
   struct thread *cur = thread_current();
   list_remove (&cur->allelem);
   cur->status = THREAD_DYING;
@@ -324,6 +325,7 @@ thread_exit (void)
   // }
 
   sema_up(&thread_current()->sema_wait_process);
+  printf("<4>\n");
   schedule ();
   NOT_REACHED ();
 }
