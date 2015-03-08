@@ -106,6 +106,7 @@ struct thread
     // #End Kenneth driving
     bool error_happened;
     bool is_zombie;
+    char fn_name;
 
     struct semaphore sema_wait_process;
     struct semaphore sema_thread_create;

@@ -503,6 +503,7 @@ init_thread (struct thread *t, const char *name, int priority)
   list_init (&t->child_threads);
   t->exit_status = 0;
   t->called_exit = false;
+  t->fn_name = NULL;
 
   //#End Adam Driving
 

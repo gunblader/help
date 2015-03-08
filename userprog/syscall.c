@@ -2,6 +2,7 @@
 #include <stdio.h>
 // #include <sys/types.h>
 #include <syscall-nr.h>
+#include "lib/string.h"
 #include "threads/interrupt.h"
 #include "threads/thread.h"
 #include "devices/shutdown.h"
@@ -31,7 +32,7 @@ void close (int fd);
 // #Jacob Drove Here:
 // Create a global lock to provide mutual exclusion for the
 // utilization of the file system.
-struct lock rw_file_lock;
+struct lock lock_handler;
 // #End Jacob driving
 
 
@@ -41,7 +42,7 @@ syscall_init (void)
 {
   intr_register_int (0x30, 3, INTR_ON, syscall_handler, "syscall");
   // #Jacob Drove Here
-  lock_init(&rw_file_lock);
+  lock_init(&lock_handler);
   // #End Jacob Driving
 }
 
@@ -57,15 +58,16 @@ void verify_user(void *user_esp){
   // {
   //   return false;
   // }
+
   // return true;
-  printf("Checking thread %s in verify_user. pagedir: %d\n", cur->name, cur->pagedir);
+  printf("Checking thread %s in verify_user. pagedir: %x\n", cur->name, cur->pagedir);
 
   if(user_esp == NULL || !is_user_vaddr(user_esp) ||
   pagedir_get_page(cur->pagedir, user_esp) == NULL){
     thread_exit();
   }
 }
-
+// Explain here what this does in a comment
 bool check_num_args(int argc, int expected){
   return argc-1 < expected ? true: false;
 }
@@ -78,7 +80,10 @@ syscall_handler (struct intr_frame *f UNUSED)
 {
   // grab esp from f
   //#Adam Drove Here
+  lock_acquire(&lock_handler);
+
   int *user_esp = (int *)f->esp;
+  
   // hex_dump (f->esp, f->esp, PHYS_BASE-(f->esp), 1);
   verify_user(user_esp);
 
@@ -90,9 +95,10 @@ syscall_handler (struct intr_frame *f UNUSED)
   unsigned position;
   bool result;
   char *argv;
-  // printf("System call #: %i\n", *(int *)user_esp);
-  switch(*(int *)user_esp){
+  printf("System call #: %i\n", *(int *)user_esp);
+  switch(*user_esp){
     case SYS_HALT:
+      printf("Called Halt.\n");
       halt();
       break;
     case SYS_EXIT:
@@ -101,22 +107,24 @@ syscall_handler (struct intr_frame *f UNUSED)
       user_esp++;
       verify_user(user_esp);
       //check number of args
-      result = check_num_args(*user_esp, 1);
-      if(result)
-      {
-        printf("Not right amount of args\n");
-        exit(0);
-        // thread_exit()
-        break;
-      }
-      printf("outside of if\n");
+      // result = check_num_args(*user_esp, 1);
+      // if(result)
+      // {
+      //   printf("Not right amount of args\n");
+      //   exit(0);
+      //   // thread_exit()
+      //   return;
+      // }
+      // printf("outside of if\n");
       user_esp++;
       verify_user(user_esp);
-      int status = *(int *)user_esp;
+      int status = *user_esp;
       printf("status: %i\n", status);
+
       exit(status);
       break;
     case SYS_EXEC:
+    printf("Called Exec.\n");
       //get the char * off the stack
       user_esp++;
       // printf("EXEC argc: %i\n", *(int *)user_esp);
@@ -267,6 +275,7 @@ syscall_handler (struct intr_frame *f UNUSED)
   }//END OF SWITCH CASE
 
   // thread_exit ();
+  lock_release(&lock_handler);
 }
 
 
@@ -286,14 +295,25 @@ void halt (void)
 void exit (int status UNUSED)
 {
   printf("<1>\n");
+  //#Paul drove here  
+  int argvsize = strlen(thread_current()->name);
+  char term_message[40];
+  strlcpy(term_message, thread_current()->name, argvsize + 1);
+  strlcat(term_message, ": exit(", 40);
+  // strlcat(term_message, status, 40);
+  strlcat(term_message, ")\n", 40);
+  argvsize = strlen(term_message);
+  printf("status: %i\n", status);
+  write(1, term_message, argvsize);
+
   // #Kenneth drove here
   //set the status of the child to be returned to the parent
   thread_current()->exit_status = status;
   //clear the page of the child process
   thread_current()->called_exit = true;
-  process_exit();
-  //thread_exit();
   printf("<2>\n");
+  // process_exit();
+  thread_exit();
 }
 
 /*  Runs the executable whose name is given in cmd_line, passing any given 
@@ -304,7 +324,7 @@ void exit (int status UNUSED)
     appropriate synchronization to ensure this.  */
 pid_t exec (const char *cmd_line UNUSED)
 {
-	//#Kenneth Drove here
+	//#Jacob Drove here
   // SYNCHRONIZATION MUST BE IMPLEMENTED HERE
 	pid_t pid = process_execute(cmd_line);
 
@@ -350,10 +370,10 @@ bool remove (const char *file UNUSED)
 int open (const char *file UNUSED)
 {
   // #Jacob Drove Here
-  lock_acquire(&rw_file_lock);
+  // lock_acquire(&lock_handler);
   /* do stuff */
 
-  lock_release(&rw_file_lock);
+  // lock_release(&lock_handler);
   // #End Jacob driving
 
 	return -1;
@@ -372,10 +392,10 @@ int filesize (int fd UNUSED)
 int read (int fd UNUSED, void *buffer UNUSED, unsigned size UNUSED){
 
   // #Jacob Drove Here
-  lock_acquire(&rw_file_lock);
+  // lock_acquire(&lock_handler);
   /* do stuff */
 
-  lock_release(&rw_file_lock);
+  // lock_release(&lock_handler);
   // #End Jacob Driving
 
   // int count = 0;
@@ -401,11 +421,11 @@ int read (int fd UNUSED, void *buffer UNUSED, unsigned size UNUSED){
 int write (int fd UNUSED, const void *buffer UNUSED, unsigned size UNUSED){
 
   // #Jacob Drove Here
-  lock_acquire(&rw_file_lock);
+  // lock_acquire(&lock_handler);
   ASSERT(buffer != NULL);
   if(fd == 1)
     putbuf((char *)buffer, size);
-  lock_release(&rw_file_lock);
+  // lock_release(&lock_handler);
   // #End Jacob Driving
 
   // int i;

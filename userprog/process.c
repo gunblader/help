@@ -50,6 +50,7 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
 
   /* Create a new thread to execute FILE_NAME. */
     tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
+
     sema_down(&thread_current()->sema_thread_create);
 
     if (tid == TID_ERROR)
@@ -67,7 +68,6 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
   static void
   start_process (void *cmdline_)
   {
-    sema_up(&thread_current()->parent->sema_thread_create);
     char *cmdline = cmdline_;
     struct intr_frame if_;
     bool success;
@@ -83,6 +83,7 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
     palloc_free_page (cmdline);
     if (!success) 
       thread_exit ();
+    sema_up(&thread_current()->parent->sema_thread_create);
 
   /* Start the user process by simulating a return from an
      interrupt, implemented by intr_exit (in
@@ -176,7 +177,7 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
          directory, or our active page directory will be one
          that's been freed (and cleared). */
          cur->pagedir = NULL;
-         printf("Thread %s set its pagedir to %d inside of process_exit()\n", cur->name, cur->pagedir);
+         printf("Thread %s set its pagedir to %x inside of process_exit()\n", cur->name, cur->pagedir);
          pagedir_activate (NULL);
          pagedir_destroy (pd);
        }
