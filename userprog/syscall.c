@@ -100,7 +100,12 @@ syscall_handler (struct intr_frame *f UNUSED)
       user_esp++;
       verify_user(user_esp);
       //check number of args
-      check_num_args(*user_esp, 1);
+      result = check_num_args(*user_esp, 1);
+      if(result)
+      {
+        exit(0);
+        break;
+      }
       user_esp++;
       verify_user(user_esp);
       int status = *(int *)user_esp;
@@ -193,6 +198,7 @@ syscall_handler (struct intr_frame *f UNUSED)
       // printf("WRITE argc: %i\n", *(int *)user_esp);
       verify_user(user_esp);
       result = check_num_args(*user_esp, 3);
+      // #Paul drove here
       if(result)
       {
         user_esp++;
@@ -220,19 +226,6 @@ syscall_handler (struct intr_frame *f UNUSED)
       verify_user(*argv);
       size = *(int *)argv;
 
-
-      // //increment by 3 to get argv[1] which is fd
-      // user_esp++; 
-      // verify_user(user_esp);
-      // fd = (int *)*user_esp;
-      // //increment by 1 to get argv[2] which is buffer
-      // user_esp++;
-      // verify_user(user_esp);
-      // buffer = *(*(char *)user_esp);
-      // //increment by 1 to get argv[3] which is size
-      // user_esp++;
-      // verify_user(user_esp);
-      // size = **(unsigned *)user_esp;
       write(fd, buffer, size);
       break;
     case SYS_SEEK:
