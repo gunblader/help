@@ -159,7 +159,7 @@ page_fault (struct intr_frame *f)
 
   printf("There is no crying in Pintos!\n");
 
-  debug_backtrace();
+  // debug_backtrace();
 
   kill (f);
 }

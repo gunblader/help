@@ -11,7 +11,8 @@
 
 typedef int pid_t;
 
-bool verify_user(void *user_esp);
+void verify_user(void *user_esp);
+bool check_num_args(int argc, int expected);
 static void syscall_handler (struct intr_frame *);
 void halt (void);
 void exit (int status);
@@ -27,16 +28,25 @@ void seek (int fd, unsigned position);
 unsigned tell (int fd);
 void close (int fd);
 
+// #Jacob Drove Here:
+// Create a global lock to provide mutual exclusion for the
+// utilization of the file system.
+struct lock rw_file_lock;
+// #End Jacob driving
+
 
 
 void
 syscall_init (void) 
 {
   intr_register_int (0x30, 3, INTR_ON, syscall_handler, "syscall");
+  // #Jacob Drove Here
+  lock_init(&rw_file_lock);
+  // #End Jacob Driving
 }
 
 // #Kenneth Drove here
-bool verify_user(void *user_esp){
+void verify_user(void *user_esp){
   // check if pointer is valid by checking these conditions: 
   // 1. a null pointer
   // 2. a pointer to unmapped virtual memory, 
@@ -49,7 +59,14 @@ bool verify_user(void *user_esp){
   // }
   // return true;
 
- return !(user_esp == NULL || !is_user_vaddr(user_esp) || pagedir_get_page(cur->pagedir, user_esp) == NULL);
+  if(user_esp == NULL || !is_user_vaddr(user_esp) ||
+  pagedir_get_page(cur->pagedir, user_esp) == NULL){
+    thread_exit();
+  }
+}
+
+bool check_num_args(int argc, int expected){
+  return argc-1 < expected ? true: false;
 }
 
 
@@ -60,13 +77,9 @@ syscall_handler (struct intr_frame *f UNUSED)
 {
   // grab esp from f
   //#Adam Drove Here
-  int *user_esp = f->esp;
-  if(!verify_user(user_esp)){
-    //terminating the offending process and freeing its resources
-    //thread_exit() vs process_exit()?
-    //thread_current()->error_happened = false;
-    thread_exit();
-  }
+  int *user_esp = (int *)f->esp;
+  // hex_dump (f->esp, f->esp, PHYS_BASE-(f->esp), 1);
+  verify_user(user_esp);
 
   // #Kenneth drove here
   pid_t exec_pid = -1;
@@ -75,84 +88,177 @@ syscall_handler (struct intr_frame *f UNUSED)
   unsigned size;
   int fd;
   unsigned position;
+  bool result;
+  char *argv;
+  // printf("System call #: %i\n", *(int *)user_esp);
   switch(*(int *)user_esp){
     case SYS_HALT:
       halt();
       break;
     case SYS_EXIT:
-      //get the first arg off the stack
+      //get argc off stack
       user_esp++;
+      verify_user(user_esp);
+      //check number of args
+      check_num_args(*user_esp, 1);
+      user_esp++;
+      verify_user(user_esp);
       int status = *(int *)user_esp;
       exit(status);
       break;
     case SYS_EXEC:
       //get the char * off the stack
       user_esp++;
+      // printf("EXEC argc: %i\n", *(int *)user_esp);
+      verify_user(user_esp);
+      result = check_num_args(*user_esp, 1);
+      if(result)
+        return;
+      user_esp++;
+      verify_user(user_esp);
+      //this is argv[0]
+      argv = *user_esp;
+      //this is argv[1]
+      argv++;
+      verify_user(*argv);
       char *cmdLine = *(char *)user_esp;
       exec_pid = exec(cmdLine);
       break;
     // #Jacob Drove Here
     case SYS_WAIT:
       user_esp++;
+      verify_user(user_esp);
+      check_num_args(*user_esp, 1);
       pid_t temp_pid = *(pid_t *)user_esp;
       wait(temp_pid);
       break;
     //#Kenneth Drove here
     case SYS_CREATE:
       user_esp++;
+      verify_user(user_esp);
+      check_num_args(*user_esp, 2);
+
+
       file = *(char *)user_esp;
       user_esp++;
+      verify_user(user_esp);
       size = *(unsigned *)user_esp;
       create(file, size);
       break;
     case SYS_REMOVE:
       user_esp++;
+      verify_user(user_esp);
+      check_num_args(*user_esp, 1);
+
+
       file = *(char *)user_esp;
       remove(file);
       break;
     case SYS_OPEN:
       user_esp++;
+      verify_user(user_esp);
+      check_num_args(*user_esp, 1);
+
       file = *(char *)user_esp;
       open(file);
       break;
       // #Adam driving here
     case SYS_FILESIZE:
       user_esp++;
+      verify_user(user_esp);
+      check_num_args(*user_esp, 1);
+
+
       fd = *(int *)user_esp;
       filesize(fd);
       break;
     case SYS_READ:
       user_esp++;
+      verify_user(user_esp);
+      check_num_args(*user_esp, 3);
+
+
       fd = *(int *)user_esp;
       user_esp++;
+      verify_user(user_esp);
       buffer = *(char *)user_esp;
       user_esp++;
+      verify_user(user_esp);
       size = *(unsigned *)user_esp;
       read(fd, buffer, size);
       break;
     case SYS_WRITE:
       user_esp++;
-      fd = *(int *)user_esp;
+      
+      // printf("WRITE argc: %i\n", *(int *)user_esp);
+      verify_user(user_esp);
+      result = check_num_args(*user_esp, 3);
+      if(result)
+      {
+        user_esp++;
+        //this is argv[0]
+        argv = *user_esp;
+        //this is argv[1]
+        argv;
+        int argvsize = strlen((char *)argv) * sizeof(char);
+        write(1, (char *)argv, argvsize);
+        break;
+      }
       user_esp++;
-      buffer = *(char *)user_esp;
-      user_esp++;
-      size = *(unsigned *)user_esp;
+      verify_user(user_esp);
+      //this is argv[0]
+      argv = *user_esp;
+      //this is argv[1]
+      argv++;
+      verify_user(*argv);
+      fd = *(int *)argv;
+      //this is argv[2]
+      argv++;
+      verify_user(*argv);
+      buffer = *argv;
+      argv++;
+      verify_user(*argv);
+      size = *(int *)argv;
+
+
+      // //increment by 3 to get argv[1] which is fd
+      // user_esp++; 
+      // verify_user(user_esp);
+      // fd = (int *)*user_esp;
+      // //increment by 1 to get argv[2] which is buffer
+      // user_esp++;
+      // verify_user(user_esp);
+      // buffer = *(*(char *)user_esp);
+      // //increment by 1 to get argv[3] which is size
+      // user_esp++;
+      // verify_user(user_esp);
+      // size = **(unsigned *)user_esp;
       write(fd, buffer, size);
       break;
     case SYS_SEEK:
       user_esp++;
+      verify_user(user_esp);
+      check_num_args(*user_esp, 2);
+
       fd = *(int *)user_esp;
       user_esp++;
+      verify_user(user_esp);
       position = *(unsigned *)user_esp;
       seek(fd, position);
       break;
     case SYS_TELL:
       user_esp++;
+      verify_user(user_esp);
+      check_num_args(*user_esp, 1);
+
       fd = *(int *)user_esp;
       tell (fd);
       break;
     case SYS_CLOSE:
       user_esp++;
+      verify_user(user_esp);
+      check_num_args(*user_esp, 1);
+
       fd = *(int *)user_esp;
       close (fd);
       break;
@@ -241,6 +347,13 @@ bool remove (const char *file UNUSED)
  a "file descriptor" (fd) or -1 if the file could not be opened */
 int open (const char *file UNUSED)
 {
+  // #Jacob Drove Here
+  lock_acquire(&rw_file_lock);
+  /* do stuff */
+
+  lock_release(&rw_file_lock);
+  // #End Jacob driving
+
 	return -1;
 }
 
@@ -255,6 +368,14 @@ int filesize (int fd UNUSED)
  (due to a condition other than end of file). fd 0 reads from the keyboard using 
  input_getc() */
 int read (int fd UNUSED, void *buffer UNUSED, unsigned size UNUSED){
+
+  // #Jacob Drove Here
+  lock_acquire(&rw_file_lock);
+  /* do stuff */
+
+  lock_release(&rw_file_lock);
+  // #End Jacob Driving
+
   // int count = 0;
   // int i;
   // filesys_open (const char *name);
@@ -276,10 +397,19 @@ int read (int fd UNUSED, void *buffer UNUSED, unsigned size UNUSED){
  Otherwise, lines of text output by different processes may end up interleaved on the 
  console, confusing both human readers and our grading scripts. */
 int write (int fd UNUSED, const void *buffer UNUSED, unsigned size UNUSED){
-  int i;
-  char *printf_buff = (char *)buffer;
-  for(i = 0; printf_buff[i] != '/0'; i++)
-    printf(">>>>>>Command Line: %s/n", printf_buff[i]);
+
+  // #Jacob Drove Here
+  lock_acquire(&rw_file_lock);
+  ASSERT(buffer != NULL);
+  if(fd == 1)
+    putbuf((char *)buffer, size);
+  lock_release(&rw_file_lock);
+  // #End Jacob Driving
+
+  // int i;
+  // char *printf_buff = (char *)buffer;
+  // for(i = 0; printf_buff[i] != '/0'; i++)
+  //   printf(">>>>>>Command Line: %s/n", printf_buff[i]);
 	return -1;
 }
 
