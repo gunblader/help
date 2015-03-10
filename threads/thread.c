@@ -299,21 +299,18 @@ thread_exit (void)
 {
   ASSERT (!intr_context ());
 
-#ifdef USERPROG
-  process_exit ();
-#endif
 
   /* Remove thread from all threads list, set our status to dying,
      and schedule another process.  That process will destroy us
      when it calls thread_schedule_tail(). */
 
   intr_disable ();
-  printf("<3>\n");
+  // printf("<3>\n");
   struct thread *cur = thread_current();
   list_remove (&cur->allelem);
-  cur->status = THREAD_DYING;
   if(!cur->called_exit)
       cur->exit_status = -1;
+  printf ("%s: exit(%d)\n", thread_current()->name, cur->exit_status);
 
   /* To handle orphans, we loop through this thread's "child_list" (if there are any)
      and then add them to the orphan_list */
@@ -324,8 +321,30 @@ thread_exit (void)
   //     list_push_back(&orphan_list, &t->orphanelem);
   // }
 
-  sema_up(&thread_current()->sema_wait_process);
-  printf("<4>\n");
+  sema_up(&cur->sema_wait_process);
+  /* free's orphans from blocking */
+  if(!list_empty(&cur->child_threads)){
+    struct list_elem *e;
+    for(e = list_begin(&cur->child_threads); e != list_end(&cur->child_threads);
+        e = list_next(e)){
+      struct thread *child = list_entry(e, struct thread, childelem);
+      sema_up(&child->pause_thread_exit);
+      child->parent = NULL;
+    }
+  }
+  /* if your parent is still alive, wait for it to reap your status before
+     you destroy the child's TCB */
+  if(cur->parent != NULL){
+    sema_down(&cur->pause_thread_exit);
+    list_remove(&cur->childelem);
+  }
+  // sema_down(&cur->pause_thread_exit);
+
+#ifdef USERPROG
+  process_exit ();
+#endif
+  // printf("<4>\n");
+  cur->status = THREAD_DYING;
   schedule ();
   NOT_REACHED ();
 }
@@ -510,6 +529,7 @@ init_thread (struct thread *t, const char *name, int priority)
   sema_init(&t->sema_wait_process, 0);
   // ASSERT(0);
   sema_init(&t->sema_thread_create, 0);
+  sema_init(&t->pause_thread_exit, 0);
   list_push_back (&all_list, &t->allelem);
 
 }

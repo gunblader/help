@@ -60,7 +60,7 @@ void verify_user(void *user_esp){
   // }
 
   // return true;
-  printf("Checking thread %s in verify_user. pagedir: %x\n", cur->name, cur->pagedir);
+  // printf("Checking thread %s in verify_user. pagedir: %x\n", cur->name, cur->pagedir);
 
   if(user_esp == NULL || !is_user_vaddr(user_esp) ||
   pagedir_get_page(cur->pagedir, user_esp) == NULL){
@@ -95,15 +95,15 @@ syscall_handler (struct intr_frame *f UNUSED)
   unsigned position;
   bool result;
   char *argv;
-  printf("System call #: %i\n", *(int *)user_esp);
+  // printf("System call #: %i\n", *(int *)user_esp);
   switch(*user_esp){
     case SYS_HALT:
-      printf("Called Halt.\n");
+      // printf("Called Halt.\n");
       halt();
       break;
     case SYS_EXIT:
       //get argc off stack
-      printf("Called Exit.\n");
+      // printf("Called Exit.\n");
       user_esp++;
       verify_user(user_esp);
       //check number of args
@@ -116,29 +116,29 @@ syscall_handler (struct intr_frame *f UNUSED)
       //   return;
       // }
       // printf("outside of if\n");
-      user_esp++;
-      verify_user(user_esp);
+      //user_esp++;
+      //verify_user(user_esp);
       int status = *user_esp;
-      printf("status: %i\n", status);
+      //printf("status: %i\n", status);
 
       exit(status);
       break;
     case SYS_EXEC:
-    printf("Called Exec.\n");
+    // printf("Called Exec.\n");
       //get the char * off the stack
       user_esp++;
       // printf("EXEC argc: %i\n", *(int *)user_esp);
       verify_user(user_esp);
-      result = check_num_args(*user_esp, 1);
-      if(result)
-        return;
-      user_esp++;
-      verify_user(user_esp);
-      //this is argv[0]
-      argv = *user_esp;
-      //this is argv[1]
-      argv++;
-      verify_user(*argv);
+      // result = check_num_args(*user_esp, 1);
+      // if(result)
+      //   return;
+      // user_esp++;
+      // verify_user(user_esp);
+      // //this is argv[0]
+      // argv = *user_esp;
+      // //this is argv[1]
+      // argv++;
+      // verify_user(*argv);
       char *cmdLine = *(char *)user_esp;
       f->eax = exec(cmdLine);
       break;
@@ -146,7 +146,7 @@ syscall_handler (struct intr_frame *f UNUSED)
     case SYS_WAIT:
       user_esp++;
       verify_user(user_esp);
-      check_num_args(*user_esp, 1);
+      // check_num_args(*user_esp, 1);
       pid_t temp_pid = *(pid_t *)user_esp;
       f->eax = wait(temp_pid);
       break;
@@ -154,7 +154,7 @@ syscall_handler (struct intr_frame *f UNUSED)
     case SYS_CREATE:
       user_esp++;
       verify_user(user_esp);
-      check_num_args(*user_esp, 2);
+      // check_num_args(*user_esp, 2);
 
 
       file = *(char *)user_esp;
@@ -166,7 +166,7 @@ syscall_handler (struct intr_frame *f UNUSED)
     case SYS_REMOVE:
       user_esp++;
       verify_user(user_esp);
-      check_num_args(*user_esp, 1);
+      // check_num_args(*user_esp, 1);
 
 
       file = *(char *)user_esp;
@@ -175,7 +175,7 @@ syscall_handler (struct intr_frame *f UNUSED)
     case SYS_OPEN:
       user_esp++;
       verify_user(user_esp);
-      check_num_args(*user_esp, 1);
+      // check_num_args(*user_esp, 1);
 
       file = *(char *)user_esp;
       f->eax = open(file);
@@ -184,7 +184,7 @@ syscall_handler (struct intr_frame *f UNUSED)
     case SYS_FILESIZE:
       user_esp++;
       verify_user(user_esp);
-      check_num_args(*user_esp, 1);
+      // check_num_args(*user_esp, 1);
 
 
       fd = *(int *)user_esp;
@@ -193,7 +193,7 @@ syscall_handler (struct intr_frame *f UNUSED)
     case SYS_READ:
       user_esp++;
       verify_user(user_esp);
-      check_num_args(*user_esp, 3);
+      // check_num_args(*user_esp, 3);
 
 
       fd = *(int *)user_esp;
@@ -210,42 +210,42 @@ syscall_handler (struct intr_frame *f UNUSED)
       
       // printf("WRITE argc: %i\n", *(int *)user_esp);
       verify_user(user_esp);
-      result = check_num_args(*user_esp, 3);
-      // #Paul drove here
-      if(result)
-      {
-        user_esp++;
-        //this is argv[0]
-        argv = *user_esp;
-        //printf("argv: %s\n", argv);
-        //this is argv[1]
-        argv;
-        int argvsize = strlen((char *)argv) * sizeof(char);
-        write(1, (char *)argv, argvsize);
-        break;
-      }
+      // result = check_num_args(*user_esp, 3);
+      // // #Paul drove here
+      // if(result)
+      // {
+      //   user_esp++;
+      //   //this is argv[0]
+      //   argv = *user_esp;
+      //   //printf("argv: %s\n", argv);
+      //   //this is argv[1]
+      //   argv;
+      //   int argvsize = strlen((char *)argv) * sizeof(char);
+      //   write(1, (char *)argv, argvsize);
+      //   break;
+      // }
+      // user_esp++;
+      // verify_user(user_esp);
+      // //this is argv[0]
+      // argv = *user_esp;
+      // //this is argv[1]
+      // argv++;
+      // verify_user(*argv);
+      fd = *(int *)user_esp;
+      //this is argv[2]
       user_esp++;
       verify_user(user_esp);
-      //this is argv[0]
-      argv = *user_esp;
-      //this is argv[1]
-      argv++;
-      verify_user(*argv);
-      fd = *(int *)argv;
-      //this is argv[2]
-      argv++;
-      verify_user(*argv);
-      buffer = *argv;
-      argv++;
-      verify_user(*argv);
-      size = *(int *)argv;
+      buffer = *user_esp;
+      user_esp++;
+      verify_user(user_esp);
+      size = *(int *)user_esp;
 
       f->eax = write(fd, buffer, size);
       break;
     case SYS_SEEK:
       user_esp++;
       verify_user(user_esp);
-      check_num_args(*user_esp, 2);
+      // check_num_args(*user_esp, 2);
 
       fd = *(int *)user_esp;
       user_esp++;
@@ -256,7 +256,7 @@ syscall_handler (struct intr_frame *f UNUSED)
     case SYS_TELL:
       user_esp++;
       verify_user(user_esp);
-      check_num_args(*user_esp, 1);
+      // check_num_args(*user_esp, 1);
 
       fd = *(int *)user_esp;
       f->eax = tell (fd);
@@ -264,7 +264,7 @@ syscall_handler (struct intr_frame *f UNUSED)
     case SYS_CLOSE:
       user_esp++;
       verify_user(user_esp);
-      check_num_args(*user_esp, 1);
+      // check_num_args(*user_esp, 1);
 
       fd = *(int *)user_esp;
       close (fd);
@@ -292,26 +292,26 @@ void halt (void)
 /*  Terminates the current user program, returning status to the kernel. If the process's
     parent waits for it (see below), this is the status that will be returned. 
     Conventionally, a status of 0 indicates success and nonzero values indicate errors. */
-void exit (int status UNUSED)
+void exit (int status)
 {
-  printf("<1>\n");
+  // printf("<1>\n");
   //#Paul drove here  
-  int argvsize = strlen(thread_current()->name);
-  char term_message[40];
-  strlcpy(term_message, thread_current()->name, argvsize + 1);
-  strlcat(term_message, ": exit(", 40);
-  // strlcat(term_message, status, 40);
-  strlcat(term_message, ")\n", 40);
-  argvsize = strlen(term_message);
-  printf("status: %i\n", status);
-  write(1, term_message, argvsize);
+  // int argvsize = strlen(thread_current()->name);
+  // char term_message[40];
+  // strlcpy(term_message, thread_current()->name, argvsize + 1);
+  // strlcat(term_message, ": exit(", 40);
+  // strlcat(term_message, , 40);
+  // strlcat(term_message, ")\n", 40);
+  // argvsize = strlen(term_message);
+  // // printf("status: %i\n", status);
+  // write(1, term_message, argvsize);
 
   // #Kenneth drove here
   //set the status of the child to be returned to the parent
   thread_current()->exit_status = status;
   //clear the page of the child process
   thread_current()->called_exit = true;
-  printf("<2>\n");
+  // printf("<2>\n");
   // process_exit();
   thread_exit();
 }
@@ -343,6 +343,8 @@ int wait (pid_t pid)
   status = process_wait(pid);
   /* maybe sema_up here and sema down inside thread_exit() before we
      schedule and destroy the child thread. */
+  struct thread *child = get_thread(pid);
+  sema_up(&child->pause_thread_exit);
 
   return status;
 

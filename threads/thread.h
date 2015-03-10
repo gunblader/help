@@ -110,6 +110,7 @@ struct thread
 
     struct semaphore sema_wait_process;
     struct semaphore sema_thread_create;
+    struct semaphore pause_thread_exit;
 
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
