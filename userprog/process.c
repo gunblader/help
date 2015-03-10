@@ -43,19 +43,19 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
     if (fn_copy == NULL)
       return TID_ERROR;
     strlcpy (fn_copy, cmdline, PGSIZE);
-    printf("fn_copy: %s\n", fn_copy);
+    // printf("fn_copy: %s\n", fn_copy);
 
 
     // #Adam driving
     //get the file name from the cmdline sent to this function
     file_name = strtok_r (cmdline, " ", &save_ptr);
-    printf("\n\nfile name: %s\n", file_name);
+    // printf("\n\nfile name: %s\n", file_name);
 
   /* Create a new thread to execute FILE_NAME. */
     tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
     // printf("\n\nTID: %i\n", tid);
     sema_down(&thread_current()->sema_thread_create);
-    ASSERT(0);
+    // ASSERT(0);
 
     if (tid == TID_ERROR)
       palloc_free_page (fn_copy); 
@@ -81,18 +81,21 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
     bool success;
 
   /* Initialize interrupt frame and load executable. */
+    // printf("\n\n2_TID: 0\n");
     memset (&if_, 0, sizeof if_);
     if_.gs = if_.fs = if_.es = if_.ds = if_.ss = SEL_UDSEG;
     if_.cs = SEL_UCSEG;
     if_.eflags = FLAG_IF | FLAG_MBS;
     success = load (cmdline, &if_.eip, &if_.esp);
 
+    // printf("\n\ncmdline  %s\n", cmdline);
   /* If load failed, quit. */
     palloc_free_page (cmdline);
     if (!success) 
       thread_exit ();
     // #Adam Driving here
     sema_up(&thread_current()->parent->sema_thread_create);
+    // printf("\n\n2_TID: 2\n success: %d \n", success);
 
   /* Start the user process by simulating a return from an
      interrupt, implemented by intr_exit (in

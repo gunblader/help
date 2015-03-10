@@ -99,15 +99,15 @@ syscall_handler (struct intr_frame *f UNUSED)
   unsigned position;
   bool result;
   char *argv;
-  // printf("System call #: %i\n", *(int *)user_esp);
+  printf("System call #: %i\n", *(int *)user_esp);
   switch(*user_esp){
     case SYS_HALT:
-      // printf("Called Halt.\n");
+      printf("Called Halt.\n");
       halt();
       break;
     case SYS_EXIT:
       //get argc off stack
-      // printf("Called Exit.\n");
+      printf("Called Exit. %s\n", thread_current()->name);
       user_esp++;
       verify_user(user_esp);
       //check number of args
@@ -128,10 +128,10 @@ syscall_handler (struct intr_frame *f UNUSED)
       exit(status);
       break;
     case SYS_EXEC:
-    // printf("Called Exec.\n");
+    printf("Called Exec.%s\n", thread_current()->name);
       //get the char * off the stack
       user_esp++;
-      // printf("EXEC argc: %i\n", *(int *)user_esp);
+      printf("EXEC argc: %s\n", *(int *)user_esp);
       verify_user(user_esp);
       // result = check_num_args(*user_esp, 1);
       // if(result)
@@ -143,11 +143,13 @@ syscall_handler (struct intr_frame *f UNUSED)
       // //this is argv[1]
       // argv++;
       // verify_user(*argv);
-      char *cmdLine = *(char *)user_esp;
+      char *cmdLine = *(int *)user_esp;
+      printf("EXEC cmdLine: %s\n", cmdLine);
       f->eax = exec(cmdLine);
       break;
     // #Jacob Drove Here
     case SYS_WAIT:
+      printf("Called Wait. %s\n", thread_current()->name);
       user_esp++;
       verify_user(user_esp);
       // check_num_args(*user_esp, 1);
