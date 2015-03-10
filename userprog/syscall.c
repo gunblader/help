@@ -9,6 +9,7 @@
 #include "userprog/process.h"
 #include "threads/vaddr.h"
 #include "pagedir.h"
+#include "filesys/filesys.h"
 
 typedef int pid_t;
 
@@ -32,7 +33,9 @@ void close (int fd);
 // #Jacob Drove Here:
 // Create a global lock to provide mutual exclusion for the
 // utilization of the file system.
-struct lock lock_handler;
+struct lock lock;
+int global_fd = 1;
+static struct list file_list;
 // #End Jacob driving
 
 
@@ -42,7 +45,8 @@ syscall_init (void)
 {
   intr_register_int (0x30, 3, INTR_ON, syscall_handler, "syscall");
   // #Jacob Drove Here
-  lock_init(&lock_handler);
+  lock_init(&lock);
+  list_init(&file_list);
   // #End Jacob Driving
 }
 
@@ -80,7 +84,7 @@ syscall_handler (struct intr_frame *f UNUSED)
 {
   // grab esp from f
   //#Adam Drove Here
-  lock_acquire(&lock_handler);
+  // lock_acquire(&lock_handler);
 
   int *user_esp = (int *)f->esp;
   
@@ -275,7 +279,7 @@ syscall_handler (struct intr_frame *f UNUSED)
   }//END OF SWITCH CASE
 
   // thread_exit ();
-  lock_release(&lock_handler);
+  // lock_release(&lock_handler);
 }
 
 
@@ -322,28 +326,31 @@ void exit (int status)
     any reason. Thus, the parent process cannot return from the exec until it knows 
     whether the child process successfully loaded its executable. You must use
     appropriate synchronization to ensure this.  */
-pid_t exec (const char *cmd_line UNUSED)
+pid_t exec (const char *cmd_line)
 {
 	//#Jacob Drove here
   // SYNCHRONIZATION MUST BE IMPLEMENTED HERE
+  struct thread *cur = thread_current();
 	pid_t pid = process_execute(cmd_line);
-
-	return pid;
+  //lets the parent know that the child is done.
+  if(pid != TID_ERROR){
+    sema_up(&cur->loaded);
+	}
+  return pid;
 }
 
  /* Waits for a child process pid and retrieves the child's exit status. */
 int wait (pid_t pid)
 {
-  // if(parent already called wait on pid before)
-    /* Maybe have a boolean flag in struct thread that is updated in the child thread
-     whenever we enter wait. */
-    // return -1;
-
+  //waits for the child to be fully set up.
+  printf("Called Wait\n");
+  struct thread *child = get_thread(pid);
+  sema_down(&child->loaded);
   int status;
   status = process_wait(pid);
   /* maybe sema_up here and sema down inside thread_exit() before we
      schedule and destroy the child thread. */
-  struct thread *child = get_thread(pid);
+  // struct thread *child = get_thread(pid);
   sema_up(&child->pause_thread_exit);
 
   return status;
@@ -354,31 +361,45 @@ int wait (pid_t pid)
    Returns true if successful, false otherwise. Creating a new file does
    not open it: opening the new file is a separate operation which would 
    require a open system call. */
-bool create (const char *file UNUSED, unsigned initial_size UNUSED)
+bool create (const char *file_name, unsigned initial_size)
 {
-	return false;
+  // #Adam Drove here
+  lock_acquire(&lock);
+  bool result = false;
+  result = filesys_create(file_name, initial_size);
+  lock_release(&lock);
+	return result;
 }
 
 /* Deletes the file called file. Returns true if successful, false otherwise.
    A file may be removed regardless of whether it is open or closed, and removing 
    an open file does not close it. See Removing an Open File, for details */
-bool remove (const char *file UNUSED)
+bool remove (const char *file_name)
 {
-	return false;
+  // #Adam Drove here
+  lock_acquire(&lock);
+  bool result = false;
+  result = filesys_remove(file_name);
+  lock_release(&lock);
+	return result;
 }
 
 /* Opens the file called file. Returns a nonnegative integer handle called
  a "file descriptor" (fd) or -1 if the file could not be opened */
-int open (const char *file UNUSED)
+int open (const char *file_name)
 {
-  // #Jacob Drove Here
-  // lock_acquire(&lock_handler);
-  /* do stuff */
-
-  // lock_release(&lock_handler);
-  // #End Jacob driving
-
-	return -1;
+  // #Adam Drove here
+  lock_acquire(&lock);
+  
+  struct file *file;
+  struct file_info *f;
+  file = filesys_open(file_name);
+  global_fd++;
+  // f->fd = global_fd;
+  f->fd = global_fd;
+  // list_push_back(&file_list, &f->file_list_elem);
+  lock_release(&lock);
+	return global_fd;
 }
 
 /* Returns the size, in bytes, of the file open as fd */
@@ -391,22 +412,15 @@ int filesize (int fd UNUSED)
  actually read (0 at end of file), or -1 if the file could not be read 
  (due to a condition other than end of file). fd 0 reads from the keyboard using 
  input_getc() */
-int read (int fd UNUSED, void *buffer UNUSED, unsigned size UNUSED){
+int read (int fd, void *buffer, unsigned size){
 
   // #Jacob Drove Here
-  // lock_acquire(&lock_handler);
-  /* do stuff */
+  lock_acquire(&lock);
+  
 
-  // lock_release(&lock_handler);
+
+  lock_release(&lock);
   // #End Jacob Driving
-
-  // int count = 0;
-  // int i;
-  // filesys_open (const char *name);
-  // for(i = 0; i < fd; i++0)
-  // {
-  //   (char *)buffer[i] = 
-  // }
 	return -1;
 }
 
@@ -420,20 +434,23 @@ int read (int fd UNUSED, void *buffer UNUSED, unsigned size UNUSED){
  bigger than a few hundred bytes. (It is reasonable to break up larger buffers.) 
  Otherwise, lines of text output by different processes may end up interleaved on the 
  console, confusing both human readers and our grading scripts. */
-int write (int fd UNUSED, const void *buffer UNUSED, unsigned size UNUSED){
+int write (int fd, const void *buffer, unsigned size){
 
-  // #Jacob Drove Here
-  // lock_acquire(&lock_handler);
   ASSERT(buffer != NULL);
-  if(fd == 1)
-    putbuf((char *)buffer, size);
-  // lock_release(&lock_handler);
-  // #End Jacob Driving
+  // #Jacob Drove Here
+  lock_acquire(&lock);
+  char *buf = (char *)buffer;
 
-  // int i;
-  // char *printf_buff = (char *)buffer;
-  // for(i = 0; printf_buff[i] != '/0'; i++)
-  //   printf(">>>>>>Command Line: %s/n", printf_buff[i]);
+  if(fd == 1){
+    //if size > 256 we need to call putbuf multiple times until buffer has been printed
+    // unsigned char_remaining = size;
+    // if(size > 256){
+
+    // } 
+    putbuf(buf, size);
+  }
+
+  lock_release(&lock);
 	return -1;
 }
 

@@ -188,6 +188,8 @@ thread_create (const char *name, int priority,
   /* Initialize thread. */
   init_thread (t, name, priority);
   //sets the parent thread (current) for the child (t)
+  printf("Name: %s\n", thread_current()->name);
+  printf("Child's name: %s\n", t->name);
   t->parent = thread_current();
   //END
   tid = t->tid = allocate_tid ();
@@ -312,15 +314,7 @@ thread_exit (void)
       cur->exit_status = -1;
   printf ("%s: exit(%d)\n", thread_current()->name, cur->exit_status);
 
-  /* To handle orphans, we loop through this thread's "child_list" (if there are any)
-     and then add them to the orphan_list */
-  // struct list_elem *e;
-  // for(e = list_begin(&cur->child_threads); e != list_end(&cur->child_threads); 
-  //   e = list_next(e)){
-  //     struct thread *t = list_entry(e, struct thread, childelem);
-  //     list_push_back(&orphan_list, &t->orphanelem);
-  // }
-
+  // #Kenneth and Adam Drove here
   sema_up(&cur->sema_wait_process);
   /* free's orphans from blocking */
   if(!list_empty(&cur->child_threads)){
@@ -339,6 +333,7 @@ thread_exit (void)
     list_remove(&cur->childelem);
   }
   // sema_down(&cur->pause_thread_exit);
+  // #End Kenneth and Adam Driving
 
 #ifdef USERPROG
   process_exit ();
@@ -530,6 +525,7 @@ init_thread (struct thread *t, const char *name, int priority)
   // ASSERT(0);
   sema_init(&t->sema_thread_create, 0);
   sema_init(&t->pause_thread_exit, 0);
+  sema_init(&t->loaded, 0);
   list_push_back (&all_list, &t->allelem);
 
 }

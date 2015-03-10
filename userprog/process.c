@@ -43,15 +43,19 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
     if (fn_copy == NULL)
       return TID_ERROR;
     strlcpy (fn_copy, cmdline, PGSIZE);
+    printf("fn_copy: %s\n", fn_copy);
+
 
     // #Adam driving
     //get the file name from the cmdline sent to this function
     file_name = strtok_r (cmdline, " ", &save_ptr);
+    printf("\n\nfile name: %s\n", file_name);
 
   /* Create a new thread to execute FILE_NAME. */
     tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
-
+    // printf("\n\nTID: %i\n", tid);
     sema_down(&thread_current()->sema_thread_create);
+    ASSERT(0);
 
     if (tid == TID_ERROR)
       palloc_free_page (fn_copy); 
