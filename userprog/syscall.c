@@ -164,9 +164,8 @@ syscall_handler (struct intr_frame *f UNUSED)
       user_esp++;
       verify_user(user_esp);
       // check_num_args(*user_esp, 2);
-
-
       file = *(char *)user_esp;
+      verify_user(file);
       user_esp++;
       verify_user(user_esp);
       size = *(unsigned *)user_esp;
@@ -180,6 +179,7 @@ syscall_handler (struct intr_frame *f UNUSED)
 
 
       file = *(char *)user_esp;
+      verify_user(file);
       f->eax = remove(file);
       break;
     
@@ -211,6 +211,7 @@ syscall_handler (struct intr_frame *f UNUSED)
       user_esp++;
       verify_user(user_esp);
       buffer = *(char *)user_esp;
+      verify_user(buffer);
       user_esp++;
       verify_user(user_esp);
       size = *(unsigned *)user_esp;
@@ -226,6 +227,7 @@ syscall_handler (struct intr_frame *f UNUSED)
       user_esp++;
       verify_user(user_esp);
       buffer = *user_esp;
+      verify_user(buffer);
       user_esp++;
       verify_user(user_esp);
       size = *(int *)user_esp;
