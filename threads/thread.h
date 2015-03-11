@@ -99,6 +99,8 @@ struct thread
     bool entered_process_wait;          /* Set to true if successfully enters process wait */
     bool called_exit;
     bool entered_exec;
+    bool load_success;                  /* Used to keep track of load success */
+
     int exit_status;                    /* Holds the exit status of this process */
     struct list child_threads;          /* List to hold all direct child threads of this thread */
     struct list_elem childelem;

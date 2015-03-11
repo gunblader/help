@@ -164,8 +164,9 @@ syscall_handler (struct intr_frame *f UNUSED)
       user_esp++;
       verify_user(user_esp);
       // check_num_args(*user_esp, 2);
-      file = *(char *)user_esp;
+      file = *(int *)user_esp;
       verify_user(file);
+
       user_esp++;
       verify_user(user_esp);
       size = *(unsigned *)user_esp;
@@ -178,7 +179,7 @@ syscall_handler (struct intr_frame *f UNUSED)
       // check_num_args(*user_esp, 1);
 
 
-      file = *(char *)user_esp;
+      file = *(int *)user_esp;
       verify_user(file);
       f->eax = remove(file);
       break;
@@ -210,7 +211,7 @@ syscall_handler (struct intr_frame *f UNUSED)
       fd = *(int *)user_esp;
       user_esp++;
       verify_user(user_esp);
-      buffer = *(char *)user_esp;
+      buffer = *(int *)user_esp;
       verify_user(buffer);
       user_esp++;
       verify_user(user_esp);
@@ -322,7 +323,7 @@ pid_t exec (const char *cmd_line)
   struct thread *parent = thread_current();
   pid_t pid = process_execute(cmd_line);
   // printf("\n\n FINISHED process_execute\n\n");
-  sema_down(&thread_current()->sema_thread_create);
+  // sema_down(&thread_current()->sema_thread_create);
   if(pid != TID_ERROR)
     parent->entered_exec = true;
   //lets the parent know that the child is done.
@@ -342,7 +343,8 @@ int wait (pid_t pid)
   /* maybe sema_up here and sema down inside thread_exit() before we
      schedule and destroy the child thread. */
   // struct thread *child = get_thread(pid);
-  sema_up(&child->pause_thread_exit);
+  if(child != NULL)
+    sema_up(&child->pause_thread_exit);
 
   return status;
 
@@ -381,7 +383,6 @@ int open (const char *file_name)
 {
   // #Adam Drove here
   lock_acquire(&lock);
-  
   struct file *file;
   struct file_info *f;
   file = filesys_open(file_name);

@@ -310,8 +310,10 @@ thread_exit (void)
   // printf("<3>\n");
   struct thread *cur = thread_current();
   list_remove (&cur->allelem);
+
   if(!cur->called_exit)
       cur->exit_status = -1;
+
   printf ("%s: exit(%d)\n", thread_current()->name, cur->exit_status);
 
   // #Kenneth and Adam Drove here
@@ -514,6 +516,7 @@ init_thread (struct thread *t, const char *name, int priority)
   t->all_list_pt = &all_list;
   t->killed_by_kernel = false;
   t->entered_process_wait = false;
+  t->load_success = false;
   list_init (&t->child_threads);
   t->exit_status = 0;
   t->called_exit = false;

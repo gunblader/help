@@ -58,23 +58,28 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
   /* Create a new thread to execute FILE_NAME. */
     tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
     // printf("\n\n FINISHED CREATING THREAD \n\n");
+      sema_down(&thread_current()->sema_thread_create);
 
-    if (tid == TID_ERROR)
+
+    if (tid == TID_ERROR){
       palloc_free_page (fn_copy); 
+      // palloc_free_page (cmdline_copy);
+    }
+    struct thread *child = get_thread(tid);
+    struct thread *parent = thread_current();
     
 
     
     //add to the cur threads child_list
     // #Kenneth Drove here
-    struct thread *child = get_thread(tid);
-    struct thread *parent = thread_current();
     if(child != NULL){
       list_push_back(&parent->child_threads, &child->childelem);
     }
 
-    if(tid != TID_ERROR){
-      sema_up(&parent->sema_thread_create);
-    }
+    //if load fails, return -1
+    if(!parent->load_success)
+      return -1;
+    // ASSERT(0);
 
     return tid;
   }
@@ -96,8 +101,13 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
     if_.eflags = FLAG_IF | FLAG_MBS;
     success = load (cmdline, &if_.eip, &if_.esp);
 
+    // if(tid != TID_ERROR){
+    thread_current()->parent->load_success = success;
+    // }
+
     // printf("\n\ncmdline  %s\n", cmdline);
   /* If load failed, quit. */
+    sema_up(&thread_current()->parent->sema_thread_create);
     palloc_free_page (cmdline);
     if (!success) 
       thread_exit ();
@@ -128,11 +138,6 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
    {
     // #Kenneth drove here
 
-    // while(1){
-
-    // }
-
-    
     struct list_elem *e = NULL;
     struct thread *child_thread = NULL;
     struct thread *cur = thread_current();
@@ -322,6 +327,7 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
     file = filesys_open (name);
     if (file == NULL) 
     {
+      // printf("\n\n IN load conditonal\n"); 
       printf ("load: %s: open failed\n", cmdline);
       goto done; 
     }

@@ -104,3 +104,7 @@ syscall.c
 
 	3. Why is load not recognizing file is not in system? Do we have to have our create working for this test to pass?
 
+	4. Would it be ok to check if a function has called exec?
+
+3/11
+
