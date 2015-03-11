@@ -99,15 +99,15 @@ syscall_handler (struct intr_frame *f UNUSED)
   unsigned position;
   bool result;
   char *argv;
-  printf("System call #: %i\n", *(int *)user_esp);
+  // printf("System call #: %i\n", *(int *)user_esp);
   switch(*user_esp){
     case SYS_HALT:
-      printf("Called Halt.\n");
+      // printf("Called Halt.\n");
       halt();
       break;
     case SYS_EXIT:
       //get argc off stack
-      printf("Called Exit. %s\n", thread_current()->name);
+      // printf("Called Exit. %s\n", thread_current()->name);
       user_esp++;
       verify_user(user_esp);
       //check number of args
@@ -128,10 +128,10 @@ syscall_handler (struct intr_frame *f UNUSED)
       exit(status);
       break;
     case SYS_EXEC:
-    printf("Called Exec.%s\n", thread_current()->name);
+    // printf("Called Exec.%s\n", thread_current()->name);
       //get the char * off the stack
       user_esp++;
-      printf("EXEC argc: %s\n", *(int *)user_esp);
+      // printf("EXEC argc: %s\n", *(int *)user_esp);
       verify_user(user_esp);
       // result = check_num_args(*user_esp, 1);
       // if(result)
@@ -144,12 +144,12 @@ syscall_handler (struct intr_frame *f UNUSED)
       // argv++;
       // verify_user(*argv);
       char *cmdLine = *(int *)user_esp;
-      printf("EXEC cmdLine: %s\n", cmdLine);
+      // printf("EXEC cmdLine: %s\n", cmdLine);
       f->eax = exec(cmdLine);
       break;
     // #Jacob Drove Here
     case SYS_WAIT:
-      printf("Called Wait. %s\n", thread_current()->name);
+      // printf("Called Wait. %s\n", thread_current()->name);
       user_esp++;
       verify_user(user_esp);
       // check_num_args(*user_esp, 1);
@@ -213,30 +213,8 @@ syscall_handler (struct intr_frame *f UNUSED)
       break;
     case SYS_WRITE:
       user_esp++;
-      
       // printf("WRITE argc: %i\n", *(int *)user_esp);
       verify_user(user_esp);
-      // result = check_num_args(*user_esp, 3);
-      // // #Paul drove here
-      // if(result)
-      // {
-      //   user_esp++;
-      //   //this is argv[0]
-      //   argv = *user_esp;
-      //   //printf("argv: %s\n", argv);
-      //   //this is argv[1]
-      //   argv;
-      //   int argvsize = strlen((char *)argv) * sizeof(char);
-      //   write(1, (char *)argv, argvsize);
-      //   break;
-      // }
-      // user_esp++;
-      // verify_user(user_esp);
-      // //this is argv[0]
-      // argv = *user_esp;
-      // //this is argv[1]
-      // argv++;
-      // verify_user(*argv);
       fd = *(int *)user_esp;
       //this is argv[2]
       user_esp++;
@@ -332,12 +310,13 @@ pid_t exec (const char *cmd_line)
 {
 	//#Jacob Drove here
   // SYNCHRONIZATION MUST BE IMPLEMENTED HERE
-  struct thread *cur = thread_current();
-	pid_t pid = process_execute(cmd_line);
+  struct thread *parent = thread_current();
+  pid_t pid = process_execute(cmd_line);
+  sema_down(&thread_current()->sema_thread_create);
+  if(pid != TID_ERROR)
+    parent->entered_exec = true;
   //lets the parent know that the child is done.
-  if(pid != TID_ERROR){
-    sema_up(&cur->loaded);
-	}
+
   return pid;
 }
 
@@ -345,9 +324,18 @@ pid_t exec (const char *cmd_line)
 int wait (pid_t pid)
 {
   //waits for the child to be fully set up.
-  printf("Called Wait\n");
+  // printf("Called Wait\n");
+  struct thread *parent = thread_current();
+  // if(parent->entered_exec){
+    // printf("ENTERED CONDITIONAL\n");
+    // sema_down(&parent->child_is_loaded);
+  // }
   struct thread *child = get_thread(pid);
-  sema_down(&child->loaded);
+  // printf("\n\n IN WAIT: Child thread name: %s \n\n", child->name);
+
+
+
+
   int status;
   status = process_wait(pid);
   /* maybe sema_up here and sema down inside thread_exit() before we

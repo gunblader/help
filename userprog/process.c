@@ -54,18 +54,24 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
   /* Create a new thread to execute FILE_NAME. */
     tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
     // printf("\n\nTID: %i\n", tid);
-    sema_down(&thread_current()->sema_thread_create);
     // ASSERT(0);
 
     if (tid == TID_ERROR)
       palloc_free_page (fn_copy); 
+    
 
+    
     //add to the cur threads child_list
     // #Kenneth Drove here
-    struct thread *parent = thread_current();
     struct thread *child = get_thread(tid);
+    struct thread *parent = thread_current();
     if(child != NULL){
       list_push_back(&parent->child_threads, &child->childelem);
+    }
+
+    if(tid != TID_ERROR){
+      sema_up(&parent->child_is_loaded);
+      sema_up(&parent->sema_thread_create);
     }
 
     return tid;
@@ -94,7 +100,6 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
     if (!success) 
       thread_exit ();
     // #Adam Driving here
-    sema_up(&thread_current()->parent->sema_thread_create);
     // printf("\n\n2_TID: 2\n success: %d \n", success);
 
   /* Start the user process by simulating a return from an

@@ -188,8 +188,8 @@ thread_create (const char *name, int priority,
   /* Initialize thread. */
   init_thread (t, name, priority);
   //sets the parent thread (current) for the child (t)
-  printf("Name: %s\n", thread_current()->name);
-  printf("Child's name: %s\n", t->name);
+  // printf("Name: %s\n", thread_current()->name);
+  // printf("Child's name: %s\n", t->name);
   t->parent = thread_current();
   //END
   tid = t->tid = allocate_tid ();
@@ -517,6 +517,7 @@ init_thread (struct thread *t, const char *name, int priority)
   list_init (&t->child_threads);
   t->exit_status = 0;
   t->called_exit = false;
+  t->entered_exec = false;
   t->fn_name = NULL;
 
   //#End Adam Driving
@@ -525,7 +526,7 @@ init_thread (struct thread *t, const char *name, int priority)
   // ASSERT(0);
   sema_init(&t->sema_thread_create, 0);
   sema_init(&t->pause_thread_exit, 0);
-  sema_init(&t->loaded, 0);
+  sema_init(&t->child_is_loaded, 0);
   list_push_back (&all_list, &t->allelem);
 
 }
