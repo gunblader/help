@@ -99,3 +99,6 @@ syscall.c
 
 3/10
 	1. How to handle synchonization in exec()?
+
+	2. Why are we failing on strtok_r() for child? is cmdline read only? 
+		- Where to free copy of command line?

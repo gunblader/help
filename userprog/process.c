@@ -33,28 +33,31 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
    {
     //initialize to NULL to prevent memory leaks
     char *fn_copy = NULL;
+    char *cmdline_copy = NULL;
     tid_t tid;
-    char *save_ptr;
-    char *file_name;
+    char *save_ptr = NULL;
+    char *file_name = NULL;
 
   /* Make a copy of cmdline.
      Otherwise there's a race between the caller and load(). */
     fn_copy = palloc_get_page (0);
+    cmdline_copy = palloc_get_page (0);
     if (fn_copy == NULL)
       return TID_ERROR;
     strlcpy (fn_copy, cmdline, PGSIZE);
-    // printf("fn_copy: %s\n", fn_copy);
+    strlcpy (cmdline_copy, cmdline, PGSIZE);
+    
+    // printf("\n\n command line: %s\n", cmdline);
 
 
     // #Adam driving
     //get the file name from the cmdline sent to this function
-    file_name = strtok_r (cmdline, " ", &save_ptr);
-    // printf("\n\nfile name: %s\n", file_name);
-
+    file_name = strtok_r (cmdline_copy, " ", &save_ptr);
+    // printf("\n\n filename: %s\n", file_name);
+  
   /* Create a new thread to execute FILE_NAME. */
     tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
-    // printf("\n\nTID: %i\n", tid);
-    // ASSERT(0);
+    // printf("\n\n FINISHED CREATING THREAD \n\n");
 
     if (tid == TID_ERROR)
       palloc_free_page (fn_copy); 
@@ -70,7 +73,6 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
     }
 
     if(tid != TID_ERROR){
-      sema_up(&parent->child_is_loaded);
       sema_up(&parent->sema_thread_create);
     }
 

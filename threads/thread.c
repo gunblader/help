@@ -526,7 +526,6 @@ init_thread (struct thread *t, const char *name, int priority)
   // ASSERT(0);
   sema_init(&t->sema_thread_create, 0);
   sema_init(&t->pause_thread_exit, 0);
-  sema_init(&t->child_is_loaded, 0);
   list_push_back (&all_list, &t->allelem);
 
 }

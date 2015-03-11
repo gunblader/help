@@ -127,6 +127,7 @@ syscall_handler (struct intr_frame *f UNUSED)
 
       exit(status);
       break;
+    
     case SYS_EXEC:
     // printf("Called Exec.%s\n", thread_current()->name);
       //get the char * off the stack
@@ -144,9 +145,10 @@ syscall_handler (struct intr_frame *f UNUSED)
       // argv++;
       // verify_user(*argv);
       char *cmdLine = *(int *)user_esp;
-      // printf("EXEC cmdLine: %s\n", cmdLine);
+      verify_user(cmdLine);
       f->eax = exec(cmdLine);
       break;
+    
     // #Jacob Drove Here
     case SYS_WAIT:
       // printf("Called Wait. %s\n", thread_current()->name);
@@ -156,6 +158,7 @@ syscall_handler (struct intr_frame *f UNUSED)
       pid_t temp_pid = *(pid_t *)user_esp;
       f->eax = wait(temp_pid);
       break;
+    
     //#Kenneth Drove here
     case SYS_CREATE:
       user_esp++;
@@ -169,6 +172,7 @@ syscall_handler (struct intr_frame *f UNUSED)
       size = *(unsigned *)user_esp;
       f->eax = create(file, size);
       break;
+    
     case SYS_REMOVE:
       user_esp++;
       verify_user(user_esp);
@@ -178,6 +182,7 @@ syscall_handler (struct intr_frame *f UNUSED)
       file = *(char *)user_esp;
       f->eax = remove(file);
       break;
+    
     case SYS_OPEN:
       user_esp++;
       verify_user(user_esp);
@@ -186,6 +191,7 @@ syscall_handler (struct intr_frame *f UNUSED)
       file = *(char *)user_esp;
       f->eax = open(file);
       break;
+      
       // #Adam driving here
     case SYS_FILESIZE:
       user_esp++;
@@ -196,12 +202,11 @@ syscall_handler (struct intr_frame *f UNUSED)
       fd = *(int *)user_esp;
       f->eax = filesize(fd);
       break;
+    
     case SYS_READ:
       user_esp++;
       verify_user(user_esp);
       // check_num_args(*user_esp, 3);
-
-
       fd = *(int *)user_esp;
       user_esp++;
       verify_user(user_esp);
@@ -211,6 +216,7 @@ syscall_handler (struct intr_frame *f UNUSED)
       size = *(unsigned *)user_esp;
       f->eax = read(fd, buffer, size);
       break;
+
     case SYS_WRITE:
       user_esp++;
       // printf("WRITE argc: %i\n", *(int *)user_esp);
@@ -310,8 +316,10 @@ pid_t exec (const char *cmd_line)
 {
 	//#Jacob Drove here
   // SYNCHRONIZATION MUST BE IMPLEMENTED HERE
+  // printf("\n\nIN EXEC: cmd_line - %s\n\n", cmd_line);
   struct thread *parent = thread_current();
   pid_t pid = process_execute(cmd_line);
+  // printf("\n\n FINISHED process_execute\n\n");
   sema_down(&thread_current()->sema_thread_create);
   if(pid != TID_ERROR)
     parent->entered_exec = true;
@@ -326,16 +334,7 @@ int wait (pid_t pid)
   //waits for the child to be fully set up.
   // printf("Called Wait\n");
   struct thread *parent = thread_current();
-  // if(parent->entered_exec){
-    // printf("ENTERED CONDITIONAL\n");
-    // sema_down(&parent->child_is_loaded);
-  // }
   struct thread *child = get_thread(pid);
-  // printf("\n\n IN WAIT: Child thread name: %s \n\n", child->name);
-
-
-
-
   int status;
   status = process_wait(pid);
   /* maybe sema_up here and sema down inside thread_exit() before we
