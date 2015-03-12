@@ -38,6 +38,7 @@ int write (int fd, const void *buffer, unsigned size);
 void seek (int fd, unsigned position);
 unsigned tell (int fd);
 void close (int fd);
+struct file_info *get_file_from_fd(int fd);
 
 // #Jacob Drove Here:
 // Create a global lock to provide mutual exclusion for the
@@ -404,21 +405,12 @@ int open (const char *file_name)
 }
 
 /* Returns the size, in bytes, of the file open as fd */
-int filesize (int fd UNUSED)
+int filesize (int fd)
 {
   // #Adam driving here
   lock_acquire(&lock);
 
-  struct list_elem *e = NULL;
-  struct file_info *cur_file = NULL;
-  //find the current file if it exists
-  for(e = list_begin(&file_list); e != list_end(&file_list); e = list_next(e)){
-    struct file_info *temp = list_entry(e, struct file_info, file_list_elem);
-    if(temp->fd == fd){
-      cur_file = temp;
-      break;
-    }
-  }
+  struct file_info *cur_file = get_file_from_fd(fd);
   if(cur_file == NULL)
     return -1;
 
@@ -433,21 +425,27 @@ int filesize (int fd UNUSED)
  actually read (0 at end of file), or -1 if the file could not be read 
  (due to a condition other than end of file). fd 0 reads from the keyboard using 
  input_getc() */
-int read (int fd, void *buffer, unsigned size){
+ int read (int fd, void *buffer, unsigned size){
 
-  // #Jacob Drove Here
+  // #Kenneth and Jacob Drove Here
   lock_acquire(&lock);
-  // int bytes_read = -1;;
-  // if(fd == 0){
-  //   bytes_read = input_getc();
-  // }
+  int bytes_read = -1;
+  if(fd == 0){
+    bytes_read = input_getc();
+    lock_release(&lock);
+    return -1;
+  }
 
-  
-
+  struct file_info *cur_file_info = get_file_from_fd(fd);
+  if(cur_file_info == NULL){
+    lock_release(&lock);
+    return -1;
+  }
+  bytes_read = file_read(cur_file_info->file, buffer, size);
 
   lock_release(&lock);
-  // #End Jacob Driving
-	return -1;
+  // #End Kenneth and Jacob Driving
+  return bytes_read;
 }
 
 /* Writes size bytes from buffer to the open file fd. Returns the number of bytes
@@ -474,16 +472,7 @@ int write (int fd, const void *buffer, unsigned size){
   }
 
   //otherwise write to the open file fd
-  struct list_elem *e = NULL;
-  struct file_info *cur_file_info = NULL;
-  //find the current file info if it exists
-  for(e = list_begin(&file_list); e != list_end(&file_list); e = list_next(e)){
-    struct file_info *temp = list_entry(e, struct file_info, file_list_elem);
-    if(temp->fd == fd){
-      cur_file_info = temp;
-      break;
-    }
-  }
+  struct file_info *cur_file_info = get_file_from_fd(fd);
   if(cur_file_info == NULL){
     lock_release(&lock);
     return 0;
@@ -504,4 +493,20 @@ unsigned tell (int fd UNUSED){
 
 void close (int fd UNUSED){
 
+}
+
+struct file_info *
+get_file_from_fd(int fd){
+  struct list_elem *e = NULL;
+  struct file_info *cur_file_info = NULL;
+  //find the current file info if it exists
+  for(e = list_begin(&file_list); e != list_end(&file_list); e = list_next(e)){
+    struct file_info *temp = list_entry(e, struct file_info, file_list_elem);
+    if(temp->fd == fd){
+      cur_file_info = temp;
+      break;
+    }
+  }
+
+  return cur_file_info;
 }
