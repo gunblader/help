@@ -11,6 +11,7 @@
 #include "pagedir.h"
 #include "filesys/filesys.h"
 #include <list.h>
+#include "filesys/file.h"
 
 struct file_info{
   int fd;
@@ -387,13 +388,13 @@ int open (const char *file_name)
   
   struct file *file = NULL;
   struct file_info *f = palloc_get_page(0);
-  f->fd = ++global_fd;
   file = filesys_open(file_name);
   if(file == NULL){
     lock_release(&lock);
     return -1;
   }
   
+  f->fd = ++global_fd;
   f->file = file;
   f->name = file_name;
   list_push_back(&file_list, &f->file_list_elem);
@@ -436,6 +437,11 @@ int read (int fd, void *buffer, unsigned size){
 
   // #Jacob Drove Here
   lock_acquire(&lock);
+  // int bytes_read = -1;;
+  // if(fd == 0){
+  //   bytes_read = input_getc();
+  // }
+
   
 
 
@@ -462,16 +468,30 @@ int write (int fd, const void *buffer, unsigned size){
   char *buf = (char *)buffer;
 
   if(fd == 1){
-    //if size > 256 we need to call putbuf multiple times until buffer has been printed
-    // unsigned char_remaining = size;
-    // if(size > 256){
-
-    // } 
     putbuf(buf, size);
+    lock_release(&lock);
+    return 0;
   }
 
+  //otherwise write to the open file fd
+  struct list_elem *e = NULL;
+  struct file_info *cur_file_info = NULL;
+  //find the current file info if it exists
+  for(e = list_begin(&file_list); e != list_end(&file_list); e = list_next(e)){
+    struct file_info *temp = list_entry(e, struct file_info, file_list_elem);
+    if(temp->fd == fd){
+      cur_file_info = temp;
+      break;
+    }
+  }
+  if(cur_file_info == NULL){
+    lock_release(&lock);
+    return 0;
+  }
+  int bytes_written = file_write(cur_file_info->file, buffer, size);
+
   lock_release(&lock);
-	return -1;
+	return bytes_written;
 }
 
 void seek (int fd UNUSED, unsigned position UNUSED){

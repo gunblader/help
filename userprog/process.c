@@ -57,7 +57,7 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
   
   /* Create a new thread to execute FILE_NAME. */
     tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
-    // printf("\n\n FINISHED CREATING THREAD \n\n");
+    //wait here until the child thread is finished being created
     sema_down(&thread_current()->sema_thread_create);
 
 
