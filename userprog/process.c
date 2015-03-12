@@ -22,6 +22,8 @@
 
 static thread_func start_process NO_RETURN;
 static bool load (const char *cmdline, void (**eip) (void), void **esp);
+
+static struct file *global_file;
 // static struct semaphore;
 
 /* Starts a new thread running a user program loaded from
@@ -191,6 +193,10 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
 
       uint32_t *pd;
 
+      if(global_file != NULL){
+        file_allow_write(global_file);
+      }
+
   /* Destroy the current process's page directory and switch back
      to the kernel-only page directory. */
       pd = cur->pagedir;
@@ -334,6 +340,8 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
       printf ("load: %s: open failed\n", cmdline);
       goto done; 
     }
+    global_file = file;
+    file_deny_write(file);
 
   /* Read and verify executable header. */
     if (file_read (file, &ehdr, sizeof ehdr) != sizeof ehdr
@@ -420,7 +428,7 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
   /* We arrive here whether the load is successful or not. */
 
     palloc_free_page (cmd_copy_page_pt);
-    file_close (file);
+    // file_close (file);
     return success;
   }
 
