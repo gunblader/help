@@ -394,6 +394,7 @@ int open (const char *file_name)
     lock_release(&lock);
     return -1;
   }
+  // file_deny_write(file);
   
   f->fd = ++global_fd;
   f->file = file;
@@ -483,16 +484,42 @@ int write (int fd, const void *buffer, unsigned size){
 	return bytes_written;
 }
 
-void seek (int fd UNUSED, unsigned position UNUSED){
-
+void seek (int fd, unsigned position){
+  struct file_info *cur_file_info = get_file_from_fd(fd);
+  if(cur_file_info == NULL){
+    return;
+  }
+  lock_acquire(&lock);
+  file_seek(cur_file_info->file, position);
+  lock_release(&lock);
 }
 
-unsigned tell (int fd UNUSED){
-	return 0;
+unsigned tell (int fd){
+	struct file_info *cur_file_info = get_file_from_fd(fd);
+  if(cur_file_info == NULL){
+    return -1;
+  }
+
+  lock_acquire(&lock);
+  int pos = file_tell(cur_file_info->file);
+  lock_release(&lock);
+  return pos;
 }
 
-void close (int fd UNUSED){
+void close (int fd){
+  lock_acquire(&lock);
 
+  struct file_info *cur_file_info = get_file_from_fd(fd);
+  if(cur_file_info == NULL){
+    lock_release(&lock);
+    return;
+  }
+  // file_allow_write(cur_file_info->file);
+
+  // file_close(cur_file_info->file);
+  list_remove(&cur_file_info->file_list_elem);
+
+  lock_release(&lock);
 }
 
 struct file_info *

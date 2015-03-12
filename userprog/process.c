@@ -80,7 +80,7 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
     if(!parent->load_success)
       return -1;
     // ASSERT(0);
-
+    
     return tid;
   }
 
