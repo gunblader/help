@@ -314,6 +314,9 @@ thread_exit (void)
       cur->exit_status = -1;
 
   printf ("%s: exit(%d)\n", thread_current()->name, cur->exit_status);
+#ifdef USERPROG
+  process_exit ();
+#endif
 
   // #Kenneth and Adam Drove here
   sema_up(&cur->sema_wait_process);
@@ -337,9 +340,6 @@ thread_exit (void)
   // #End Kenneth and Adam Driving
 
   list_remove (&cur->allelem);
-#ifdef USERPROG
-  process_exit ();
-#endif
   // printf("<4>\n");
   cur->status = THREAD_DYING;
   schedule ();

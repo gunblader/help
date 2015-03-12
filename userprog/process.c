@@ -194,6 +194,7 @@ static struct file *global_file;
       uint32_t *pd;
 
       if(global_file != NULL){
+        // printf("Did it get here\n");
         file_allow_write(global_file);
       }
 

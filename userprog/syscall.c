@@ -481,10 +481,10 @@ int write (int fd, const void *buffer, unsigned size){
     lock_release(&lock);
     return 0;
   }
-  int bytes_written = file_write(cur_file_info->file, buffer, size);
+  off_t bytes_written = file_write(cur_file_info->file, buffer, size);
 
   lock_release(&lock);
-	return bytes_written;
+	return (int)bytes_written;
 }
 
 // # Kenneth, Jacob and Paul Drove here
