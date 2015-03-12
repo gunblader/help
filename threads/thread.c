@@ -309,7 +309,6 @@ thread_exit (void)
   intr_disable ();
   // printf("<3>\n");
   struct thread *cur = thread_current();
-  list_remove (&cur->allelem);
 
   if(!cur->called_exit)
       cur->exit_status = -1;
@@ -328,15 +327,16 @@ thread_exit (void)
       child->parent = NULL;
     }
   }
+
   /* if your parent is still alive, wait for it to reap your status before
      you destroy the child's TCB */
   if(cur->parent != NULL){
     sema_down(&cur->pause_thread_exit);
     list_remove(&cur->childelem);
   }
-  // sema_down(&cur->pause_thread_exit);
   // #End Kenneth and Adam Driving
 
+  list_remove (&cur->allelem);
 #ifdef USERPROG
   process_exit ();
 #endif

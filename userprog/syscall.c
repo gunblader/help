@@ -99,7 +99,6 @@ syscall_handler (struct intr_frame *f UNUSED)
   unsigned position;
   bool result;
   char *argv;
-  // printf("System call #: %i\n", *(int *)user_esp);
   switch(*user_esp){
     case SYS_HALT:
       // printf("Called Halt.\n");
@@ -335,14 +334,13 @@ pid_t exec (const char *cmd_line)
 int wait (pid_t pid)
 {
   //waits for the child to be fully set up.
-  // printf("Called Wait\n");
+  // printf("\n\n %s Called Wait\n\n", thread_current()->name);
   struct thread *parent = thread_current();
   struct thread *child = get_thread(pid);
   int status;
   status = process_wait(pid);
   /* maybe sema_up here and sema down inside thread_exit() before we
      schedule and destroy the child thread. */
-  // struct thread *child = get_thread(pid);
   if(child != NULL)
     sema_up(&child->pause_thread_exit);
 

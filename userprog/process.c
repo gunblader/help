@@ -58,7 +58,7 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
   /* Create a new thread to execute FILE_NAME. */
     tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
     // printf("\n\n FINISHED CREATING THREAD \n\n");
-      sema_down(&thread_current()->sema_thread_create);
+    sema_down(&thread_current()->sema_thread_create);
 
 
     if (tid == TID_ERROR){
@@ -137,11 +137,12 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
    process_wait (tid_t child_tid) 
    {
     // #Kenneth drove here
-
+    // printf("\n\n %s Called Wait\n\n", thread_current()->name);
     struct list_elem *e = NULL;
     struct thread *child_thread = NULL;
     struct thread *cur = thread_current();
 
+    // printf("())\n", );
     // Get the child tid of the current thread
     for(e = list_begin(&cur->child_threads); e != list_end(&cur->child_threads); e = list_next(e)){
       struct thread *t = list_entry(e, struct thread, childelem);
@@ -152,6 +153,8 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
     }
 
     //checks if TID is valid (it exists) and if process wait hasn't been called yet
+    // printf("\n\nchild_thread == NULL: %s \n", child_thread == NULL ? "true" : "false");
+    // printf("child_thread->entered_process_wait: %s \n\n", child_thread->entered_process_wait ? "true" : "false");
     if(child_thread == NULL || child_thread->entered_process_wait)
       return -1;
 
