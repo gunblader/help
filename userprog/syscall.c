@@ -360,6 +360,7 @@ bool create (const char *file_name, unsigned initial_size)
 bool remove (const char *file_name)
 {
   // #Adam Drove here
+  lock_acquire(&lock);
   struct list_elem *e = NULL;
   struct file_info *cur_file = NULL;
   for(e = list_begin(&file_list); e != list_end(&file_list); e = list_next(e)){
@@ -369,7 +370,6 @@ bool remove (const char *file_name)
       break;
     }
   }
-  lock_acquire(&lock);
   bool result = false;
   result = filesys_remove(file_name);
   palloc_free_page(cur_file);
@@ -412,11 +412,14 @@ int filesize (int fd)
   lock_acquire(&lock);
 
   struct file_info *cur_file = get_file_from_fd(fd);
-  if(cur_file == NULL)
+  if(cur_file == NULL){
+    lock_release(&lock);
     return -1;
+  }
 
   off_t size;
   size = file_length(cur_file->file);
+  // printf("\n\nThread: %s, file_size: %u\n\n", thread_current()->name, size);
 
   lock_release(&lock);
 	return size;
@@ -484,23 +487,26 @@ int write (int fd, const void *buffer, unsigned size){
 	return bytes_written;
 }
 
+// # Kenneth, Jacob and Paul Drove here
 void seek (int fd, unsigned position){
+  lock_acquire(&lock);
   struct file_info *cur_file_info = get_file_from_fd(fd);
   if(cur_file_info == NULL){
+    lock_release(&lock);
     return;
   }
-  lock_acquire(&lock);
   file_seek(cur_file_info->file, position);
   lock_release(&lock);
 }
 
 unsigned tell (int fd){
-	struct file_info *cur_file_info = get_file_from_fd(fd);
+  lock_acquire(&lock);
+  struct file_info *cur_file_info = get_file_from_fd(fd);
   if(cur_file_info == NULL){
+    lock_release(&lock);
     return -1;
   }
 
-  lock_acquire(&lock);
   int pos = file_tell(cur_file_info->file);
   lock_release(&lock);
   return pos;
@@ -517,7 +523,7 @@ void close (int fd){
   // file_allow_write(cur_file_info->file);
 
   // file_close(cur_file_info->file);
-  list_remove(&cur_file_info->file_list_elem);
+  // list_remove(&cur_file_info->file_list_elem);
 
   lock_release(&lock);
 }
@@ -537,3 +543,4 @@ get_file_from_fd(int fd){
 
   return cur_file_info;
 }
+// #Kenneth, Jacob and Paul finished driving here
