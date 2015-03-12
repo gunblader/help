@@ -10,6 +10,14 @@
 #include "threads/vaddr.h"
 #include "pagedir.h"
 #include "filesys/filesys.h"
+#include <list.h>
+
+struct file_info{
+  int fd;
+  char *name;
+  struct file *file;
+  struct list_elem file_list_elem;
+};
 
 typedef int pid_t;
 
@@ -34,7 +42,7 @@ void close (int fd);
 // Create a global lock to provide mutual exclusion for the
 // utilization of the file system.
 struct lock lock;
-int global_fd = 1;
+int global_fd;
 static struct list file_list;
 // #End Jacob driving
 
@@ -47,6 +55,7 @@ syscall_init (void)
   // #Jacob Drove Here
   lock_init(&lock);
   list_init(&file_list);
+  global_fd = 1;
   // #End Jacob Driving
 }
 
@@ -188,7 +197,8 @@ syscall_handler (struct intr_frame *f UNUSED)
       verify_user(user_esp);
       // check_num_args(*user_esp, 1);
 
-      file = *(char *)user_esp;
+      file = *(int *)user_esp;
+      verify_user(file);
       f->eax = open(file);
       break;
       
@@ -286,25 +296,12 @@ void halt (void)
     Conventionally, a status of 0 indicates success and nonzero values indicate errors. */
 void exit (int status)
 {
-  // printf("<1>\n");
-  //#Paul drove here  
-  // int argvsize = strlen(thread_current()->name);
-  // char term_message[40];
-  // strlcpy(term_message, thread_current()->name, argvsize + 1);
-  // strlcat(term_message, ": exit(", 40);
-  // strlcat(term_message, , 40);
-  // strlcat(term_message, ")\n", 40);
-  // argvsize = strlen(term_message);
-  // // printf("status: %i\n", status);
-  // write(1, term_message, argvsize);
-
   // #Kenneth drove here
   //set the status of the child to be returned to the parent
   thread_current()->exit_status = status;
   //clear the page of the child process
   thread_current()->called_exit = true;
   // printf("<2>\n");
-  // process_exit();
   thread_exit();
 }
 
@@ -317,33 +314,26 @@ void exit (int status)
 pid_t exec (const char *cmd_line)
 {
 	//#Jacob Drove here
-  // SYNCHRONIZATION MUST BE IMPLEMENTED HERE
   // printf("\n\nIN EXEC: cmd_line - %s\n\n", cmd_line);
   struct thread *parent = thread_current();
   pid_t pid = process_execute(cmd_line);
   // printf("\n\n FINISHED process_execute\n\n");
-  // sema_down(&thread_current()->sema_thread_create);
+  //lets the parent know that the child is done.
   if(pid != TID_ERROR)
     parent->entered_exec = true;
-  //lets the parent know that the child is done.
-
   return pid;
 }
 
  /* Waits for a child process pid and retrieves the child's exit status. */
 int wait (pid_t pid)
 {
-  //waits for the child to be fully set up.
   // printf("\n\n %s Called Wait\n\n", thread_current()->name);
   struct thread *parent = thread_current();
   struct thread *child = get_thread(pid);
   int status;
   status = process_wait(pid);
-  /* maybe sema_up here and sema down inside thread_exit() before we
-     schedule and destroy the child thread. */
   if(child != NULL)
     sema_up(&child->pause_thread_exit);
-
   return status;
 
 }
@@ -368,9 +358,20 @@ bool create (const char *file_name, unsigned initial_size)
 bool remove (const char *file_name)
 {
   // #Adam Drove here
+  struct list_elem *e = NULL;
+  struct file_info *cur_file = NULL;
+  for(e = list_begin(&file_list); e != list_end(&file_list); e = list_next(e)){
+    struct file_info *temp = list_entry(e, struct file_info, file_list_elem);
+    if(file_name == temp->name){
+      cur_file = temp;
+      break;
+    }
+  }
   lock_acquire(&lock);
   bool result = false;
   result = filesys_remove(file_name);
+  palloc_free_page(cur_file);
+
   lock_release(&lock);
 	return result;
 }
@@ -380,14 +381,23 @@ bool remove (const char *file_name)
 int open (const char *file_name)
 {
   // #Adam Drove here
+  if(file_name == NULL)
+    return -1;
   lock_acquire(&lock);
-  struct file *file;
-  struct file_info *f;
+  
+  struct file *file = NULL;
+  struct file_info *f = palloc_get_page(0);
+  f->fd = ++global_fd;
   file = filesys_open(file_name);
-  global_fd++;
-  // f->fd = global_fd;
-  f->fd = global_fd;
-  // list_push_back(&file_list, &f->file_list_elem);
+  if(file == NULL){
+    lock_release(&lock);
+    return -1;
+  }
+  
+  f->file = file;
+  f->name = file_name;
+  list_push_back(&file_list, &f->file_list_elem);
+
   lock_release(&lock);
 	return global_fd;
 }
@@ -395,7 +405,27 @@ int open (const char *file_name)
 /* Returns the size, in bytes, of the file open as fd */
 int filesize (int fd UNUSED)
 {
-	return -1;
+  // #Adam driving here
+  lock_acquire(&lock);
+
+  struct list_elem *e = NULL;
+  struct file_info *cur_file = NULL;
+  //find the current file if it exists
+  for(e = list_begin(&file_list); e != list_end(&file_list); e = list_next(e)){
+    struct file_info *temp = list_entry(e, struct file_info, file_list_elem);
+    if(temp->fd == fd){
+      cur_file = temp;
+      break;
+    }
+  }
+  if(cur_file == NULL)
+    return -1;
+
+  off_t size;
+  size = file_length(cur_file->file);
+
+  lock_release(&lock);
+	return size;
 }
 
 /* Reads size bytes from the file open as fd into buffer. Returns the number of bytes

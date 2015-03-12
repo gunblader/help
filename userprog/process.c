@@ -160,7 +160,7 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
 
     child_thread->entered_process_wait = true;
 
-    // #Jacob Drove here
+    // #Jacob Drove Here
     // Check the TID of the thread to make sure it has not been terminated
     // Run indefinitely until the thread is terminated.
     // else
