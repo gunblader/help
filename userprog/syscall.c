@@ -400,9 +400,10 @@ int open (const char *file_name)
   f->file = file;
   f->name = file_name;
   list_push_back(&file_list, &f->file_list_elem);
+  // list_push_back(&thread_current()->fd_list, &f->file_list_elem);
 
   lock_release(&lock);
-	return global_fd;
+	return f->fd;
 }
 
 /* Returns the size, in bytes, of the file open as fd */
@@ -482,6 +483,7 @@ int write (int fd, const void *buffer, unsigned size){
     return 0;
   }
   off_t bytes_written = file_write(cur_file_info->file, buffer, size);
+  // printf("************Bytes written to file: %i, from size: %i\n", bytes_written, size);
 
   lock_release(&lock);
 	return (int)bytes_written;
@@ -495,7 +497,7 @@ void seek (int fd, unsigned position){
     lock_release(&lock);
     return;
   }
-  file_seek(cur_file_info->file, position);
+  file_seek(cur_file_info->file, (off_t)position);
   lock_release(&lock);
 }
 
@@ -520,9 +522,6 @@ void close (int fd){
     lock_release(&lock);
     return;
   }
-  // file_allow_write(cur_file_info->file);
-
-  // file_close(cur_file_info->file);
   // list_remove(&cur_file_info->file_list_elem);
 
   lock_release(&lock);

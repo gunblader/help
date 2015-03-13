@@ -522,6 +522,8 @@ init_thread (struct thread *t, const char *name, int priority)
   t->called_exit = false;
   t->entered_exec = false;
   t->fn_name = NULL;
+  list_init(&t->fd_list);
+  
 
   //#End Adam Driving
 

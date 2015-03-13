@@ -23,7 +23,6 @@
 static thread_func start_process NO_RETURN;
 static bool load (const char *cmdline, void (**eip) (void), void **esp);
 
-static struct file *global_file;
 // static struct semaphore;
 
 /* Starts a new thread running a user program loaded from
@@ -189,13 +188,14 @@ static struct file *global_file;
     void
     process_exit (void)
     {
+
       struct thread *cur = thread_current ();
 
       uint32_t *pd;
 
-      if(global_file != NULL){
-        // printf("Did it get here\n");
-        file_allow_write(global_file);
+      if(cur->file != NULL){
+        // printf("************Thread: %s called exit, File can write\n", thread_current()->name);
+        file_close(cur->file);
       }
 
   /* Destroy the current process's page directory and switch back
@@ -341,7 +341,6 @@ static struct file *global_file;
       printf ("load: %s: open failed\n", cmdline);
       goto done; 
     }
-    global_file = file;
     file_deny_write(file);
 
   /* Read and verify executable header. */
@@ -430,6 +429,7 @@ static struct file *global_file;
 
     palloc_free_page (cmd_copy_page_pt);
     // file_close (file);
+    thread_current()->file = file;
     return success;
   }
 

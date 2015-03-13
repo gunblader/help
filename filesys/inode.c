@@ -323,6 +323,7 @@ void
 inode_deny_write (struct inode *inode) 
 {
   inode->deny_write_cnt++;
+  // printf("DW: Deny_write_cnt: %i\n", inode->deny_write_cnt);
   ASSERT (inode->deny_write_cnt <= inode->open_cnt);
 }
 
@@ -335,6 +336,8 @@ inode_allow_write (struct inode *inode)
   ASSERT (inode->deny_write_cnt > 0);
   ASSERT (inode->deny_write_cnt <= inode->open_cnt);
   inode->deny_write_cnt--;
+  // printf("AW: Deny_write_cnt: %i\n", inode->deny_write_cnt);
+
 }
 
 /* Returns the length, in bytes, of INODE's data. */

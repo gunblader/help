@@ -106,6 +106,8 @@ struct thread
     struct list_elem childelem;
     struct thread *parent;
     struct list_elem orphanelem;
+    struct list fd_list;
+    struct file *file;
     // #End Kenneth driving
     bool error_happened;
     bool is_zombie;
