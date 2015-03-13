@@ -372,7 +372,8 @@ bool remove (const char *file_name)
   }
   bool result = false;
   result = filesys_remove(file_name);
-  palloc_free_page(cur_file);
+  // palloc_free_page(cur_file);
+  //^^^^^^ This broke syn-remove ^^^^^^^^^^
 
   lock_release(&lock);
 	return result;
