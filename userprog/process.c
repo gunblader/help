@@ -168,13 +168,8 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
     // else
     //   return -1;
 
-    if(child_thread->status != THREAD_DYING)
-    {
-      sema_down(&child_thread->sema_wait_process);
-      return child_thread->exit_status;
-    }
-    else
-      return child_thread->exit_status;
+    sema_down(&child_thread->sema_wait_process);
+    return child_thread->exit_status;
 
     // while(child_thread->status != THREAD_DYING){
     //   if(child_thread->killed_by_kernel){

@@ -94,24 +94,17 @@ struct thread
     struct list_elem allelem;           /* List element for all threads list. */
     
     // #Kenneth drove here
-    // struct list *all_list_pt;           /* Pointer to head of all_list */
-    // bool killed_by_kernel;              /* Used to determine if thread killed by kernel */
     bool entered_process_wait;          /* Set to true if successfully enters process wait */
     bool called_exit;
-    // bool entered_exec;
     bool load_success;                  /* Used to keep track of load success */
 
     int exit_status;                    /* Holds the exit status of this process */
+
     struct list child_threads;          /* List to hold all direct child threads of this thread */
     struct list_elem childelem;
     struct thread *parent;
-    // struct list_elem orphanelem;
     struct list fd_list;
     struct file *file;
-    // #End Kenneth driving
-    // bool error_happened;
-    // bool is_zombie;
-    // char fn_name;
 
     struct semaphore sema_wait_process;
     struct semaphore sema_thread_create;
