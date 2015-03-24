@@ -4,12 +4,13 @@
 
 #include "lib/kernel/list.h"
 
-// struct file_info{
-//   int fd;
-//   char *name;
-//   struct file *file;
-//   struct list_elem file_list_elem;
-// };
+struct file_info{
+  int fd;
+  char *name;
+  struct file *file;
+  struct list_elem file_list_elem;
+  struct list_elem thread_file_list_elem;
+};
 
 void syscall_init (void);
 

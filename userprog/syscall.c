@@ -13,12 +13,6 @@
 #include <list.h>
 #include "filesys/file.h"
 
-struct file_info{
-  int fd;
-  char *name;
-  struct file *file;
-  struct list_elem file_list_elem;
-};
 
 typedef int pid_t;
 
@@ -303,7 +297,13 @@ void exit (int status)
   thread_current()->exit_status = status;
   //clear the page of the child process
   thread_current()->called_exit = true;
-  // printf("<2>\n");
+
+  // struct list_elem *e;
+  // for(e = list_begin(&file_list); e != list_end(&file_list); e = list_next(&file_list)){
+  //   struct file_info *f = list_entry(e, struct file_info, file_list_elem);
+
+  // }
+
   thread_exit();
 }
 
@@ -321,8 +321,8 @@ pid_t exec (const char *cmd_line)
   pid_t pid = process_execute(cmd_line);
   // printf("\n\n FINISHED process_execute\n\n");
   //lets the parent know that the child is done.
-  if(pid != TID_ERROR)
-    parent->entered_exec = true;
+  // if(pid != TID_ERROR)
+  //   parent->entered_exec = true;
   return pid;
 }
 
@@ -390,18 +390,21 @@ int open (const char *file_name)
   
   struct file *file = NULL;
   struct file_info *f = palloc_get_page(0);
+  if(f == NULL) {
+    lock_release(&lock);
+    return -1;
+  }
   file = filesys_open(file_name);
   if(file == NULL){
     lock_release(&lock);
     return -1;
   }
-  // file_deny_write(file);
   
   f->fd = ++global_fd;
   f->file = file;
   f->name = file_name;
   list_push_back(&file_list, &f->file_list_elem);
-  // list_push_back(&thread_current()->fd_list, &f->file_list_elem);
+  list_push_back(&thread_current()->fd_list, &f->thread_file_list_elem);
 
   lock_release(&lock);
 	return f->fd;
@@ -524,6 +527,7 @@ void close (int fd){
     return;
   }
   // list_remove(&cur_file_info->file_list_elem);
+  list_remove(&cur_file_info->thread_file_list_elem);
 
   lock_release(&lock);
 }

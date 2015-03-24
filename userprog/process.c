@@ -43,7 +43,7 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
      Otherwise there's a race between the caller and load(). */
     fn_copy = palloc_get_page (0);
     cmdline_copy = palloc_get_page (0);
-    if (fn_copy == NULL)
+    if (fn_copy == NULL || cmdline_copy == NULL)
       return TID_ERROR;
     strlcpy (fn_copy, cmdline, PGSIZE);
     strlcpy (cmdline_copy, cmdline, PGSIZE);
@@ -64,12 +64,14 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
 
     if (tid == TID_ERROR){
       palloc_free_page (fn_copy); 
-      // palloc_free_page (cmdline_copy);
     }
+    palloc_free_page (cmdline_copy);
     struct thread *child = get_thread(tid);
     struct thread *parent = thread_current();
     
-
+    if(!parent->load_success) {
+      return -1;
+    }
     
     //add to the cur threads child_list
     // #Kenneth Drove here
@@ -78,8 +80,7 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
     }
 
     //if load fails, return -1
-    if(!parent->load_success)
-      return -1;
+
     // ASSERT(0);
     
     return tid;
@@ -318,6 +319,9 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
     //#Adam driving here
     int i;
     char *cmdline_copy = palloc_get_page (0);
+    if(cmdline_copy == NULL){
+      return false;
+    }
     char *cmd_copy_page_pt = cmdline_copy;
     char *name;
     char *save_ptr;
@@ -551,6 +555,9 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
       
       //#Adam driving here
       char *cmdline_copy = palloc_get_page (0);
+      if(cmdline_copy == NULL){
+        return false;
+      }
       char *cmd_copy_page_pt = cmdline_copy;
       strlcpy (cmdline_copy, cmdline, PGSIZE);
 
@@ -578,6 +585,7 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
             args[count] = token;
             count++;
           }
+
 
           //push onto stack
           int i = count-1;
@@ -650,6 +658,7 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
         else
           palloc_free_page (kpage);
       }
+          palloc_free_page(cmdline_copy);
       // palloc_free_page();
       return success;
     }

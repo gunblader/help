@@ -13,6 +13,7 @@
 #include "threads/vaddr.h"
 #ifdef USERPROG
 #include "userprog/process.h"
+#include "userprog/syscall.h"
 #endif
 
 /* Random value for struct thread's `magic' member.
@@ -26,7 +27,7 @@ static struct list ready_list;
 
 /* List of all child threads (no matter the parent) whose parents have died. They
    will be reaped later on. */
-static struct list orphan_list;
+// static struct list orphan_list;
 
 /* List of all processes.  Processes are added to this list
    when they are first scheduled and removed when they exit. */
@@ -96,7 +97,7 @@ thread_init (void)
   lock_init (&tid_lock);
   list_init (&ready_list);
   list_init (&all_list);
-  list_init (&orphan_list);
+  // list_init (&orphan_list);
 
   /* Set up a thread structure for the running thread. */
   initial_thread = running_thread ();
@@ -339,6 +340,19 @@ thread_exit (void)
   }
   // #End Kenneth and Adam Driving
 
+  //go through the fd_list and call file_close on all of them.
+  if(!list_empty(&cur->fd_list)){
+    struct list_elem *e;
+    for(e = list_begin(&cur->fd_list); e != list_end(&cur->fd_list);
+      ){
+        struct file_info *f = list_entry(e, struct file_info, thread_file_list_elem);
+        e = list_remove(e);
+        list_remove(&f->file_list_elem);
+        file_close(f->file);
+        palloc_free_page(f);
+    }
+  }
+
   list_remove (&cur->allelem);
   // printf("<4>\n");
   cur->status = THREAD_DYING;
@@ -513,15 +527,15 @@ init_thread (struct thread *t, const char *name, int priority)
   t->magic = THREAD_MAGIC;
   //update the pointer to all_list
   //#Adam Drove Here
-  t->all_list_pt = &all_list;
-  t->killed_by_kernel = false;
+  // t->all_list_pt = &all_list;
+  // t->killed_by_kernel = false;
   t->entered_process_wait = false;
   t->load_success = false;
   list_init (&t->child_threads);
   t->exit_status = 0;
   t->called_exit = false;
-  t->entered_exec = false;
-  t->fn_name = NULL;
+  // t->entered_exec = false;
+  // t->fn_name = NULL;
   list_init(&t->fd_list);
   
 
