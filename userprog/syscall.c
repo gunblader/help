@@ -62,14 +62,6 @@ void verify_user(void *user_esp){
   // 2. a pointer to unmapped virtual memory, 
   // 3. a pointer to kernel virtual address space
   struct thread *cur = thread_current();
-  // if (pagedir_get_page(cur->pagedir, user_esp) == NULL ||
-  //  user_esp == NULL || is_kernel_vaddr(user_esp))
-  // {
-  //   return false;
-  // }
-
-  // return true;
-  // printf("Checking thread %s in verify_user. pagedir: %x\n", cur->name, cur->pagedir);
 
   if(user_esp == NULL || !is_user_vaddr(user_esp) ||
   pagedir_get_page(cur->pagedir, user_esp) == NULL){
@@ -89,11 +81,9 @@ syscall_handler (struct intr_frame *f UNUSED)
 {
   // grab esp from f
   //#Adam Drove Here
-  // lock_acquire(&lock_handler);
 
   int *user_esp = (int *)f->esp;
   
-  // hex_dump (f->esp, f->esp, PHYS_BASE-(f->esp), 1);
   verify_user(user_esp);
 
   // #Kenneth drove here
@@ -106,48 +96,19 @@ syscall_handler (struct intr_frame *f UNUSED)
   char *argv;
   switch(*user_esp){
     case SYS_HALT:
-      // printf("Called Halt.\n");
       halt();
       break;
     case SYS_EXIT:
-      //get argc off stack
-      // printf("Called Exit. %s\n", thread_current()->name);
       user_esp++;
       verify_user(user_esp);
-      //check number of args
-      // result = check_num_args(*user_esp, 1);
-      // if(result)
-      // {
-      //   printf("Not right amount of args\n");
-      //   exit(0);
-      //   // thread_exit()
-      //   return;
-      // }
-      // printf("outside of if\n");
-      //user_esp++;
-      //verify_user(user_esp);
       int status = *user_esp;
-      //printf("status: %i\n", status);
 
       exit(status);
       break;
     
     case SYS_EXEC:
-    // printf("Called Exec.%s\n", thread_current()->name);
-      //get the char * off the stack
       user_esp++;
-      // printf("EXEC argc: %s\n", *(int *)user_esp);
       verify_user(user_esp);
-      // result = check_num_args(*user_esp, 1);
-      // if(result)
-      //   return;
-      // user_esp++;
-      // verify_user(user_esp);
-      // //this is argv[0]
-      // argv = *user_esp;
-      // //this is argv[1]
-      // argv++;
-      // verify_user(*argv);
       char *cmdLine = *(int *)user_esp;
       verify_user(cmdLine);
       f->eax = exec(cmdLine);
@@ -155,10 +116,8 @@ syscall_handler (struct intr_frame *f UNUSED)
     
     // #Jacob Drove Here
     case SYS_WAIT:
-      // printf("Called Wait. %s\n", thread_current()->name);
       user_esp++;
       verify_user(user_esp);
-      // check_num_args(*user_esp, 1);
       pid_t temp_pid = *(pid_t *)user_esp;
       f->eax = wait(temp_pid);
       break;
@@ -167,7 +126,6 @@ syscall_handler (struct intr_frame *f UNUSED)
     case SYS_CREATE:
       user_esp++;
       verify_user(user_esp);
-      // check_num_args(*user_esp, 2);
       file = *(int *)user_esp;
       verify_user(file);
 
@@ -180,9 +138,6 @@ syscall_handler (struct intr_frame *f UNUSED)
     case SYS_REMOVE:
       user_esp++;
       verify_user(user_esp);
-      // check_num_args(*user_esp, 1);
-
-
       file = *(int *)user_esp;
       verify_user(file);
       f->eax = remove(file);
@@ -191,8 +146,6 @@ syscall_handler (struct intr_frame *f UNUSED)
     case SYS_OPEN:
       user_esp++;
       verify_user(user_esp);
-      // check_num_args(*user_esp, 1);
-
       file = *(int *)user_esp;
       verify_user(file);
       f->eax = open(file);
@@ -202,9 +155,6 @@ syscall_handler (struct intr_frame *f UNUSED)
     case SYS_FILESIZE:
       user_esp++;
       verify_user(user_esp);
-      // check_num_args(*user_esp, 1);
-
-
       fd = *(int *)user_esp;
       f->eax = filesize(fd);
       break;
@@ -212,7 +162,6 @@ syscall_handler (struct intr_frame *f UNUSED)
     case SYS_READ:
       user_esp++;
       verify_user(user_esp);
-      // check_num_args(*user_esp, 3);
       fd = *(int *)user_esp;
       user_esp++;
       verify_user(user_esp);
@@ -226,10 +175,8 @@ syscall_handler (struct intr_frame *f UNUSED)
 
     case SYS_WRITE:
       user_esp++;
-      // printf("WRITE argc: %i\n", *(int *)user_esp);
       verify_user(user_esp);
       fd = *(int *)user_esp;
-      //this is argv[2]
       user_esp++;
       verify_user(user_esp);
       buffer = *user_esp;
@@ -243,8 +190,6 @@ syscall_handler (struct intr_frame *f UNUSED)
     case SYS_SEEK:
       user_esp++;
       verify_user(user_esp);
-      // check_num_args(*user_esp, 2);
-
       fd = *(int *)user_esp;
       user_esp++;
       verify_user(user_esp);
@@ -254,16 +199,12 @@ syscall_handler (struct intr_frame *f UNUSED)
     case SYS_TELL:
       user_esp++;
       verify_user(user_esp);
-      // check_num_args(*user_esp, 1);
-
       fd = *(int *)user_esp;
       f->eax = tell (fd);
       break;
     case SYS_CLOSE:
       user_esp++;
       verify_user(user_esp);
-      // check_num_args(*user_esp, 1);
-
       fd = *(int *)user_esp;
       close (fd);
       break;
@@ -272,8 +213,6 @@ syscall_handler (struct intr_frame *f UNUSED)
       break;
   }//END OF SWITCH CASE
 
-  // thread_exit ();
-  // lock_release(&lock_handler);
 }
 
 
@@ -298,12 +237,6 @@ void exit (int status)
   //clear the page of the child process
   thread_current()->called_exit = true;
 
-  // struct list_elem *e;
-  // for(e = list_begin(&file_list); e != list_end(&file_list); e = list_next(&file_list)){
-  //   struct file_info *f = list_entry(e, struct file_info, file_list_elem);
-
-  // }
-
   thread_exit();
 }
 
@@ -319,10 +252,7 @@ pid_t exec (const char *cmd_line)
   // printf("\n\nIN EXEC: cmd_line - %s\n\n", cmd_line);
   struct thread *parent = thread_current();
   pid_t pid = process_execute(cmd_line);
-  // printf("\n\n FINISHED process_execute\n\n");
-  //lets the parent know that the child is done.
-  // if(pid != TID_ERROR)
-  //   parent->entered_exec = true;
+
   return pid;
 }
 
@@ -336,6 +266,7 @@ int wait (pid_t pid)
   status = process_wait(pid);
   if(child != NULL)
     sema_up(&child->pause_thread_exit);
+
   return status;
 
 }
@@ -351,6 +282,7 @@ bool create (const char *file_name, unsigned initial_size)
   bool result = false;
   result = filesys_create(file_name, initial_size);
   lock_release(&lock);
+
 	return result;
 }
 
@@ -372,8 +304,6 @@ bool remove (const char *file_name)
   }
   bool result = false;
   result = filesys_remove(file_name);
-  // palloc_free_page(cur_file);
-  //^^^^^^ This broke syn-remove ^^^^^^^^^^
 
   lock_release(&lock);
 	return result;
@@ -424,7 +354,6 @@ int filesize (int fd)
 
   off_t size;
   size = file_length(cur_file->file);
-  // printf("\n\nThread: %s, file_size: %u\n\n", thread_current()->name, size);
 
   lock_release(&lock);
 	return size;
@@ -487,7 +416,6 @@ int write (int fd, const void *buffer, unsigned size){
     return 0;
   }
   off_t bytes_written = file_write(cur_file_info->file, buffer, size);
-  // printf("************Bytes written to file: %i, from size: %i\n", bytes_written, size);
 
   lock_release(&lock);
 	return (int)bytes_written;

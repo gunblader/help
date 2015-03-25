@@ -48,13 +48,11 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
     strlcpy (fn_copy, cmdline, PGSIZE);
     strlcpy (cmdline_copy, cmdline, PGSIZE);
     
-    // printf("\n\n command line: %s\n", cmdline);
 
 
     // #Adam driving
     //get the file name from the cmdline sent to this function
     file_name = strtok_r (cmdline_copy, " ", &save_ptr);
-    // printf("\n\n filename: %s\n", file_name);
   
   /* Create a new thread to execute FILE_NAME. */
     tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
@@ -78,11 +76,7 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
     if(child != NULL){
       list_push_back(&parent->child_threads, &child->childelem);
     }
-
-    //if load fails, return -1
-
-    // ASSERT(0);
-    
+ 
     return tid;
   }
 
@@ -96,25 +90,20 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
     bool success;
 
   /* Initialize interrupt frame and load executable. */
-    // printf("\n\n2_TID: 0\n");
     memset (&if_, 0, sizeof if_);
     if_.gs = if_.fs = if_.es = if_.ds = if_.ss = SEL_UDSEG;
     if_.cs = SEL_UCSEG;
     if_.eflags = FLAG_IF | FLAG_MBS;
     success = load (cmdline, &if_.eip, &if_.esp);
 
-    // if(tid != TID_ERROR){
     thread_current()->parent->load_success = success;
-    // }
 
-    // printf("\n\ncmdline  %s\n", cmdline);
   /* If load failed, quit. */
     sema_up(&thread_current()->parent->sema_thread_create);
     palloc_free_page (cmdline);
     if (!success) 
       thread_exit ();
     // #Adam Driving here
-    // printf("\n\n2_TID: 2\n success: %d \n", success);
 
   /* Start the user process by simulating a return from an
      interrupt, implemented by intr_exit (in
@@ -139,12 +128,10 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
    process_wait (tid_t child_tid) 
    {
     // #Kenneth drove here
-    // printf("\n\n %s Called Wait\n\n", thread_current()->name);
     struct list_elem *e = NULL;
     struct thread *child_thread = NULL;
     struct thread *cur = thread_current();
 
-    // printf("())\n", );
     // Get the child tid of the current thread
     for(e = list_begin(&cur->child_threads); e != list_end(&cur->child_threads); e = list_next(e)){
       struct thread *t = list_entry(e, struct thread, childelem);
@@ -155,29 +142,16 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
     }
 
     //checks if TID is valid (it exists) and if process wait hasn't been called yet
-    // printf("\n\nchild_thread == NULL: %s \n", child_thread == NULL ? "true" : "false");
-    // printf("child_thread->entered_process_wait: %s \n\n", child_thread->entered_process_wait ? "true" : "false");
     if(child_thread == NULL || child_thread->entered_process_wait)
       return -1;
 
     child_thread->entered_process_wait = true;
 
     // #Jacob Drove Here
-    // Check the TID of the thread to make sure it has not been terminated
-    // Run indefinitely until the thread is terminated.
-    // else
-    //   return -1;
 
     sema_down(&child_thread->sema_wait_process);
     return child_thread->exit_status;
 
-    // while(child_thread->status != THREAD_DYING){
-    //   if(child_thread->killed_by_kernel){
-    //     return -1;
-    //   }
-    //   //otherwise, keep waiting
-    // }
-    // return child_thread->exit_status;
    }// end process_wait
 
 /* Free the current process's resources. */
@@ -190,7 +164,6 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
       uint32_t *pd;
 
       if(cur->file != NULL){
-        // printf("************Thread: %s called exit, File can write\n", thread_current()->name);
         file_close(cur->file);
       }
 
@@ -207,7 +180,6 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
          directory, or our active page directory will be one
          that's been freed (and cleared). */
          cur->pagedir = NULL;
-         // printf("Thread %s set its pagedir to %x inside of process_exit()\n", cur->name, cur->pagedir);
          pagedir_activate (NULL);
          pagedir_destroy (pd);
        }
@@ -590,14 +562,11 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
           // Make an array that holds the addresses of args
           int args_addresses [count];
           
-          // printf("addr args[1]: 0x%x\n", &args[i]);
           while(i >= 0 && args[i] != NULL)
           { 
-            //ASSERT(0);
             args_length = strlen(args[i]);
             myesp -= args_length + 1;
             memcpy(myesp, args[i], args_length + 1);
-            //printf("0x%x %s\t char[%i]\n", myesp, *args[i], i);
             // store the addresses into args_addresses
             args_addresses[i] = myesp;
             i--;
@@ -610,16 +579,12 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
           while(word_align)
           {
             myesp--;
-            //*myesp = (uint8_t)0;
-            // myesp -= 4;
             word_align--;
           }
 
           i = count - 1;
 
           // push word_align onto stack
-          // myesp--;
-          // *myesp = word_align;
           myesp -= 4;
 
           while(i >= 0 && args[i] != NULL)
@@ -647,14 +612,11 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
           *esp = myesp;
 
           //print the stack after pushing 
-          // hex_dump (*esp, *esp, PHYS_BASE-*esp, 1);
-          //palloc_free_page(front_of_args_page);
         } 
         else
           palloc_free_page (kpage);
       }
           palloc_free_page(cmdline_copy);
-      // palloc_free_page();
       return success;
     }
 

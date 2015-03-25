@@ -354,7 +354,6 @@ thread_exit (void)
   }
 
   list_remove (&cur->allelem);
-  // printf("<4>\n");
   cur->status = THREAD_DYING;
   schedule ();
   NOT_REACHED ();
