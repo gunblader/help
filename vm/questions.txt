@@ -1,0 +1,10 @@
+Frame Table
+	1. Is a frame table essentially just a list of the frames that are located in physical memory as shown in the graphic (show graphic)?
+
+	2. Which replacement algorithm are we supposed to use, or is it up to us?
+
+			a. Is clock, in your experience, relatively harder (or longer) to implement?
+
+	3. Can we use an array of frames? If so, then how big does the array need to be?
+
+	4. Should we prioritize space or time for this project?
