@@ -1,10 +1,10 @@
 Frame Table
 	1. Is a frame table essentially just a list of the frames that are located in physical memory as shown in the graphic (show graphic)?
-
+	   yes, it is a page table but with frames mapping to physical mem
 	2. Which replacement algorithm are we supposed to use, or is it up to us?
-
 			a. Is clock, in your experience, relatively harder (or longer) to implement?
-
+			   its ok to do clock at first. we could write a function with fifo and then replace this function when we know we have everything else working
 	3. Can we use an array of frames? If so, then how big does the array need to be?
-
+	   yes, we could just find the total size of mem and create an array with the total number of frames (total mem / frame size)
 	4. Should we prioritize space or time for this project?
+	   time
