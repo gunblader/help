@@ -19,6 +19,7 @@
 #include "threads/vaddr.h"
 #include <list.h>
 #include "threads/synch.h"
+#include "vm/frame.h"
 
 static thread_func start_process NO_RETURN;
 static bool load (const char *cmdline, void (**eip) (void), void **esp);
@@ -485,7 +486,8 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
          size_t page_zero_bytes = PGSIZE - page_read_bytes;
 
       /* Get a page of memory. */
-         uint8_t *kpage = palloc_get_page (PAL_USER);
+         // uint8_t *kpage = palloc_get_page (PAL_USER);
+         uint8_t *kpage = get_frame();
          if (kpage == NULL)
           return false;
 
