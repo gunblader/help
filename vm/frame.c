@@ -3,13 +3,14 @@
 #include "vm/frame.h"
 #include "lib/kernel/list.h"
 #include "threads/palloc.h"
+#include "threads/palloc.c"
 
-#define NUM_FRAMES = num_frames;
 
-void *get_frame();
-int *evict_frame();
+// #define NUM_FRAMES num_frames
+
 /* Global Frame table list that contains all the available frames that pages can be mapped to*/
-struct frame *frame_table[NUM_FRAMES];
+struct frame frame_table[frame_size];
+
 
 //This function returns a pointer to a frame
 // # Jacob and Kenneth drove here
@@ -18,9 +19,9 @@ get_frame()
 {
 	bool found_something = false;
 	struct frame *f = NULL;
-	int *kva = NULL;
+	int *kva = NULL;         //kva = Kernel Vitual Address
 	int i;
-	for(i = 0; i < NUM_FRAMES; i++)
+	for(i = 0; i < frame_size; i++)
 	{
 		f = frame_table[i];
 		if(f->cur_page == NULL)
@@ -31,7 +32,7 @@ get_frame()
 	}
 	if(!found_something)
 	{
-		evict_frame();
+		kva = evict_frame();
 	}
 	else
 	{
@@ -51,12 +52,12 @@ evict_frame()
 	frame_table[0] = NULL;
 	//shift all elements in frame_table to the left
 	int i;
-	for(i = 0; i < NUM_FRAMES - 1; i++)
+	for(i = 0; i < frame_size - 1; i++)
 	{
 		frame_table[i] = frame_table[i+1];
 	}
 	//put new frame at the last index
 	int *kva = (int *)palloc_get_page(PAL_USER);
-	frame_table[NUM_FRAMES - 1] = kva;
+	frame_table[frame_size - 1] = kva;
 	return kva;
 }
