@@ -5,9 +5,6 @@
 #include "threads/interrupt.h"
 #include "threads/thread.h"
 #include "userprog/process.h"
-#include "threads/palloc.h"
-#include "vm/page.h"
-#include "threads/vaddr.h"
 
 /* Number of page faults processed. */
 static long long page_fault_cnt;
@@ -171,19 +168,19 @@ page_fault (struct intr_frame *f)
 // kill (f);
  struct page *load_page = thread_current ()->load_page;
 
- file_seek (load_page->file, load_page->ofs);
- while (load_page->read_bytes > 0 || load_page->zero_bytes > 0)
+ file_seek (file, ofs);
+ while (read_bytes > 0 || zero_bytes > 0)
  {
       /* Calculate how to fill this page.
          We will read PAGE_READ_BYTES bytes from FILE
          and zero the final PAGE_ZERO_BYTES bytes. */
-         size_t page_read_bytes = load_page->read_bytes < PGSIZE ? load_page->read_bytes : PGSIZE;
+         size_t page_read_bytes = read_bytes < PGSIZE ? read_bytes : PGSIZE;
          size_t page_zero_bytes = PGSIZE - page_read_bytes;
 
 
 
       /* Get a page of memory. */
-         // uint8_t *kpage = palloc_get_page (PAL_USER);
+         uint8_t *kpage = palloc_get_page (PAL_USER);
       // #Kenneth and Jacob drove here
          uint8_t *kpage = get_frame ();
          if (kpage == NULL)
@@ -211,8 +208,8 @@ page_fault (struct intr_frame *f)
          }
 
       /* Advance. */
-         load_page->read_bytes -= page_read_bytes;
-         load_page->zero_bytes -= page_zero_bytes;
+                         read_bytes -= page_read_bytes;
+         zero_bytes -= page_zero_bytes;
          load_page->upage += PGSIZE;
      }
  }
@@ -222,8 +219,8 @@ page_fault (struct intr_frame *f)
  {
   struct thread *t = thread_current ();
 
- /* Verify that there's not already a page at that virtual
- address, then map our page there. */ 
+/* Verify that there's not already a page at that virtual
+ address, then map our page there. */
   return (pagedir_get_page (t->pagedir, upage) == NULL
      && pagedir_set_page (t->pagedir, upage, kpage, writable));
 }

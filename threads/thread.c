@@ -540,7 +540,7 @@ init_thread (struct thread *t, const char *name, int priority)
   sema_init(&t->sema_thread_create, 0);
   sema_init(&t->pause_thread_exit, 0);
 
-  //#Kenneth Drove here
+  //#Kenneth and Paul Drove here
   // hash_init(t->pagetable, hash_func, hash_less_func, NULL);
   //#End Kenneth Driving
 

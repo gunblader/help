@@ -114,6 +114,7 @@ struct thread
 
     /* VM */
     struct hash pagetable;
+    struct page *load_page;
     // #End Kenneth driving
 
     /* Shared between thread.c and synch.c. */
