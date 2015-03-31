@@ -14,9 +14,11 @@ Frame Table
 
 
 	5. Should we handle cases where other flags are set, ie PAL_ZERO, not just when PAL_USER is sent?
+	Just for PAL_USER
 
 
+Supplemental Page Table
+	1. We need to store the parameters in load_segment() as metadata inside our supp page entry struct. Then we need to move some of the load_segment() code into our page fault handler in exception.c, so that we can use DEMAND PAGING. I.E. we won't load anything until the CPU demands it via page_fault
 
-	6. Should we change every palloc_get_page() in process.c to our get_frame() function, or should we be more selective?
-
+	2. Use a hash table as our struct that represents the supplemental page table. This is because hash tables are the fastest.
 	

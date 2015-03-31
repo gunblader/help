@@ -5,6 +5,7 @@
 #include <list.h>
 #include <stdint.h>
 #include "synch.h"
+#include "vm/page.h"
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -109,6 +110,9 @@ struct thread
     struct semaphore sema_wait_process;
     struct semaphore sema_thread_create;
     struct semaphore pause_thread_exit;
+
+    /* VM */
+    // struct page *pagetable;
     // #End Kenneth driving
 
     /* Shared between thread.c and synch.c. */

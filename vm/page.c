@@ -1,6 +1,3 @@
 #include "userprog/pagedir.h"
 
-
-void page_init(){
-
-}
+// Jacob & Kenneth Drove Here
