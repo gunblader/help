@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include "synch.h"
 #include "vm/page.h"
+#include <hash.h>
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -112,7 +113,7 @@ struct thread
     struct semaphore pause_thread_exit;
 
     /* VM */
-    // struct page *pagetable;
+    struct hash pagetable;
     // #End Kenneth driving
 
     /* Shared between thread.c and synch.c. */

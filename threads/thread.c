@@ -526,27 +526,22 @@ init_thread (struct thread *t, const char *name, int priority)
   t->magic = THREAD_MAGIC;
   //update the pointer to all_list
   //#Adam Drove Here
-  // t->all_list_pt = &all_list;
-  // t->killed_by_kernel = false;
   t->entered_process_wait = false;
   t->load_success = false;
   list_init (&t->child_threads);
   t->exit_status = 0;
   t->called_exit = false;
-  // t->entered_exec = false;
-  // t->fn_name = NULL;
   list_init(&t->fd_list);
   
 
   //#End Adam Driving
 
   sema_init(&t->sema_wait_process, 0);
-  // ASSERT(0);
   sema_init(&t->sema_thread_create, 0);
   sema_init(&t->pause_thread_exit, 0);
 
   //#Kenneth Drove here
-  
+  // hash_init(t->pagetable, hash_func, hash_less_func, NULL);
   //#End Kenneth Driving
 
   list_push_back (&all_list, &t->allelem);

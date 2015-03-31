@@ -29,7 +29,7 @@ get_frame()
 	{
 		f = &frame_table[i];
 		//Continue looping until you find an empty page
-		if(f->cur_page == NULL)
+		if(f->kva == NULL)
 		{
 			found_something = true;
 			break;
@@ -45,7 +45,7 @@ get_frame()
 	else
 	{
 		kva = (int *)palloc_get_page(PAL_USER);
-		frame_table[i].cur_page = kva;
+		frame_table[i].kva = kva;
 	}
 	ASSERT(kva != NULL);
 	return kva;
@@ -56,7 +56,7 @@ static int *
 evict_frame()
 {
 	//remove first frame from frame_table
-	frame_table[0].cur_page = NULL;
+	frame_table[0].kva = NULL;
 	//shift all elements in frame_table to the left
 	int i;
 	for(i = 0; i < num_frames - 1; i++)
@@ -66,6 +66,6 @@ evict_frame()
 	}
 	//put new frame at the last index
 	int *kva = (int *)palloc_get_page(PAL_USER);
-	frame_table[num_frames - 1].cur_page = kva;
+	frame_table[num_frames - 1].kva = kva;
 	return kva;
 }

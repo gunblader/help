@@ -533,7 +533,8 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
       strlcpy (cmdline_copy, cmdline, PGSIZE);
 
 
-      kpage = palloc_get_page (PAL_USER | PAL_ZERO);
+      // kpage = palloc_get_page (PAL_USER | PAL_ZERO);
+      kpage = get_frame();
       if (kpage != NULL) 
       {
         success = install_page (((uint8_t *) PHYS_BASE) - PGSIZE, kpage, true);

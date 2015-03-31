@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include "threads/palloc.h"
 #include "lib/kernel/list.h"
+#include "vm/page.h"
 
 // static struct frame_num
 // {
@@ -17,7 +18,7 @@
 struct frame
 {
 	// struct page *cur_page; /* A pointer to the page that is currently using this frame */
-	void *cur_page;
+	void *kva;
 	struct list_elem frame_table_elem;
 };
 

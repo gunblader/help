@@ -14,7 +14,7 @@ Frame Table
 
 
 	5. Should we handle cases where other flags are set, ie PAL_ZERO, not just when PAL_USER is sent?
-	Just for PAL_USER
+	
 
 
 Supplemental Page Table
