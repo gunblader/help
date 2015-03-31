@@ -34,7 +34,7 @@ struct pool
     uint8_t *base;                      /* Base of pool. */
   };
 
-int frame_size;
+// int frame_size;
 
 /* Two pools: one for kernel data, one for user pages. */
 static struct pool kernel_pool, user_pool;
@@ -58,15 +58,15 @@ palloc_init (size_t user_page_limit)
     user_pages = user_page_limit;
   kernel_pages = free_pages - user_pages;
 
+  num_frames = user_pages;
+  // printf("%d\n", user_pages);
+  // printf("%d\n", user_page_limit);
 
   /* Give half of memory to kernel, half to user. */
   init_pool (&kernel_pool, free_start, kernel_pages, "kernel pool");
   init_pool (&user_pool, free_start + kernel_pages * PGSIZE,
              user_pages, "user pool");
 
-  //#Paul Drove here.
-  struct pool *pool = &kernel_pool;
-  frame_size = bitmap_size (pool->used_map);
 }
 
 /* Obtains and returns a group of PAGE_CNT contiguous free pages.

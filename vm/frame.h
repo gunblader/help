@@ -7,20 +7,23 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "threads/palloc.h"
+#include "lib/kernel/list.h"
 
-static struct frame_num
-{
-	int num_frames;
-};
+// static struct frame_num
+// {
+// 	int num_frames;
+// };
 
 struct frame
 {
-	struct page *cur_page; /* A pointer to the page that is currently using this frame */
-	
+	// struct page *cur_page; /* A pointer to the page that is currently using this frame */
+	void *cur_page;
+	struct list_elem frame_table_elem;
 };
 
-//static size_t num_frames;
 
+void frame_init();
 void *get_frame();
 
+size_t num_frames;
 #endif /* vm/frame.h */

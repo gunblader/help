@@ -1,16 +1,19 @@
-#include <stdio.h>
-#include <stdint.h>
 #include "vm/frame.h"
 #include "lib/kernel/list.h"
-#include "threads/palloc.h"
-#include "threads/palloc.c"
+#include "threads/loader.h"
+#include "threads/malloc.h"
+#include "threads/vaddr.h"
 
 
-// #define NUM_FRAMES num_frames
+static int *evict_frame();
 
 /* Global Frame table list that contains all the available frames that pages can be mapped to*/
-struct frame frame_table[frame_size];
+struct frame *frame_table;
 
+void
+frame_init(){
+	frame_table = (struct frame *)malloc(num_frames * sizeof(struct frame *));
+}
 
 //This function returns a pointer to a frame
 // # Jacob and Kenneth drove here
@@ -21,43 +24,48 @@ get_frame()
 	struct frame *f = NULL;
 	int *kva = NULL;         //kva = Kernel Vitual Address
 	int i;
-	for(i = 0; i < frame_size; i++)
+	//loop through the frame table
+	for(i = 0; i < num_frames; i++)
 	{
-		f = frame_table[i];
+		f = &frame_table[i];
+		//Continue looping until you find an empty page
 		if(f->cur_page == NULL)
 		{
 			found_something = true;
 			break;
 		}
 	}
+	//if you didn't find an empty frame, evict something.
 	if(!found_something)
 	{
+		ASSERT(0); //for now panic the kernel if frame table is full
 		kva = evict_frame();
 	}
+	//if you did find an empty frame, allocate a page into that frame
 	else
 	{
-		//somehow add that frame (kva) to the frame_table
 		kva = (int *)palloc_get_page(PAL_USER);
-		frame_table[i] = kva;
+		frame_table[i].cur_page = kva;
 	}
 	ASSERT(kva != NULL);
 	return kva;
 } // # End Jacob and Kenneth driving
 
 //returns the kva of the new frame
-int *
+static int *
 evict_frame()
 {
 	//remove first frame from frame_table
-	frame_table[0] = NULL;
+	frame_table[0].cur_page = NULL;
 	//shift all elements in frame_table to the left
 	int i;
-	for(i = 0; i < frame_size - 1; i++)
+	for(i = 0; i < num_frames - 1; i++)
 	{
-		frame_table[i] = frame_table[i+1];
+		struct frame *temp = &frame_table[i];
+		temp = &frame_table[i+1];
 	}
 	//put new frame at the last index
 	int *kva = (int *)palloc_get_page(PAL_USER);
-	frame_table[frame_size - 1] = kva;
+	frame_table[num_frames - 1].cur_page = kva;
 	return kva;
 }

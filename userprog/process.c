@@ -487,7 +487,9 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
 
       /* Get a page of memory. */
          // uint8_t *kpage = palloc_get_page (PAL_USER);
+         // #Kenneth and Jacob drove here
          uint8_t *kpage = get_frame();
+         // #End Driving
          if (kpage == NULL)
           return false;
 

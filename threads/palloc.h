@@ -18,6 +18,6 @@ void palloc_free_page (void *);
 void palloc_free_multiple (void *, size_t page_cnt);
 
 //#Paul Drove here
-int get_frame_size ();
+// int get_frame_size ();
 
 #endif /* threads/palloc.h */
