@@ -50,7 +50,7 @@ unsigned
 page_hash(const struct hash_elem *e, void *aux){
   const struct page *p = hash_entry(e, struct page, page_table_elem);
   unsigned hash = hash_bytes(&p->addr, sizeof p->addr);
-  printf("Page 0x%x has a hash of %u\n", p->addr, hash);
+  // printf("Page 0x%x has a hash of %u\n", p->addr, hash);
   return hash;
 }
 

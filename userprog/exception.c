@@ -153,11 +153,11 @@ page_fault (struct intr_frame *f)
   /* To implement virtual memory, delete the rest of the function
      body, and replace it with code that brings in the page to
      which fault_addr refers. */
-  // printf ("Page fault at %p: %s error %s page in %s context.\n",
-  //         fault_addr,
-  //         not_present ? "not present" : "rights violation",
-  //         write ? "writing" : "reading",
-  //         user ? "user" : "kernel");
+  printf ("Page fault at %p: %s error %s page in %s context.\n",
+          fault_addr,
+          not_present ? "not present" : "rights violation",
+          write ? "writing" : "reading",
+          user ? "user" : "kernel");
 
   // printf("There is no crying in Pintos!\n");
 
@@ -165,11 +165,22 @@ page_fault (struct intr_frame *f)
 
   // kill (f);
 
+  /* If the supplemental page table indicates that the user process
+      should not expect any data at the address it was trying to access,
+      or if the page lies within kernel virtual memory, or if the access
+      is an attempt to write to a read-only page, then the access is invalid
+      and we should terminate the process */
+  if(is_kernel_vaddr(fault_addr) || !not_present)
+  {
+    printf("Terminating process\n");
+    thread_exit();
+  }
+
   struct thread *cur_thread = thread_current();
 
   //search for the fault_addr in the current threads page table
   //faulting page = fp
-  struct page *fp = find_page(fault_addr);
+  struct page *fp = find_page(pg_round_down(fault_addr));
 
   //if the page was not found, do something
   if(fp == NULL)
