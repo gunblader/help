@@ -45,16 +45,16 @@ get_frame()
 	else
 	{
 		kva = (int *)palloc_get_page(PAL_USER);
-		frame_table[i].kva = kva;
+		f->kva = kva;
 	}
 	ASSERT(kva != NULL);
 	return kva;
 } // # End Jacob and Kenneth driving
 
-//returns the kva of the new frame
 static int *
 evict_frame()
 {
+	//THIS NEEDS TO BE CHANGED LATER WHEN WE IMPLEMENT SWAP
 	//remove first frame from frame_table
 	frame_table[0].kva = NULL;
 	//shift all elements in frame_table to the left

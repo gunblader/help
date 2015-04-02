@@ -2,28 +2,27 @@
 #define VM_PAGE_H
 
 #include <hash.h>
-#include <stdint.h>
 #include "filesys/off_t.h"
 
 struct page
 {
 	void *addr; /* The address of this page */
-	int resident_bit; /* Set 1 if the page is in physical memory, 0 otherwise */
+	bool resident_bit; /* Set 1 if the page is in physical memory, 0 otherwise */
+	bool in_swap; /* Bool to tell if the page is currently in swap */
+	bool in_filesys; /* Bool to tell if the page is currently in the file system */
 	struct hash_elem page_table_elem; /* Hash Table elem for our supplemental page table */
-	// int reference_bit; /* Set if it was recently used */
 
-	/* Meta Data */
-	struct thread *cur_thread;
+	//This is the meta data to help with demand paging in page_fault
 	struct file *file;
 	off_t ofs;
-	uint8_t *upage;
 	uint32_t read_bytes;
 	uint32_t zero_bytes;
 	bool writable;
-	// size_t page_read_bytes;
-	// size_t page_zero_bytes;
-	bool success;
-
 };
+
+void add_page(struct file *file, off_t ofs, uint8_t *vaddr,
+    uint32_t read_bytes, uint32_t zero_bytes, bool writable);
+struct page *find_page(void *addr);
+
 
 #endif /* vm/page.h */

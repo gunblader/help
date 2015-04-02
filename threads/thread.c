@@ -14,6 +14,7 @@
 #ifdef USERPROG
 #include "userprog/process.h"
 #include "userprog/syscall.h"
+#include "vm/page.h"
 #endif
 
 /* Random value for struct thread's `magic' member.
@@ -75,6 +76,8 @@ static void *alloc_frame (struct thread *, size_t size);
 static void schedule (void);
 void thread_schedule_tail (struct thread *prev);
 static tid_t allocate_tid (void);
+unsigned page_hash(const struct hash_elem *e, void *aux);
+bool page_less (const struct hash_elem *a_, const struct hash_elem *b_, void *aux UNUSED);
 
 /* Initializes the threading system by transforming the code
    that's currently running into a thread.  This can't work in
@@ -311,9 +314,9 @@ thread_exit (void)
   // printf("<3>\n");
   struct thread *cur = thread_current();
 
-  if(!cur->called_exit)
-      cur->exit_status = -1;
-
+  if(!cur->called_exit){
+    cur->exit_status = -1;
+  }
   printf ("%s: exit(%d)\n", thread_current()->name, cur->exit_status);
 #ifdef USERPROG
   process_exit ();
@@ -540,13 +543,15 @@ init_thread (struct thread *t, const char *name, int priority)
   sema_init(&t->sema_thread_create, 0);
   sema_init(&t->pause_thread_exit, 0);
 
-  //#Kenneth and Paul Drove here
-  // hash_init(t->pagetable, hash_func, hash_less_func, NULL);
+  //#Kenneth Drove here
+  page_init();
+  // hash_init(&t->pagetable, page_hash, page_less, NULL);
   //#End Kenneth Driving
 
   list_push_back (&all_list, &t->allelem);
 
 }
+
 
 /* Allocates a SIZE-byte frame at the top of thread T's stack and
    returns a pointer to the frame's base. */
