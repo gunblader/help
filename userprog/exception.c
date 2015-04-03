@@ -152,12 +152,12 @@ page_fault (struct intr_frame *f)
 
   /* To implement virtual memory, delete the rest of the function
      body, and replace it with code that brings in the page to
-     which fault_addr refers. */
-  printf ("Page fault at %p: %s error %s page in %s context.\n",
-          fault_addr,
-          not_present ? "not present" : "rights violation",
-          write ? "writing" : "reading",
-          user ? "user" : "kernel");
+     which fault_addr refers */
+  // printf ("Page fault at %p: %s error %s page in %s context.\n",
+  //         fault_addr,
+  //         not_present ? "not present" : "rights violation",
+  //         write ? "writing" : "reading",
+  //         user ? "user" : "kernel");
 
   // printf("There is no crying in Pintos!\n");
 
@@ -172,7 +172,7 @@ page_fault (struct intr_frame *f)
       and we should terminate the process */
   if(is_kernel_vaddr(fault_addr) || !not_present)
   {
-    printf("Terminating process\n");
+    // printf("Terminating process\n");
     thread_exit();
   }
 
@@ -186,8 +186,8 @@ page_fault (struct intr_frame *f)
   if(fp == NULL)
   {
     //either terminate the process or grow the stack
-    printf("The faulting page wasn't found in the supp page table\n");
-    printf("Faulting addr: 0x%x\n", fault_addr);
+    // printf("The faulting page wasn't found in the supp page table\n");
+    // printf("Faulting addr: 0x%x\n", fault_addr);
     thread_exit();
   }
   //else, connect the addresses
@@ -199,16 +199,26 @@ page_fault (struct intr_frame *f)
     //obtain a frame to store the page
     uint8_t *kpage = get_frame();
     if(kpage == NULL)
-      return;
-
-    //fetch the data into the frame, by reading it from filesys or swap, zeroing it, etc.
-    if(file_read(fp->file, kpage, page_read_bytes) != (int) page_read_bytes){
+    {
+      // printf("Kpage was null\n");
       return;
     }
+
+    //fetch the data into the frame, by reading it from filesys or swap, zeroing it, etc.
+    file_seek(fp->file, fp->ofs);
+    if(file_read(fp->file, kpage, page_read_bytes) != (int) page_read_bytes){
+      // printf("File wasn't read properly\n");
+      // palloc_free_page (kpage);
+      return;
+    }
+    memset (kpage + page_read_bytes, 0, page_zero_bytes);
+
     //point the PTE for the faulty address to the physical page
     if(!(pagedir_get_page (cur_thread->pagedir, fp->addr) == NULL
       && pagedir_set_page (cur_thread->pagedir, fp->addr, kpage, fp->writable)))
     {
+      // printf("Page wasn't mapped properly\n");
+      // palloc_free_page (kpage);
       return;
     }
   }     

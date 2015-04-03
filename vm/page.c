@@ -1,6 +1,7 @@
 #include "userprog/pagedir.h"
 #include "vm/page.h"
 #include "threads/thread.h"
+#include "threads/vaddr.h"
 
 // Jacob & Kenneth Drove Here
 
@@ -24,7 +25,7 @@ add_page(struct file *file, off_t ofs, uint8_t *vaddr,
 	//then initialize that hash table here
 	struct thread *cur_thread = thread_current();
 	if(init == false){
-		printf("initialized hash table\n");
+		// printf("initialized hash table\n");
 		hash_init(&cur_thread->pagetable, page_hash, page_less, NULL);
 		init = true;
 	}
@@ -40,7 +41,7 @@ add_page(struct file *file, off_t ofs, uint8_t *vaddr,
 	p->zero_bytes = zero_bytes;
 	p->writable = writable;
 
-	printf("Add page at address, 0x%x, to supplemental page table\n", p->addr);
+	// printf("Add page at address, 0x%x, to supplemental page table\n", p->addr);
 	hash_insert(&cur_thread->pagetable, &p->page_table_elem);
 }
 
@@ -73,7 +74,7 @@ find_page(void *addr){
 	struct hash_elem *h;
 
 	p.addr = addr;
-	printf("find_page using addr: 0x%x\n", p.addr);
+	// printf("find_page using addr: 0x%x\n", p.addr);
 	h = hash_find(&thread_current()->pagetable, &p.page_table_elem);
 	if(h == NULL)
 		return NULL;

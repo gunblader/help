@@ -23,3 +23,6 @@ Supplemental Page Table
 	2. Use a hash table as our struct that represents the supplemental page table. This is because hash tables are the fastest.
 	
 	3. How can we tell if a page is a read-only page
+
+	4. What Ben said: 
+			

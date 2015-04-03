@@ -63,10 +63,17 @@ void verify_user(void *user_esp){
   // 3. a pointer to kernel virtual address space
   struct thread *cur = thread_current();
 
+  //We should change pagedir here to lookup something
+  //from our supplemental page table rather than pagedir_get_page()
   if(user_esp == NULL || !is_user_vaddr(user_esp) ||
   pagedir_get_page(cur->pagedir, user_esp) == NULL){
+    // printf("In verify_user\n");
     thread_exit();
   }
+  // if(user_esp == NULL || !is_user_vaddr(user_esp)){
+  //   // printf("In verify_user\n");
+  //   thread_exit();
+  // }
 }
 // Explain here what this does in a comment
 bool check_num_args(int argc, int expected){
@@ -161,13 +168,17 @@ syscall_handler (struct intr_frame *f UNUSED)
     
     case SYS_READ:
       user_esp++;
+      // printf("<1>\n");
       verify_user(user_esp);
       fd = *(int *)user_esp;
       user_esp++;
+      // printf("<2>\n");
       verify_user(user_esp);
-      buffer = *(int *)user_esp;
+      buffer = *user_esp;
+      // printf("<3>\n");
       verify_user(buffer);
       user_esp++;
+      // printf("<4>\n");
       verify_user(user_esp);
       size = *(unsigned *)user_esp;
       f->eax = read(fd, buffer, size);
