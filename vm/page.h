@@ -11,6 +11,7 @@ struct page
 	bool in_swap; /* Bool to tell if the page is currently in swap */
 	bool in_filesys; /* Bool to tell if the page is currently in the file system */
 	struct hash_elem page_table_elem; /* Hash Table elem for our supplemental page table */
+	bool stack_page; /* true if this page is a stack page */
 
 	//This is the meta data to help with demand paging in page_fault
 	struct file *file;

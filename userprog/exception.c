@@ -188,7 +188,16 @@ page_fault (struct intr_frame *f)
     //either terminate the process or grow the stack
     // printf("The faulting page wasn't found in the supp page table\n");
     // printf("Faulting addr: 0x%x\n", fault_addr);
-    thread_exit();
+    
+    //if we are 32 or 4 bytes below the stack pointer, then grow the stack
+    int diff = f->esp - fault_addr;
+    if(diff <= 32){
+      //add a stack page to the supplemental page table and install it
+      printf("GROW THE STACK HERE\n");
+    }
+    else{
+      thread_exit();
+    }
   }
   //else, connect the addresses
   else

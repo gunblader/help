@@ -114,6 +114,7 @@ struct thread
 
     /* VM */
     struct hash pagetable;
+    int stacklimit; /* 8MB limit */
     // #End Kenneth driving
 
     /* Shared between thread.c and synch.c. */
