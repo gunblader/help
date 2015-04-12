@@ -192,8 +192,8 @@ thread_create (const char *name, int priority,
   /* Initialize thread. */
   init_thread (t, name, priority);
   //sets the parent thread (current) for the child (t)
-  printf("Name: %s\n", thread_current()->name);
-  printf("\n\nGOT IN thread_create\n\n");
+  // printf("Name: %s\n", thread_current()->name);
+  // printf("\n\nGOT IN thread_create\n\n");
   // printf("Child's name: %s\n", t->name);
   t->parent = thread_current();
   //END

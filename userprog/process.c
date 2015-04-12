@@ -62,8 +62,6 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
     sema_down(&thread_current()->sema_thread_create);
 
 
-    printf("\n\nGOT IN process_execute\n\n");
-
     if (tid == TID_ERROR){
       palloc_free_page (fn_copy); 
     }
@@ -89,8 +87,7 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
   static void
   start_process (void *cmdline_)
   {
-    printf("\n\nGOT IN start_process\n\n");
-
+    
     char *cmdline = cmdline_;
     struct intr_frame if_;
     bool success;
@@ -516,8 +513,6 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
       /* Add the page to this processes supplemental page table */
         // struct page *p;
         // struct thread *cur_thread = thread_current();
-
-        printf("Add page in process.c");
 
         add_page(file, ofs, upage, read_bytes, zero_bytes, writable);
 

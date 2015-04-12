@@ -160,7 +160,7 @@ page_fault (struct intr_frame *f)
   //         write ? "writing" : "reading",
   //         user ? "user" : "kernel");
 
-  printf("There is no crying in Pintos!\n");
+  // printf("There is no crying in Pintos!\n");
 
   // // debug_backtrace();
 
@@ -175,7 +175,7 @@ page_fault (struct intr_frame *f)
       and we should terminate the process */
   if(is_kernel_vaddr(fault_addr) || !not_present)
   {
-    printf("Terminating process\n");
+    // printf("Terminating process\n");
     thread_exit();
   }
 
@@ -197,7 +197,7 @@ page_fault (struct intr_frame *f)
     if(diff <= 32){
       //add a stack page to the supplemental page table and install it
       
-      printf("GROW THE STACK HERE\n");
+      // printf("GROW THE STACK HERE\n");
 
       // #Jacob and Paul Drove Here
        uint8_t *kpage;
