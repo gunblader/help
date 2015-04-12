@@ -4,6 +4,7 @@
 #include "threads/malloc.h"
 #include "threads/vaddr.h"
 
+int frame_to_evict;
 
 static int *evict_frame();
 
@@ -13,6 +14,7 @@ struct frame *frame_table;
 void
 frame_init(){
 	frame_table = (struct frame *)malloc(num_frames * sizeof(struct frame *));
+	frame_to_evict = 0;
 }
 
 //This function returns a pointer to a frame
@@ -38,7 +40,7 @@ get_frame()
 	//if you didn't find an empty frame, evict something.
 	if(!found_something)
 	{
-		ASSERT(0); //for now panic the kernel if frame table is full
+		// ASSERT(0); //for now panic the kernel if frame table is full
 		kva = evict_frame();
 	}
 	//if you did find an empty frame, allocate a page into that frame
@@ -54,18 +56,30 @@ get_frame()
 static int *
 evict_frame()
 {
-	//THIS NEEDS TO BE CHANGED LATER WHEN WE IMPLEMENT SWAP
-	//remove first frame from frame_table
-	frame_table[0].kva = NULL;
-	//shift all elements in frame_table to the left
-	int i;
-	for(i = 0; i < num_frames - 1; i++)
-	{
-		struct frame *temp = &frame_table[i];
-		temp = &frame_table[i+1];
-	}
-	//put new frame at the last index
-	int *kva = (int *)palloc_get_page(PAL_USER);
-	frame_table[num_frames - 1].kva = kva;
+	// //THIS NEEDS TO BE CHANGED LATER WHEN WE IMPLEMENT SWAP
+	// //remove first frame from frame_table
+	// frame_table[0].kva = NULL;
+	// //shift all elements in frame_table to the left
+	// int i;
+	// for(i = 0; i < num_frames - 1; i++)
+	// {
+	// 	struct frame *temp = &frame_table[i];
+	// 	temp = &frame_table[i+1];
+	// }
+	// //put new frame at the last index
+	// int *kva = (int *)palloc_get_page(PAL_USER);
+	// frame_table[num_frames - 1].kva = kva;
+	// return kva;
+
+	frame_table[frame_to_evict].kva = NULL;
+	int *kva = &frame_table[frame_to_evict];
+
+	ASSERT(kva != NULL);
+	// frame_table[frame_to_evict++].kva = kva;
+
+	if(frame_to_evict >= num_frames)
+		frame_to_evict = 0;
+
 	return kva;
+
 }

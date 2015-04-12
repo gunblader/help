@@ -6,6 +6,7 @@
 #include "threads/thread.h"
 #include "vm/frame.h"
 #include "threads/vaddr.h"
+#include "vm/page.h"
 
 /* Number of page faults processed. */
 static long long page_fault_cnt;
@@ -165,6 +166,8 @@ page_fault (struct intr_frame *f)
 
   // kill (f);
 
+
+
   /* If the supplemental page table indicates that the user process
       should not expect any data at the address it was trying to access,
       or if the page lies within kernel virtual memory, or if the access
@@ -193,10 +196,34 @@ page_fault (struct intr_frame *f)
     int diff = f->esp - fault_addr;
     if(diff <= 32){
       //add a stack page to the supplemental page table and install it
-      printf("GROW THE STACK HERE\n");
+      
+      // printf("GROW THE STACK HERE\n");
+
+      // #Jacob and Paul Drove Here
+       uint8_t *kpage;
+       int *alloc_stack_space = f->esp;
+
+       // we need toa get a new frame and put a new page in it, so that we can
+       // allocate more space on the stack inside of the frame.
+       kpage = get_frame();
+       
+       // create a page struct for the page struct for the page that is put into
+       // the frame table. This is so that we can add the page to the supplemental
+       // page table
+
+       // add_page(cur_thread->file, 0, kpage, 0, 0, true);
+       add_page_to_stack(kpage);
+
+
+      return;
+    
+       // #End Jacob and Paul driving
+
     }
     else{
-      thread_exit();
+      // will have to input the correct failing behavior for output match here.
+      // thread_exit();
+      exit(-1);
     }
   }
   //else, connect the addresses

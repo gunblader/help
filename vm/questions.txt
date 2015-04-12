@@ -25,4 +25,12 @@ Supplemental Page Table
 	3. How can we tell if a page is a read-only page
 
 	4. What Ben said: 
+
+
+4/12
+
+1.) made a new function in page.c called addpagetostack(), initialized all new page info to
+    either 0 or null, ect.. file was initialized to NULL, will this be an issue?
+
+    
 			

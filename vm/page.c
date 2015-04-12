@@ -82,3 +82,28 @@ find_page(void *addr){
 	else
 		return hash_entry(h, struct page, page_table_elem);
 }
+
+// add_page_to_stack() adds a new, empty, page to the frame and 
+// returns a pointer to that page in the frame
+void
+add_page_to_stack(uint8_t *vaddr){
+
+	struct thread *cur_thread = thread_current();
+
+	struct page *p = malloc(sizeof(struct page));
+	p->addr = vaddr;
+	p->resident_bit = false;
+	p->in_swap = false;
+	p->in_filesys = false;
+	p->stack_page = false;
+
+	p->file = NULL;
+	p->ofs = 0;
+	p->read_bytes = 0;
+	p->zero_bytes = 0;
+	p->writable = true;
+
+	// printf("Add page at address, 0x%x, to supplemental page table\n", p->addr);
+	hash_insert(&cur_thread->pagetable, &p->page_table_elem);
+
+}
