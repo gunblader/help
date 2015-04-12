@@ -14,7 +14,7 @@ struct swap
 	bool taken;     // set to true if swap slot is taken
 	int slot_num;   // slot number in the swap table
 
-	struct page page_info;    // Holds info about page put in swap
+	struct page *page_info;    // Holds info about page put in swap
 
 //# Paul ends driving
 };

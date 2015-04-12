@@ -17,8 +17,8 @@ swap_init()
 	int i;
 	for(i = 0; i < NUM_SWAP_SLOTS; i++)
 	{
-		swap_table[i]->taken = false;
-		swap_table[i]->swap_num = i;
+		swap_table[i].taken = false;
+		swap_table[i].slot_num = i;
 	}
 	//# Paul ends driving
 }
@@ -27,11 +27,11 @@ swap_init()
 void *
 swap_page(void *page)
 {
-	// struct block * swap_space = block_get_role(BLOCK_SWAP);
+	struct block *swap_space = block_get_role(BLOCK_SWAP);
 	// int block_sectors = block_size(swap_space);
 	// int swap_slots = block_sectors/8;
 
-	struct swap_slot;
+	struct swap *swap_slot;
 	int i;
 	int slot_num;
 	bool swap_empty = false;
@@ -56,31 +56,31 @@ swap_page(void *page)
 
 			s++;
 			bytes_read += 512;
-			block_write (swap_space + bytes_read, s, page + bytes_read);
+			block_write (swap_space, s, page + bytes_read);
 
 			s++;
 			bytes_read += 512;
-			block_write (swap_space + bytes_read, s, page + bytes_read);
+			block_write (swap_space, s, page + bytes_read);
 
 			s++;
 			bytes_read += 512;
-			block_write (swap_space + bytes_read, s, page + bytes_read);
+			block_write (swap_space, s, page + bytes_read);
 
 			s++;
 			bytes_read += 512;
-			block_write (swap_space + bytes_read, s, page + bytes_read);
+			block_write (swap_space, s, page + bytes_read);
 
 			s++;
 			bytes_read += 512;
-			block_write (swap_space + bytes_read, s, page + bytes_read);
+			block_write (swap_space, s, page + bytes_read);
 
 			s++;
 			bytes_read += 512;
-			block_write (swap_space + bytes_read, s, page + bytes_read);
+			block_write (swap_space, s, page + bytes_read);
 
 			s++;
 			bytes_read += 512;
-			block_write (swap_space + bytes_read, s, page + bytes_read);
+			block_write (swap_space, s, page + bytes_read);
 
 		}
 		else
@@ -98,10 +98,12 @@ swap_page(void *page)
 void *
 get_page_from_swap(void *page)
 {
-	struct swap_slot;
+	struct block *swap_space = block_get_role(BLOCK_SWAP);
+	struct swap *swap_slot;
 	int i;
 	int slot_num;
 	bool swap_empty = false;
+	int bytes_read = 0;
 
 	for(i = 0; i < NUM_SWAP_SLOTS; i++)
 	{
@@ -118,31 +120,31 @@ get_page_from_swap(void *page)
 
 			s++;
 			bytes_read += 512;
-			block_read (swap_space + bytes_read, s, page + bytes_read);
+			block_read (swap_space, s, page + bytes_read);
 
 			s++;
 			bytes_read += 512;
-			block_read (swap_space + bytes_read, s, page + bytes_read);
+			block_read (swap_space, s, page + bytes_read);
 
 			s++;
 			bytes_read += 512;
-			block_read (swap_space + bytes_read, s, page + bytes_read);
+			block_read (swap_space, s, page + bytes_read);
 
 			s++;
 			bytes_read += 512;
-			block_read (swap_space + bytes_read, s, page + bytes_read);
+			block_read (swap_space, s, page + bytes_read);
 
 			s++;
 			bytes_read += 512;
-			block_read (swap_space + bytes_read, s, page + bytes_read);
+			block_read (swap_space, s, page + bytes_read);
 
 			s++;
 			bytes_read += 512;
-			block_read (swap_space + bytes_read, s, page + bytes_read);
+			block_read (swap_space, s, page + bytes_read);
 
 			s++;
 			bytes_read += 512;
-			block_read (swap_space + bytes_read, s, page + bytes_read);
+			block_read (swap_space, s, page + bytes_read);
 
 		}
 	}
