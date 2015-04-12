@@ -3,6 +3,7 @@
 #include "threads/loader.h"
 #include "threads/malloc.h"
 #include "threads/vaddr.h"
+#include "vm/swap.h"
 
 int frame_to_evict;
 
@@ -19,7 +20,7 @@ frame_init(){
 
 //This function returns a pointer to a frame
 // # Jacob and Kenneth drove here
-void * 
+struct frame * 
 get_frame()
 {
 	bool found_something = false;
@@ -42,6 +43,7 @@ get_frame()
 	{
 		// ASSERT(0); //for now panic the kernel if frame table is full
 		kva = evict_frame();
+		f->kva = kva;
 	}
 	//if you did find an empty frame, allocate a page into that frame
 	else
@@ -50,7 +52,11 @@ get_frame()
 		f->kva = kva;
 	}
 	ASSERT(kva != NULL);
-	return kva;
+	
+	// #paul drove here
+	return f;
+	// #driving ends
+
 } // # End Jacob and Kenneth driving
 
 static int *
@@ -71,15 +77,20 @@ evict_frame()
 	// frame_table[num_frames - 1].kva = kva;
 	// return kva;
 
+	//#Paul and Adam Drove here.
+	int *oldpage = frame_table[frame_to_evict].kva;
+	swap_page(oldpage);
+	frame_table[frame_to_evict].cur_page->in_swap = true;
+
 	frame_table[frame_to_evict].kva = NULL;
-	int *kva = &frame_table[frame_to_evict];
+	int *kva = (int *)palloc_get_page(PAL_USER);
 
 	ASSERT(kva != NULL);
-	// frame_table[frame_to_evict++].kva = kva;
+	frame_table[frame_to_evict++].kva = kva;
 
 	if(frame_to_evict >= num_frames)
 		frame_to_evict = 0;
 
 	return kva;
-
+	//#Driving ends.
 }

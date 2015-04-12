@@ -543,7 +543,12 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
 
 
       // kpage = palloc_get_page (PAL_USER | PAL_ZERO);
-      kpage = get_frame();
+      
+      //#paul drove here.
+      struct frame * f = get_frame();
+      kpage = f->kva;
+      //driving ends.
+      
       if (kpage != NULL) 
       {
         success = install_page (((uint8_t *) PHYS_BASE) - PGSIZE, kpage, true);

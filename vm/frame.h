@@ -17,14 +17,14 @@
 
 struct frame
 {
-	// struct page *cur_page; /* A pointer to the page that is currently using this frame */
+	struct page *cur_page; /* A pointer to the page that is currently using this frame */
 	void *kva;
 	struct list_elem frame_table_elem;
 };
 
 
 void frame_init();
-void *get_frame();
+struct frame *get_frame();
 
 size_t num_frames;
 #endif /* vm/frame.h */

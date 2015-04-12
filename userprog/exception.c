@@ -205,14 +205,16 @@ page_fault (struct intr_frame *f)
 
        // we need toa get a new frame and put a new page in it, so that we can
        // allocate more space on the stack inside of the frame.
-       kpage = get_frame();
+       struct frame * f = get_frame();
+       kpage = f->kva;
        
        // create a page struct for the page struct for the page that is put into
        // the frame table. This is so that we can add the page to the supplemental
        // page table
 
        // add_page(cur_thread->file, 0, kpage, 0, 0, true);
-       add_page_to_stack(kpage);
+       add_page_to_stack(f);
+
 
 
       return;
@@ -233,7 +235,14 @@ page_fault (struct intr_frame *f)
     size_t page_zero_bytes = PGSIZE - page_read_bytes;
     
     //obtain a frame to store the page
-    uint8_t *kpage = get_frame();
+    
+    //#paul drove here.
+    uint8_t *kpage;
+    struct frame * f = get_frame();
+    f->cur_page = fp;
+    kpage = f->kva;
+    //driving ends.
+
     if(kpage == NULL)
     {
       // printf("Kpage was null\n");

@@ -2,6 +2,7 @@
 #include "vm/page.h"
 #include "threads/thread.h"
 #include "threads/vaddr.h"
+#include "vm/frame.h"
 
 // Jacob & Kenneth Drove Here
 
@@ -86,12 +87,12 @@ find_page(void *addr){
 // add_page_to_stack() adds a new, empty, page to the frame and 
 // returns a pointer to that page in the frame
 void
-add_page_to_stack(uint8_t *vaddr){
+add_page_to_stack(struct frame *f){
 
 	struct thread *cur_thread = thread_current();
 
 	struct page *p = malloc(sizeof(struct page));
-	p->addr = vaddr;
+	p->addr = f->kva;
 	p->resident_bit = false;
 	p->in_swap = false;
 	p->in_filesys = false;
@@ -102,6 +103,8 @@ add_page_to_stack(uint8_t *vaddr){
 	p->read_bytes = 0;
 	p->zero_bytes = 0;
 	p->writable = true;
+
+	f->cur_page = p;
 
 	// printf("Add page at address, 0x%x, to supplemental page table\n", p->addr);
 	hash_insert(&cur_thread->pagetable, &p->page_table_elem);
