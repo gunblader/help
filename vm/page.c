@@ -86,7 +86,7 @@ find_page(void *addr){
 
 // add_page_to_stack() adds a new, empty, page to the frame and 
 // returns a pointer to that page in the frame
-void
+bool
 add_page_to_stack(struct frame *f){
 
 	struct thread *cur_thread = thread_current();
@@ -109,4 +109,7 @@ add_page_to_stack(struct frame *f){
 	// printf("Add page at address, 0x%x, to supplemental page table\n", p->addr);
 	hash_insert(&cur_thread->pagetable, &p->page_table_elem);
 
+	//need to add p to page directory
+	return (pagedir_get_page (cur_thread->pagedir, upage) == NULL &&
+		pagedir_set_page (cur_thread->pagedir, upage, p->addr, writable));
 }

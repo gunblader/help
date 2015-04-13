@@ -1,0 +1,47 @@
+Frame Table
+	1. Is a frame table essentially just a list of the frames that are located in physical memory as shown in the graphic (show graphic)?
+	   yes, it is a page table but with frames mapping to physical mem
+
+	2. Which replacement algorithm are we supposed to use, or is it up to us?
+			a. Is clock, in your experience, relatively harder (or longer) to implement?
+			   its ok to do clock at first. we could write a function with fifo and then replace this function when we know we have everything else working
+
+	3. Can we use an array of frames? If so, then how big does the array need to be?
+	   yes, we could just find the total size of mem and create an array with the total number of frames (total mem / frame size)
+
+	4. Should we prioritize space or time for this project?
+	   time
+
+
+	5. Should we handle cases where other flags are set, ie PAL_ZERO, not just when PAL_USER is sent?
+	
+
+
+Supplemental Page Table
+	1. We need to store the parameters in load_segment() as metadata inside our supp page entry struct. Then we need to move some of the load_segment() code into our page fault handler in exception.c, so that we can use DEMAND PAGING. I.E. we won't load anything until the CPU demands it via page_fault
+
+	2. Use a hash table as our struct that represents the supplemental page table. This is because hash tables are the fastest.
+	
+	3. How can we tell if a page is a read-only page
+
+	4. What Ben said: 
+
+
+4/12
+
+	1. made a new function in page.c called addpagetostack(), initialized all new page info to either 0 or null, ect.. file was initialized to NULL, will this be an issue?
+	
+
+    2. Why is our vitural mem. stoping at 383 pages??
+    	- we are allocating pages with palloc(PAL_USER); so that means that our user pool only has 383 pages.
+    	-Should we be allocating pages a different way?
+	
+
+    4. Will a page's data be erased if you call palloc_free_page()??
+    	- how do we free the pages to use them again?
+	
+
+    5. How will we be able to know what page in SWAP a process needs?
+    	-how will it ask for the info?
+
+    6.

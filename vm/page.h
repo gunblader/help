@@ -24,7 +24,6 @@ struct page
 void add_page(struct file *file, off_t ofs, uint8_t *vaddr,
     uint32_t read_bytes, uint32_t zero_bytes, bool writable);
 struct page *find_page(void *addr);
-// void add_page_to_stack(struct frame * f);
-
+// bool add_page_to_stack(struct frame *f)
 
 #endif /* vm/page.h */
