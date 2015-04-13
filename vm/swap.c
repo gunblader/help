@@ -118,6 +118,7 @@ void
 write_to_swap(struct block *swap_space, block_sector_t sector_to_write, void *page)
 {
 	int count = 0;
+	int bytes_read = 0;
 	while (count < 8)
 	{
 		block_write (swap_space, sector_to_write, page + bytes_read);
@@ -132,6 +133,7 @@ void
 read_page_from_swap(struct block *swap_space, block_sector_t sector_to_write, void *page)
 {
 	int count = 0;
+	int bytes_read = 0;
 	while (count < 8)
 	{
 		block_read (swap_space, sector_to_write, page + bytes_read);
