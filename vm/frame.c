@@ -86,6 +86,9 @@ evict_frame()
 	int *oldpage = frame_table[frame_to_evict].kva;
 	swap_page(oldpage);
 
+	//free pgae since it is not needed anymore. The data is saved in the sectors in swap space
+	palloc_free_page(oldpage);
+
 	//update bool that tells us where this page is
 	frame_table[frame_to_evict].cur_page->in_swap = true;
 
