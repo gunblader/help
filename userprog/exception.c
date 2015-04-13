@@ -203,7 +203,7 @@ page_fault (struct intr_frame *f)
        uint8_t *kpage;
        int *alloc_stack_space = f->esp;
 
-       // we need toa get a new frame and put a new page in it, so that we can
+       // we need to get a new frame and put a new page in it, so that we can
        // allocate more space on the stack inside of the frame.
        struct frame * f = get_frame();
        kpage = f->kva;
@@ -214,8 +214,6 @@ page_fault (struct intr_frame *f)
 
        // add_page(cur_thread->file, 0, kpage, 0, 0, true);
        add_page_to_stack(f);
-
-
 
       return;
     

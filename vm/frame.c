@@ -5,6 +5,7 @@
 #include "threads/vaddr.h"
 #include "vm/swap.h"
 
+//Used to track which frame we need to evict when the table is full for FIFO algorithm
 int frame_to_evict;
 
 static int *evict_frame();
@@ -43,17 +44,16 @@ get_frame()
 	{
 		// ASSERT(0); //for now panic the kernel if frame table is full
 		kva = evict_frame();
-		f->kva = kva;
 	}
 	//if you did find an empty frame, allocate a page into that frame
 	else
 	{
 		kva = (int *)palloc_get_page(PAL_USER);
-		f->kva = kva;
 	}
 	ASSERT(kva != NULL);
 	
 	// #paul drove here
+	f->kva = kva;
 	return f;
 	// #driving ends
 
@@ -77,20 +77,34 @@ evict_frame()
 	// frame_table[num_frames - 1].kva = kva;
 	// return kva;
 
-	//#Paul and Adam Drove here.
+
+
+
+	// #Paul and Adam drove here
+	
+	//move old page into swap space
 	int *oldpage = frame_table[frame_to_evict].kva;
 	swap_page(oldpage);
+
+	//update bool that tells us where this page is
 	frame_table[frame_to_evict].cur_page->in_swap = true;
 
+	//free this frame
 	frame_table[frame_to_evict].kva = NULL;
+
+	//allocate a new page to put in the frame
 	int *kva = (int *)palloc_get_page(PAL_USER);
 
 	ASSERT(kva != NULL);
+
+	//add the page to this frame
 	frame_table[frame_to_evict++].kva = kva;
 
 	if(frame_to_evict >= num_frames)
 		frame_to_evict = 0;
 
 	return kva;
-	//#Driving ends.
+	// #End of Paul and Adam driving
 }
+
+
