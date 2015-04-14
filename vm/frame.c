@@ -4,6 +4,7 @@
 #include "threads/malloc.h"
 #include "threads/vaddr.h"
 #include "vm/swap.h"
+#include "threads/thread.h"
 
 //Used to track which frame we need to evict when the table is full for FIFO algorithm
 int frame_to_evict;
@@ -86,11 +87,15 @@ evict_frame()
 	// #Paul and Adam drove here
 	
 	//move old page into swap space
-	int *oldpage = frame_table[frame_to_evict].kva;
-	swap_page(oldpage);
+	struct page *oldpage = frame_table[frame_to_evict].cur_page;
+
+	swap_page((void *)oldpage->addr);
 
 	//update bool that tells us where this page is
 	frame_table[frame_to_evict].cur_page->in_swap = true;
+
+	//need to get rid of page directory entry for this frame
+	pagedir_clear_page(thread_current()->pagedir, oldpage->addr);
 
 	//free this frame
 	frame_table[frame_to_evict].kva = NULL;

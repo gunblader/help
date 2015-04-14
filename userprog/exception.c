@@ -194,7 +194,7 @@ page_fault (struct intr_frame *f)
     
     //if we are 32 or 4 bytes below the stack pointer, then grow the stack
     int diff = f->esp - fault_addr;
-    if(diff <= 32){
+    if(diff <= 40){
       //add a stack page to the supplemental page table and install it
       
       // printf("GROW THE STACK HERE\n");
@@ -205,7 +205,7 @@ page_fault (struct intr_frame *f)
 
        // we need to get a new frame and put a new page in it, so that we can
        // allocate more space on the stack inside of the frame.
-       struct frame * f = get_frame();
+       struct frame *f = get_frame();
        kpage = f->kva;
        
        // create a page struct for the page struct for the page that is put into
@@ -213,7 +213,7 @@ page_fault (struct intr_frame *f)
        // page table
 
        // add_page(cur_thread->file, 0, kpage, 0, 0, true);
-       add_page_to_stack(f);
+       add_page_to_stack(f, fault_addr);
 
       return;
     

@@ -18,8 +18,8 @@ struct swap_entry
 	struct page *page;		// Holds page put in swap
 //# Paul ends driving
 
-	block_sector_t first_index	//Used to access the first sector of this entry's data in swap
-	block_sector_t last_index	//Used to access the last sector of this entry's data in swap
+	block_sector_t first_index;	//Used to access the first sector of this entry's data in swap
+	block_sector_t last_index;	//Used to access the last sector of this entry's data in swap
 
 };
 

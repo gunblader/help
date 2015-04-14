@@ -5,7 +5,6 @@
 #include "vm/frame.h"
 
 // Jacob & Kenneth Drove Here
-
 unsigned page_hash(const struct hash_elem *e, void *aux);
 bool page_less (const struct hash_elem *a_, const struct hash_elem *b_,
            void *aux);
@@ -87,12 +86,12 @@ find_page(void *addr){
 // add_page_to_stack() adds a new, empty, page to the frame and 
 // returns a pointer to that page in the frame
 bool
-add_page_to_stack(struct frame *f){
-
+add_page_to_stack(struct frame *f, void *vaddr)
+{
 	struct thread *cur_thread = thread_current();
 
 	struct page *p = malloc(sizeof(struct page));
-	p->addr = f->kva;
+	p->addr = vaddr;
 	p->resident_bit = false;
 	p->in_swap = false;
 	p->in_filesys = false;
@@ -109,7 +108,11 @@ add_page_to_stack(struct frame *f){
 	// printf("Add page at address, 0x%x, to supplemental page table\n", p->addr);
 	hash_insert(&cur_thread->pagetable, &p->page_table_elem);
 
+
+	bool result = (pagedir_get_page (cur_thread->pagedir, vaddr) == NULL &&
+		pagedir_set_page (cur_thread->pagedir, vaddr, p->addr, p->writable));
+
+	ASSERT(0);
 	//need to add p to page directory
-	return (pagedir_get_page (cur_thread->pagedir, upage) == NULL &&
-		pagedir_set_page (cur_thread->pagedir, upage, p->addr, writable));
+	return result;
 }

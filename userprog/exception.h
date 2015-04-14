@@ -1,8 +1,4 @@
 
-
-
-
-
 #ifndef USERPROG_EXCEPTION_H
 #define USERPROG_EXCEPTION_H
 

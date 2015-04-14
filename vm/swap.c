@@ -25,7 +25,8 @@ void
 swap_init()
 {
 	// num_swap_slots = 2000; 
-	swap_table = (struct swap_entry *)malloc(NUM_SWAP_SLOTS * sizeof(struct swap_entry *));
+	swap_table = (struct swap_entry *)malloc(NUM_SWAP_SLOTS 
+		* sizeof(struct swap_entry *));
 
 	//# Paul drove here
 	int i;

@@ -3,6 +3,7 @@
 
 #include <hash.h>
 #include "filesys/off_t.h"
+#include "vm/frame.h"
 
 struct page
 {
@@ -24,6 +25,6 @@ struct page
 void add_page(struct file *file, off_t ofs, uint8_t *vaddr,
     uint32_t read_bytes, uint32_t zero_bytes, bool writable);
 struct page *find_page(void *addr);
-// bool add_page_to_stack(struct frame *f)
+bool add_page_to_stack(struct frame *f, void *vaddr);
 
 #endif /* vm/page.h */

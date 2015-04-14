@@ -52,8 +52,6 @@ Supplemental Page Table
 
 4/13
 	
-	1. What do we use for virtual address in pagedir?
+	1. how to tell which process block in swap belongs to?
 
-	2. how to tell which process block in swap belongs to?
-
-	3. Do we need to maintain the same virtual address mapping or remap the block once it is faulted back into mem?
+	2. Do we need to maintain the same virtual address mapping or remap the block once it is faulted back into mem?
