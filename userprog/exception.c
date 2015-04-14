@@ -194,7 +194,8 @@ page_fault (struct intr_frame *f)
     
     //if we are 32 or 4 bytes below the stack pointer, then grow the stack
     int diff = f->esp - fault_addr;
-    if(diff <= 40){
+    // might need to change to 40 - Sage
+    if(diff <= 32){
       //add a stack page to the supplemental page table and install it
       
       // printf("GROW THE STACK HERE\n");
@@ -213,7 +214,8 @@ page_fault (struct intr_frame *f)
        // page table
 
        // add_page(cur_thread->file, 0, kpage, 0, 0, true);
-       add_page_to_stack(f, fault_addr);
+
+       add_page_to_stack(f, pg_round_down(fault_addr));
 
       return;
     
