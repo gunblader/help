@@ -51,7 +51,22 @@ Supplemental Page Table
     7.
 
 4/13
+
+	1. For pt-grow-stack, why is vaddr 0? 
 	
 	1. how to tell which process block in swap belongs to?
 
 	2. Do we need to maintain the same virtual address mapping or remap the block once it is faulted back into mem?
+
+4/14
+
+	1. make check exiting before it finishes running all tests with error? It will continue running from where it left off with the backtrace if we call "make check" again
+		- (userprog/read-boundary; userprog/bad-jump; vm/page-merge-mm)
+			maybe synchronization issue?
+		- vm/page-merge-mm: error 255
+			make[1]: *** [tests/vm/page-merge-mm.output] Error 255
+			make[1]: Leaving directory `/v/filer4b/v38q001/ahood/pintos_src/vm/build'
+			make: *** [check] Error 2
+
+
+	2. 

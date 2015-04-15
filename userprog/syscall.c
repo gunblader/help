@@ -65,8 +65,12 @@ void verify_user(void *user_esp){
 
   //We should change pagedir here to lookup something
   //from our supplemental page table rather than pagedir_get_page()
-  if(user_esp == NULL || !is_user_vaddr(user_esp) ||
-  pagedir_get_page(cur->pagedir, user_esp) == NULL){
+  if(user_esp == NULL || !is_user_vaddr(user_esp)
+   // || pagedir_get_page(cur->pagedir, user_esp) == NULL
+
+  ){
+  // if(user_esp == NULL || !is_user_vaddr(user_esp) ||
+  // find_page(user_esp) == NULL){
     // printf("In verify_user\n");
     thread_exit();
   }
@@ -411,6 +415,8 @@ int write (int fd, const void *buffer, unsigned size){
 
   ASSERT(buffer != NULL);
   // #Jacob Drove Here
+  if(pagedir_get_page(thread_current()->pagedir, buffer) == NULL)
+    thread_exit();
   lock_acquire(&lock);
   char *buf = (char *)buffer;
 

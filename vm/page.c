@@ -91,7 +91,7 @@ add_page_to_stack(struct frame *f, void *vaddr)
 	struct thread *cur_thread = thread_current();
 
 	struct page *p = malloc(sizeof(struct page));
-	p->addr = f->kva;
+	p->addr = vaddr;
 	p->resident_bit = false;
 	p->in_swap = false;
 	p->in_filesys = false;
@@ -108,10 +108,9 @@ add_page_to_stack(struct frame *f, void *vaddr)
 	// printf("Add page at address, 0x%x, to supplemental page table\n", p->addr);
 	hash_insert(&cur_thread->pagetable, &p->page_table_elem);
 
-	// printf("void *vaddr::::::::::::: %x\n", vaddr);
 	//need to add p to page directory
 	bool result = (pagedir_get_page (cur_thread->pagedir, vaddr) == NULL &&
-		pagedir_set_page (cur_thread->pagedir, vaddr, p->addr, p->writable));
+		pagedir_set_page (cur_thread->pagedir, vaddr, f->kva, p->writable));
 
 	// ASSERT(0);
 	return result;

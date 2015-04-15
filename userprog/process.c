@@ -627,7 +627,7 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
           *((int *)myesp) = count;
 
           // push return value
-         myesp -= 4;
+          myesp -= 4;
           *((int *)myesp) = 0;
 
           *esp = myesp;
