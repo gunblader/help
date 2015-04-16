@@ -108,6 +108,8 @@ struct thread
     struct list fd_list;
     struct file *file;
 
+    uint32_t cur_esp;                   /* Holds the value of esp for use in page_fault() */
+
     struct semaphore sema_wait_process;
     struct semaphore sema_thread_create;
     struct semaphore pause_thread_exit;

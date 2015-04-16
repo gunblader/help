@@ -5,9 +5,14 @@
 #include "threads/vaddr.h"
 #include "vm/swap.h"
 #include "threads/thread.h"
+#include "threads/loader.h"
 
-//Used to track which frame we need to evict when the table is full for FIFO algorithm
+// Used to track which frame we need to evict when the table is full for FIFO algorithm
 int frame_to_evict;
+
+// Number of pages that were returned from the user pool
+int num_pages;
+bool num_pages_set;
 
 static int *evict_frame();
 
@@ -19,8 +24,11 @@ struct frame *frame_table;
 
 void
 frame_init(){
+	// printf("\n\nnum_frames = %i\n", num_frames);
 	frame_table = (struct frame *)malloc(num_frames * sizeof(struct frame *));
 	frame_to_evict = 0;
+	// num_pages = 0;
+	// num_pages_set = false;
 }
 
 //This function returns a pointer to a frame
@@ -48,11 +56,14 @@ get_frame()
 	{
 		// ASSERT(0); //for now panic the kernel if frame table is full
 		kva = evict_frame();
+		// num_pages_set = true;
 	}
 	//if you did find an empty frame, allocate a page into that frame
 	else
 	{
 		kva = (int *)palloc_get_page(PAL_USER);
+		// if(!num_pages_set)
+		// 	num_pages++;
 	}
 	ASSERT(kva != NULL);
 	
@@ -88,17 +99,16 @@ evict_frame()
 	
 	//move old page into swap space
 	struct page *oldpage = frame_table[frame_to_evict].cur_page;
+	//update bool that tells us where this page is
+	oldpage->in_swap = true;
+	frame_table[frame_to_evict].kva = NULL;
 
 	swap_page((void *)oldpage->addr);
 
-	//update bool that tells us where this page is
-	frame_table[frame_to_evict].cur_page->in_swap = true;
-
 	//need to get rid of page directory entry for this frame
 	pagedir_clear_page(thread_current()->pagedir, oldpage->addr);
-
 	//free this frame
-	frame_table[frame_to_evict].kva = NULL;
+	palloc_free_page(oldpage->addr);
 
 	//allocate a new page to put in the frame
 	int *kva = (int *)palloc_get_page(PAL_USER);
@@ -110,6 +120,17 @@ evict_frame()
 
 	if(frame_to_evict >= num_frames)
 		frame_to_evict = 0;
+
+
+
+
+
+	// DONT THROW OUT DIRTY PAGES WHEN USING CLOCK*************
+
+
+
+
+
 
 	return kva;
 	// #End of Paul and Adam driving

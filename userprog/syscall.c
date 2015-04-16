@@ -92,7 +92,7 @@ syscall_handler (struct intr_frame *f UNUSED)
 {
   // grab esp from f
   //#Adam Drove Here
-
+  thread_current()->cur_esp = f->esp;
   int *user_esp = (int *)f->esp;
   
   verify_user(user_esp);

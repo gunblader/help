@@ -196,8 +196,14 @@ page_fault (struct intr_frame *f)
     // printf("The faulting page wasn't found in the supp page table\n");
     // printf("Faulting addr: 0x%x\n", fault_addr);
     
+    // if(cur_thread == kernel)
+    //  syscall_saved_esp
+    // else
+    //  use f->esp
+    
+    uint32_t cur_esp = !user ? cur_thread->cur_esp : f-> esp;
     //if we are 32 or 4 bytes below the stack pointer, then grow the stack
-    int diff = f->esp - fault_addr;
+    int diff = (void *)cur_esp - fault_addr;
     // might need to change to 40 - Sage
     if(diff <= 32){
       //add a stack page to the supplemental page table and install it
@@ -245,7 +251,11 @@ page_fault (struct intr_frame *f)
       // update  the page directory
       if(!(pagedir_get_page (cur_thread->pagedir, fault_addr) == NULL
         && pagedir_set_page (cur_thread->pagedir, fault_addr, f->kva, fp->writable)))
-          return;
+      {
+        //set dirty bit to 1
+        pagedir_set_dirty(cur_thread->pagedir, fault_addr, 1);
+        return;
+      }
 
     }
     else

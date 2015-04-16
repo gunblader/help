@@ -537,6 +537,8 @@ init_thread (struct thread *t, const char *name, int priority)
   t->called_exit = false;
   list_init(&t->fd_list);
   t->stacklimit = 1000000;
+
+  t->cur_esp = NULL;
   
 
   //#End Adam Driving
