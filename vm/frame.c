@@ -68,6 +68,7 @@ get_frame()
 	ASSERT(kva != NULL);
 	
 	// #paul drove here
+	// pagedir_set_accessed(thread_current()->pagedir, f->cur_page->addr, 0);
 	f->kva = kva;
 	return f;
 	// #driving ends
@@ -95,42 +96,84 @@ evict_frame()
 
 
 
-	// #Paul and Adam drove here
+	// // #Paul and Adam drove here
 	
-	//move old page into swap space
-	struct page *oldpage = frame_table[frame_to_evict].cur_page;
-	//update bool that tells us where this page is
-	oldpage->in_swap = true;
-	frame_table[frame_to_evict].kva = NULL;
+	// //move old page into swap space
+	// struct page *oldpage = frame_table[frame_to_evict].cur_page;
+	// //update bool that tells us where this page is
+	// oldpage->in_swap = true;
+	// frame_table[frame_to_evict].kva = NULL;
 
-	swap_page((void *)oldpage->addr);
+	// swap_page((void *)oldpage->addr);
 
-	//need to get rid of page directory entry for this frame
-	pagedir_clear_page(thread_current()->pagedir, oldpage->addr);
-	//free this frame
-	palloc_free_page(oldpage->addr);
+	// //need to get rid of page directory entry for this frame
+	// pagedir_clear_page(thread_current()->pagedir, oldpage->addr);
+	// //free this frame
+	// palloc_free_page(oldpage->addr);
 
-	//allocate a new page to put in the frame
-	int *kva = (int *)palloc_get_page(PAL_USER);
+	// //allocate a new page to put in the frame
+	// int *kva = (int *)palloc_get_page(PAL_USER);
 
-	ASSERT(kva != NULL);
+	// ASSERT(kva != NULL);
 
-	//add the page to this frame
-	frame_table[frame_to_evict++].kva = kva;
+	// //add the page to this frame
+	// frame_table[frame_to_evict++].kva = kva;
 
-	if(frame_to_evict >= num_frames)
-		frame_to_evict = 0;
+	// if(frame_to_evict >= num_frames)
+	// 	frame_to_evict = 0;
 
 
 
 
 
 	// DONT THROW OUT DIRTY PAGES WHEN USING CLOCK*************
+	struct thread *cur_thread = thread_current();
+	int i = frame_to_evict;
+	bool not_found = true;
+	struct frame *f = NULL;
+	int *kva = NULL;
 
+	while(not_found)
+	{
+		f = &frame_table[i];
+		//this is the page we want to replace
+		if(!pagedir_is_accessed(cur_thread->pagedir, f->cur_page->addr) && 
+			pagedir_is_dirty(cur_thread->pagedir, f->cur_page->addr))
+		{
+			not_found = false;
 
+			/***perform eviction***/
 
+			//move old page into swap space
+			struct page *oldpage = frame_table[i].cur_page;
+			//update bool that tells us where this page is
+			oldpage->in_swap = true;
+			frame_table[i].kva = NULL;
 
+			swap_page((void *)oldpage->addr);
 
+			//need to get rid of page directory entry for this frame
+			pagedir_clear_page(thread_current()->pagedir, oldpage->addr);
+			
+			//free this frame
+			palloc_free_page(oldpage->addr);
+
+			//allocate a new page to put in the frame
+			int *kva = (int *)palloc_get_page(PAL_USER);
+
+			ASSERT(kva != NULL);
+
+			//add the page to this frame
+			frame_table[frame_to_evict++].kva = kva;
+
+		}
+		//We set reference bit to 0
+		else
+		{
+			pagedir_set_accessed(cur_thread->pagedir, f->cur_page->addr, 0);
+		}
+		i = (i == num_frames) ? 0 : i++;
+	}
 
 	return kva;
 	// #End of Paul and Adam driving

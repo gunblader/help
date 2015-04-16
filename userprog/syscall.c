@@ -81,7 +81,7 @@ void verify_user(void *user_esp){
 }
 // Explain here what this does in a comment
 bool check_num_args(int argc, int expected){
-  return argc-1 < expected ? true: false;
+  return argc-1 < expected ? true : false;
 }
 
 

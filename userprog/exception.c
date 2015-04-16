@@ -201,7 +201,7 @@ page_fault (struct intr_frame *f)
     // else
     //  use f->esp
     
-    uint32_t cur_esp = !user ? cur_thread->cur_esp : f-> esp;
+    uint32_t cur_esp = (!user) ? cur_thread->cur_esp : f-> esp;
     //if we are 32 or 4 bytes below the stack pointer, then grow the stack
     int diff = (void *)cur_esp - fault_addr;
     // might need to change to 40 - Sage
