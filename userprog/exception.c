@@ -162,11 +162,11 @@ page_fault (struct intr_frame *f)
 
   // printf("There is no crying in Pintos!\n");
 
-  // // debug_backtrace();
+  // debug_backtrace();
 
   // kill (f);
 
-
+     printf("faulting address: 0x%x\n", fault_addr);
 
   /* If the supplemental page table indicates that the user process
       should not expect any data at the address it was trying to access,
@@ -176,7 +176,7 @@ page_fault (struct intr_frame *f)
 
   if(fault_addr == NULL || (user && is_kernel_vaddr(fault_addr)) || !not_present)
   {
-    // printf("Terminating process\n");
+    printf("Terminating process\n");
     thread_exit();
   }
 
@@ -190,8 +190,11 @@ page_fault (struct intr_frame *f)
   if(fp == NULL)
   {
 
-    if(!write)
-      thread_exit();
+    if(!write){
+      printf("Exit in PF #2\n");
+      // thread_exit();
+      exit(-1);
+    }
     //either terminate the process or grow the stack
     // printf("The faulting page wasn't found in the supp page table\n");
     // printf("Faulting addr: 0x%x\n", fault_addr);
@@ -206,6 +209,7 @@ page_fault (struct intr_frame *f)
     int diff = (void *)cur_esp - fault_addr;
     // might need to change to 40 - Sage
     if(diff <= 32){
+      printf("Growing Stack\n");
       //add a stack page to the supplemental page table and install it
       
       // printf("GROW THE STACK HERE\n");
@@ -225,7 +229,12 @@ page_fault (struct intr_frame *f)
 
        // add_page(cur_thread->file, 0, kpage, 0, 0, true);
 
-       add_page_to_stack(f, pg_round_down(fault_addr));
+       if(!add_page_to_stack(f, pg_round_down(fault_addr)))
+       {
+          printf("Error installing stack page\n");
+          // thread_exit();
+          exit(-1);
+       }
 
       return;
     
@@ -235,6 +244,7 @@ page_fault (struct intr_frame *f)
     else{
       // will have to input the correct failing behavior for output match here.
       // thread_exit();
+      printf("*******************************\n");
       exit(-1);
     }
   }
@@ -243,8 +253,10 @@ page_fault (struct intr_frame *f)
   {
     //check and see if the faulting page is in a swap slot
     struct frame *f = get_frame();
+
     if(fp->in_swap)
     { 
+      printf("IN swap check\n");
       // bring it back in and place it in an empty frame;
       f->cur_page = get_page_from_swap(f->kva);
       // fp->addr = fault_addr;
@@ -252,14 +264,16 @@ page_fault (struct intr_frame *f)
       if(!(pagedir_get_page (cur_thread->pagedir, fault_addr) == NULL
         && pagedir_set_page (cur_thread->pagedir, fault_addr, f->kva, fp->writable)))
       {
-        //set dirty bit to 1
-        pagedir_set_dirty(cur_thread->pagedir, fault_addr, 1);
+        printf("IN swap: failed install\n");
         return;
       }
+        //set dirty bit to 1
+        pagedir_set_dirty(cur_thread->pagedir, fault_addr, 1);
 
     }
     else
     {
+      printf("Reading in page from the file\n");
       size_t page_read_bytes = fp->read_bytes < PGSIZE ? fp->read_bytes : PGSIZE;
       size_t page_zero_bytes = PGSIZE - page_read_bytes;
       
@@ -274,14 +288,14 @@ page_fault (struct intr_frame *f)
 
       if(kpage == NULL)
       {
-        // printf("Kpage was null\n");
+        printf("Kpage was null\n");
         return;
       }
 
       //fetch the data into the frame, by reading it from filesys or swap, zeroing it, etc.
       file_seek(fp->file, fp->ofs);
       if(file_read(fp->file, kpage, page_read_bytes) != (int) page_read_bytes){
-        // printf("File wasn't read properly\n");
+        printf("File wasn't read properly\n");
         // palloc_free_page (kpage);
         return;
       }
@@ -291,7 +305,7 @@ page_fault (struct intr_frame *f)
       if(!(pagedir_get_page (cur_thread->pagedir, fp->addr) == NULL
         && pagedir_set_page (cur_thread->pagedir, fp->addr, kpage, fp->writable)))
       {
-        // printf("Page wasn't mapped properly\n");
+        printf("Page wasn't mapped properly\n");
         // palloc_free_page (kpage);
         return;
       }

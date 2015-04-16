@@ -39,6 +39,7 @@ swap_init()
 void *
 swap_page(void *page)
 {
+	printf("IN swap_page\n");
 	struct block *swap_space = block_get_role(BLOCK_SWAP);
 	// int block_sectors = block_size(swap_space);
 	// int swap_slots = block_sectors/8;
@@ -63,7 +64,7 @@ swap_page(void *page)
 			s = i * 8;
 
 			write_to_swap(swap_space, s, page);
-
+			swap_empty = false;
 			break;
 		}
 		else
@@ -102,7 +103,7 @@ get_page_from_swap(void *page)
 			
 			//read data from swap into page
 			read_page_from_swap(swap_space, s, page);
-
+			
 			return;
 
 		}

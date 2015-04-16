@@ -54,14 +54,24 @@ get_frame()
 	//if you didn't find an empty frame, evict something.
 	if(!found_something)
 	{
+		printf("Frame Table full\n");
 		// ASSERT(0); //for now panic the kernel if frame table is full
 		kva = evict_frame();
+		printf("Evicted Frame kva: 0x%x\n", kva);
 		// num_pages_set = true;
 	}
 	//if you did find an empty frame, allocate a page into that frame
 	else
 	{
 		kva = (int *)palloc_get_page(PAL_USER);
+		
+		// struct page *temp = (struct page *)malloc(sizeof(struct page));
+		// // temp->addr = kva;
+		// temp->in_swap = false;
+		// temp->stack_page = false;
+
+		// f->cur_page = temp;
+
 		// if(!num_pages_set)
 		// 	num_pages++;
 	}
@@ -70,6 +80,7 @@ get_frame()
 	// #paul drove here
 	// pagedir_set_accessed(thread_current()->pagedir, f->cur_page->addr, 0);
 	f->kva = kva;
+	printf("frame kva: 0x%x\n", f->kva);
 	return f;
 	// #driving ends
 
@@ -132,24 +143,30 @@ evict_frame()
 	bool not_found = true;
 	struct frame *f = NULL;
 	int *kva = NULL;
-
+	printf("Evicting Frame\n");
 	while(not_found)
 	{
+		printf("In Evict Frame While Loop\n");
 		f = &frame_table[i];
+		printf("Frame f's cur_page: 0x%x\n", f->cur_page);
 		//this is the page we want to replace
-		if(!pagedir_is_accessed(cur_thread->pagedir, f->cur_page->addr) && 
-			pagedir_is_dirty(cur_thread->pagedir, f->cur_page->addr))
+		// bool is_accessed = pagedir_is_accessed(cur_thread->pagedir, f->cur_page->addr);
+		// bool is_dirty = pagedir_is_dirty(cur_thread->pagedir, f->cur_page->addr);
+		if( !pagedir_is_accessed(cur_thread->pagedir, f->cur_page->addr) )
 		{
+			printf("In Evict Frame conditional\n");
 			not_found = false;
 
 			/***perform eviction***/
 
 			//move old page into swap space
-			struct page *oldpage = frame_table[i].cur_page;
+			struct page *oldpage = f->cur_page;
 			//update bool that tells us where this page is
 			oldpage->in_swap = true;
-			frame_table[i].kva = NULL;
+			f->kva = NULL;
 
+			//do we want the oldpage to store where it is in swap?
+			//void *swap_addr = swap_page((void *)oldpage->addr);
 			swap_page((void *)oldpage->addr);
 
 			//need to get rid of page directory entry for this frame
@@ -170,6 +187,7 @@ evict_frame()
 		//We set reference bit to 0
 		else
 		{
+			printf("IN Evict Frame else statement\n");
 			pagedir_set_accessed(cur_thread->pagedir, f->cur_page->addr, 0);
 		}
 		i = (i == num_frames) ? 0 : i++;

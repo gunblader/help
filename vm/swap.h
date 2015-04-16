@@ -8,7 +8,7 @@
 #include "vm/frame.h"
 
 // **need to define how we calculated this number**
-#define NUM_SWAP_SLOTS 2000
+#define NUM_SWAP_SLOTS 2048
 
 struct swap_entry
 {			

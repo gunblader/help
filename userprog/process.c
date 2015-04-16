@@ -515,6 +515,7 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
         // struct thread *cur_thread = thread_current();
 
         add_page(file, ofs, upage, read_bytes, zero_bytes, writable);
+        // printf("Load upage: 0x%x\n", upage);
 
       /* Advance. */
         read_bytes -= page_read_bytes;

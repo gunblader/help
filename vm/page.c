@@ -18,7 +18,7 @@ page_init(){
 
 //adds the page to the page table
 void
-add_page(struct file *file, off_t ofs, uint8_t *vaddr,
+add_page(struct file *file, off_t ofs, uint8_t *upage,
     uint32_t read_bytes, uint32_t zero_bytes, bool writable)
 {
 	//if this is the first time we are adding to the supp pagetable
@@ -30,7 +30,7 @@ add_page(struct file *file, off_t ofs, uint8_t *vaddr,
 		init = true;
 	}
 	struct page *p = malloc(sizeof(struct page));
-	p->addr = vaddr;
+	p->addr = upage;
 	p->resident_bit = false;
 	p->in_swap = false;
 	p->in_filesys = false;
@@ -75,6 +75,7 @@ find_page(void *addr){
 	struct hash_elem *h;
 
 	p.addr = addr;
+	// printf("find_page upage: 0x%x\n", p.addr);
 	// printf("find_page using addr: 0x%x\n", p.addr);
 	h = hash_find(&thread_current()->pagetable, &p.page_table_elem);
 	if(h == NULL)

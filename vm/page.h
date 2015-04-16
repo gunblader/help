@@ -7,7 +7,7 @@
 
 struct page
 {
-	void *addr; /* The address of this page */
+	void *addr; /* The address of this page (*upage) */
 	bool resident_bit; /* Set 1 if the page is in physical memory, 0 otherwise */
 	bool in_swap; /* Bool to tell if the page is currently in swap */
 	bool in_filesys; /* Bool to tell if the page is currently in the file system */
