@@ -21,6 +21,7 @@
 #include "threads/synch.h"
 #include "vm/frame.h"
 #include "vm/page.h"
+#include <hash.h>
 
 static thread_func start_process NO_RETURN;
 static bool load (const char *cmdline, void (**eip) (void), void **esp);
@@ -175,6 +176,9 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
       pd = cur->pagedir;
       if (pd != NULL) 
       {
+
+
+
       /* Correct ordering here is crucial.  We must set
          cur->pagedir to NULL before switching page directories,
          so that a timer interrupt can't switch back to the
@@ -182,9 +186,31 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
          directory before destroying the process's page
          directory, or our active page directory will be one
          that's been freed (and cleared). */
+        // #Jacob Drove Here
+        struct hash_iterator it;
+        hash_first(&it, &cur->pagetable);
+        while(hash_next(&it))
+        {
+          struct page *p = hash_entry(hash_cur(&it), struct page, page_table_elem);
+          if(p->resident_bit){
+            // free the page from the frame
+            // find a way to get the frame's kernel virtual address and set it to null
+            struct frame *f = lookup_frame(p->addr);
+            f->kva = NULL;
+            f->cur_page = NULL;
+            // frame_table_print();
+          }
+          if(p->in_swap)
+          {
+            //remove page "p" from swap table
+            
+          }
+        }
+        // #End Jacob Driving
          cur->pagedir = NULL;
          pagedir_activate (NULL);
          pagedir_destroy (pd);
+
        }
      }
 

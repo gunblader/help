@@ -24,7 +24,9 @@ struct frame
 
 
 void frame_init();
+void frame_table_print();
 struct frame *get_frame();
+struct frame *lookup_frame(void *uaddr);
 
 size_t num_frames;
 #endif /* vm/frame.h */

@@ -25,10 +25,20 @@ struct frame *frame_table;
 void
 frame_init(){
 	// printf("\n\nnum_frames = %i\n", num_frames);
-	frame_table = (struct frame *)malloc(num_frames * sizeof(struct frame *));
-	frame_to_evict = 0;
+	frame_table = (struct frame *)malloc(num_frames * sizeof(struct frame));
+	frame_to_evict = 1;
 	// num_pages = 0;
 	// num_pages_set = false;
+}
+
+void
+frame_table_print(){
+	int i;
+	for(i = 1; i < num_frames; i++){
+		struct frame *f = &frame_table[i];
+		printf("**********frame addr #%d: 0x%x, page addr: 0x%x\n", i, f->kva,
+		 f->cur_page->addr);
+	}
 }
 
 //This function returns a pointer to a frame
@@ -49,12 +59,14 @@ get_frame()
 		{
 			found_something = true;
 			break;
-		}
+		}	
 	}
 	//if you didn't find an empty frame, evict something.
 	if(!found_something)
 	{
 		printf("Frame Table full\n");
+		
+		frame_table_print();
 		// ASSERT(0); //for now panic the kernel if frame table is full
 		kva = evict_frame();
 		printf("Evicted Frame kva: 0x%x\n", kva);
@@ -65,6 +77,7 @@ get_frame()
 	{
 		kva = (int *)palloc_get_page(PAL_USER);
 		
+		// printf("********************%s\n", thread_current()->name);
 		// struct page *temp = (struct page *)malloc(sizeof(struct page));
 		// // temp->addr = kva;
 		// temp->in_swap = false;
@@ -148,7 +161,7 @@ evict_frame()
 	{
 		printf("In Evict Frame While Loop\n");
 		f = &frame_table[i];
-		printf("Frame f's cur_page: 0x%x\n", f->cur_page);
+		printf("Frame f's cur_page: 0x%x\n", f->cur_page->addr);
 		//this is the page we want to replace
 		// bool is_accessed = pagedir_is_accessed(cur_thread->pagedir, f->cur_page->addr);
 		// bool is_dirty = pagedir_is_dirty(cur_thread->pagedir, f->cur_page->addr);
@@ -173,6 +186,7 @@ evict_frame()
 			pagedir_clear_page(thread_current()->pagedir, oldpage->addr);
 			
 			//free this frame
+			// printf("Oldpage addr: 0x%x\n", oldpage->addr);
 			palloc_free_page(oldpage->addr);
 
 			//allocate a new page to put in the frame
@@ -190,11 +204,30 @@ evict_frame()
 			printf("IN Evict Frame else statement\n");
 			pagedir_set_accessed(cur_thread->pagedir, f->cur_page->addr, 0);
 		}
-		i = (i == num_frames) ? 0 : i++;
+		// printf("BEFORE i %i\n", i);
+		i = (i == num_frames) ? 1 : i + 1;
+		// printf("AFTER i %i\n", i);
 	}
 
 	return kva;
 	// #End of Paul and Adam driving
 }
 
-
+//removes the page with "uaddr" address from the frame table
+struct frame *
+lookup_frame(void *uaddr)
+{
+	struct frame *f = NULL;
+	int i;
+	for(i = 0; i < num_frames; i++){
+		f = &frame_table[i];
+		if(f->cur_page != NULL)
+		{
+			if(f->cur_page->addr == uaddr)
+			{
+				break;
+			}
+		}
+	}
+	return f;
+}

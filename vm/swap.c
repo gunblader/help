@@ -25,8 +25,7 @@ void
 swap_init()
 {
 	// num_swap_slots = 2000; 
-	swap_table = (struct swap_entry *)malloc(NUM_SWAP_SLOTS 
-		* sizeof(struct swap_entry *));
+	swap_table = (struct swap_entry *)malloc(NUM_SWAP_SLOTS * sizeof(struct swap_entry ));
 
 	//# Paul drove here
 	int i;
@@ -48,7 +47,7 @@ swap_page(void *page)
 	int i;
 	bool swap_empty = false;
 	int bytes_read = 0;
-
+	void *temp;
 	//find empty swap spot in the swap table
 	for(i = 0; i < NUM_SWAP_SLOTS; i++)
 	{
@@ -60,10 +59,11 @@ swap_page(void *page)
 		{
 			// write page into all 8 sectors of the swap block that represent that
 			// swap slot.
+			temp = page;
 			swap_slot->page = page;
 			s = i * 8;
 
-			write_to_swap(swap_space, s, page);
+			write_to_swap(swap_space, s, temp);
 			swap_empty = false;
 			break;
 		}
@@ -74,6 +74,7 @@ swap_page(void *page)
 	if (swap_empty)
 		PANIC ("Killed process because Frame table full and swap table full.");
 
+	printf("swap_page completed\n");
 	return swap_slot;
 }
 //# Paul ends driving

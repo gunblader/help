@@ -273,7 +273,7 @@ page_fault (struct intr_frame *f)
     }
     else
     {
-      printf("Reading in page from the file\n");
+      // printf("Reading in page from the file\n");
       size_t page_read_bytes = fp->read_bytes < PGSIZE ? fp->read_bytes : PGSIZE;
       size_t page_zero_bytes = PGSIZE - page_read_bytes;
       
