@@ -186,7 +186,7 @@ evict_frame()
 			pagedir_clear_page(thread_current()->pagedir, oldpage->addr);
 			
 			//free this frame
-			// printf("Oldpage addr: 0x%x\n", oldpage->addr);
+			printf("Oldpage addr: 0x%x\n", oldpage->addr);
 			palloc_free_page(oldpage->addr);
 
 			//allocate a new page to put in the frame
@@ -205,7 +205,7 @@ evict_frame()
 			pagedir_set_accessed(cur_thread->pagedir, f->cur_page->addr, 0);
 		}
 		// printf("BEFORE i %i\n", i);
-		i = (i == num_frames) ? 1 : i + 1;
+		i = (i == num_frames - 1) ? 1 : i + 1;
 		// printf("AFTER i %i\n", i);
 	}
 
