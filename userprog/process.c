@@ -187,25 +187,25 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
          directory, or our active page directory will be one
          that's been freed (and cleared). */
         // #Jacob Drove Here
-        struct hash_iterator it;
-        hash_first(&it, &cur->pagetable);
-        while(hash_next(&it))
-        {
-          struct page *p = hash_entry(hash_cur(&it), struct page, page_table_elem);
-          if(p->resident_bit){
-            // free the page from the frame
-            // find a way to get the frame's kernel virtual address and set it to null
-            struct frame *f = lookup_frame(p->addr);
-            f->kva = NULL;
-            f->cur_page = NULL;
-            // frame_table_print();
-          }
-          if(p->in_swap)
-          {
-            //remove page "p" from swap table
-            remove_page_from_swap(p);
-          }
-        }
+        // struct hash_iterator it;
+        // hash_first(&it, &cur->pagetable);
+        // while(hash_next(&it))
+        // {
+        //   struct page *p = hash_entry(hash_cur(&it), struct page, page_table_elem);
+        //   if(p->resident_bit){
+        //     // free the page from the frame
+        //     // find a way to get the frame's kernel virtual address and set it to null
+        //     struct frame *f = lookup_frame(p->addr);
+        //     f->kva = NULL;
+        //     f->cur_page = NULL;
+        //     // frame_table_print();
+        //   }
+        //   if(p->in_swap)
+        //   {
+        //     //remove page "p" from swap table
+        //     remove_page_from_swap(p);
+        //   }
+        // }
         // #End Jacob Driving
          cur->pagedir = NULL;
          pagedir_activate (NULL);

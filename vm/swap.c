@@ -39,6 +39,7 @@ swap_init()
 	for(i = 0; i < NUM_SWAP_SLOTS; i++)
 	{
 		struct swap_entry *slot = &swap_table[i]; 
+		slot->slot_num = i;
 		slot->empty = true;
 		slot->page = NULL;
 	}
@@ -74,6 +75,7 @@ find_empty_sector(){
   of where the page is in swap*/
 void
 swap_page(void *upage, void *kpage){
+	printf("IN SWAP PAGE\n");
 	//find the page to swap in our supplemental page table
 	struct page *page_to_swap = find_page(upage);
 	ASSERT(page_to_swap != NULL);
@@ -93,11 +95,16 @@ swap_page(void *upage, void *kpage){
 	struct swap_entry *slot = &swap_table[next_empty / 8];
 	slot->empty = false;
 	slot->page = page_to_swap;
+
+	printf("New swap entry: \n\tslot_num: %i\n\tempty: %i\n\tupage: 0x%x\n", 
+		slot->slot_num, slot->empty, slot->page->addr);
+	printf("EXITED SWAP PAGE\n");
 }
 
 /* Returns the page given by "upage" from swap*/
 struct page *
-get_page_from_swap(void *upage){
+get_page_from_swap(void *upage, void *kpage){
+	printf("****IN GET PAGE FROM SWAP****\n");
 	//find the page in the supplemental page table
 	struct page *page_from_swap = find_page(upage);
 	ASSERT(page_from_swap->in_swap);
@@ -107,12 +114,19 @@ get_page_from_swap(void *upage){
 
 	//read the page in from swap
 	
-	read_page_from_swap(swap_space, first_sector, upage);
+	read_page_from_swap(swap_space, first_sector, kpage);
+
 
 	struct swap_entry *slot = &swap_table[first_sector / 8];
+	printf("swap entry: \n\tslot_num: %i\n\tempty: %i\n\tupage: 0x%x\n", 
+		slot->slot_num, slot->empty, slot->page->addr);
 	slot->empty = true;
 	slot->page = NULL;
 
+	printf("Updated swap entry: \n\tslot_num: %i\n\tempty: %i\n\t\n", 
+		slot->slot_num, slot->empty);
+
+	// printf("EXITED GET PAGE FROM SWAP\n");
 	return page_from_swap;
 }
 

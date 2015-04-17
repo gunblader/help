@@ -64,7 +64,7 @@ get_frame()
 	//if you didn't find an empty frame, evict something.
 	if(!found_something)
 	{
-		// printf("Frame Table full\n");
+		printf("Frame Table full\n");
 		
 		//frame_table_print();
 		// ASSERT(0); //for now panic the kernel if frame table is full
@@ -172,7 +172,7 @@ evict_frame()
 			not_found = false;
 
 			/***perform eviction***/
-
+			printf("Evicting upage into swap from frame table: 0x%x\n", f->cur_page->addr);
 			//move old page into swap space
 			struct page *oldpage = f->cur_page;
 			//update bool that tells us where this page is

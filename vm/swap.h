@@ -13,7 +13,8 @@
 struct swap_entry
 {			
 
-//# Paul drove here.	
+//# Paul drove here.
+	int slot_num;	
 	bool empty;     		// set to true if swap slot is taken
 	struct page *page;		// Holds page put in swap
 //# Paul ends driving
@@ -24,7 +25,7 @@ struct swap_entry
 };
 
 void swap_page(void *upage, void *kpage);
-struct page *get_page_from_swap(void *upage);
+struct page *get_page_from_swap(void *upage, void *kpage);
 void remove_page_from_swap(struct page *p);
 
 #endif
