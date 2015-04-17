@@ -38,7 +38,7 @@ swap_init()
 void *
 swap_page(void *page)
 {
-	printf("IN swap_page\n");
+	// printf("IN swap_page\n");
 	struct block *swap_space = block_get_role(BLOCK_SWAP);
 	// int block_sectors = block_size(swap_space);
 	// int swap_slots = block_sectors/8;
@@ -74,7 +74,7 @@ swap_page(void *page)
 	if (swap_empty)
 		PANIC ("Killed process because Frame table full and swap table full.");
 
-	printf("swap_page completed\n");
+	// printf("swap_page completed\n");
 	return swap_slot;
 }
 //# Paul ends driving

@@ -64,12 +64,12 @@ get_frame()
 	//if you didn't find an empty frame, evict something.
 	if(!found_something)
 	{
-		printf("Frame Table full\n");
+		// printf("Frame Table full\n");
 		
 		//frame_table_print();
 		// ASSERT(0); //for now panic the kernel if frame table is full
 		kva = evict_frame();
-		printf("Evicted Frame kva: 0x%x\n", kva);
+		// printf("Evicted Frame kva: 0x%x\n", kva);
 		// num_pages_set = true;
 
 	}
@@ -94,7 +94,7 @@ get_frame()
 	// #paul drove here
 	// pagedir_set_accessed(thread_current()->pagedir, f->cur_page->addr, 0);
 	f->kva = kva;
-	printf("frame kva: 0x%x\n", f->kva);
+	// printf("frame kva: 0x%x\n", f->kva);
 	return f;
 	// #driving ends
 
@@ -157,18 +157,18 @@ evict_frame()
 	bool not_found = true;
 	struct frame *f = NULL;
 	int *kva = NULL;
-	printf("Evicting Frame\n");
+	// printf("Evicting Frame\n");
 	while(not_found)
 	{
-		printf("In Evict Frame While Loop\n");
+		// printf("In Evict Frame While Loop\n");
 		f = &frame_table[i];
-		printf("Frame f's cur_page: 0x%x\n", f->cur_page->addr);
+		// printf("Frame f's cur_page: 0x%x\n", f->cur_page->addr);
 		//this is the page we want to replace
 		// bool is_accessed = pagedir_is_accessed(cur_thread->pagedir, f->cur_page->addr);
 		// bool is_dirty = pagedir_is_dirty(cur_thread->pagedir, f->cur_page->addr);
 		if( !pagedir_is_accessed(cur_thread->pagedir, f->cur_page->addr) )
 		{
-			printf("In Evict Frame conditional\n");
+			// printf("In Evict Frame conditional\n");
 			not_found = false;
 
 			/***perform eviction***/
@@ -187,7 +187,7 @@ evict_frame()
 			pagedir_clear_page(thread_current()->pagedir, oldpage->addr);
 			
 			//free this frame
-			printf("Oldpage addr: 0x%x\n", oldpage->addr);
+			// printf("Oldpage addr: 0x%x\n", oldpage->addr);
 			palloc_free_page(f->kva);
 
 			//allocate a new page to put in the frame
@@ -202,7 +202,7 @@ evict_frame()
 		//We set reference bit to 0
 		else
 		{
-			printf("IN Evict Frame else statement\n");
+			// printf("IN Evict Frame else statement\n");
 			pagedir_set_accessed(cur_thread->pagedir, f->cur_page->addr, 0);
 		}
 		// printf("BEFORE i %i\n", i);
