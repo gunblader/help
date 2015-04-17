@@ -66,17 +66,18 @@ get_frame()
 	{
 		printf("Frame Table full\n");
 		
-		frame_table_print();
+		//frame_table_print();
 		// ASSERT(0); //for now panic the kernel if frame table is full
 		kva = evict_frame();
 		printf("Evicted Frame kva: 0x%x\n", kva);
 		// num_pages_set = true;
+
 	}
 	//if you did find an empty frame, allocate a page into that frame
 	else
 	{
 		kva = (int *)palloc_get_page(PAL_USER);
-		
+	       
 		// printf("********************%s\n", thread_current()->name);
 		// struct page *temp = (struct page *)malloc(sizeof(struct page));
 		// // temp->addr = kva;
@@ -176,7 +177,7 @@ evict_frame()
 			struct page *oldpage = f->cur_page;
 			//update bool that tells us where this page is
 			oldpage->in_swap = true;
-			f->kva = NULL;
+			// f->kva = NULL;
 
 			//do we want the oldpage to store where it is in swap?
 			//void *swap_addr = swap_page((void *)oldpage->addr);
@@ -187,10 +188,10 @@ evict_frame()
 			
 			//free this frame
 			printf("Oldpage addr: 0x%x\n", oldpage->addr);
-			palloc_free_page(oldpage->addr);
+			palloc_free_page(f->kva);
 
 			//allocate a new page to put in the frame
-			int *kva = (int *)palloc_get_page(PAL_USER);
+			kva = (int *)palloc_get_page(PAL_USER);
 
 			ASSERT(kva != NULL);
 

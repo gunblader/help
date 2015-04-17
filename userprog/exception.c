@@ -261,8 +261,8 @@ page_fault (struct intr_frame *f)
       f->cur_page = get_page_from_swap(f->kva);
       // fp->addr = fault_addr;
       // update  the page directory
-      if(!(pagedir_get_page (cur_thread->pagedir, fault_addr) == NULL
-        && pagedir_set_page (cur_thread->pagedir, fault_addr, f->kva, fp->writable)))
+      if(!(pagedir_get_page (cur_thread->pagedir, fp->addr) == NULL
+        && pagedir_set_page (cur_thread->pagedir, fp->addr, f->kva, fp->writable)))
       {
         printf("IN swap: failed install\n");
         return;
