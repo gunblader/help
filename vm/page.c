@@ -35,6 +35,7 @@ add_page(struct file *file, off_t ofs, uint8_t *upage,
 	p->in_swap = false;
 	p->in_filesys = false;
 	p->stack_page = false;
+	p->index_in_swap = NULL;
 
 	p->file = file;
 	p->ofs = ofs;

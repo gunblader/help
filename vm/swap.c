@@ -10,6 +10,9 @@
 	to be swapped into 
 */
 struct swap_entry *swap_table;
+struct block *swap_space;
+
+block_sector_t find_empty_sector();
 
 //helper function to write a page to swap space
 void write_to_swap(struct block *swap_space, block_sector_t sector_to_write, 
@@ -24,94 +27,94 @@ void read_page_from_swap(struct block *swap_space,
 void
 swap_init()
 {
-	// num_swap_slots = 2000; 
-	swap_table = (struct swap_entry *)malloc(NUM_SWAP_SLOTS * sizeof(struct swap_entry ));
+	swap_table = (struct swap_entry *)malloc(NUM_SWAP_SLOTS * sizeof(struct swap_entry));
+	//this is assuming swap_space contains all of the swap space
+	swap_space = block_get_role(BLOCK_SWAP);
+	if(swap_space == NULL)
+	{
+		PANIC("Called this before the OS initialized the block device\n");
+	}
 
-	//# Paul drove here
 	int i;
-	for(i = 0; i < NUM_SWAP_SLOTS; i++)
-		swap_table[i].taken = false;
-	// #End of Paul driving
-}
-
-//# Paul drove here.
-void *
-swap_page(void *page)
-{
-	// printf("IN swap_page\n");
-	struct block *swap_space = block_get_role(BLOCK_SWAP);
-	// int block_sectors = block_size(swap_space);
-	// int swap_slots = block_sectors/8;
-
-	struct swap_entry *swap_slot;
-	int i;
-	bool swap_empty = false;
-	int bytes_read = 0;
-	void *temp;
-	//find empty swap spot in the swap table
 	for(i = 0; i < NUM_SWAP_SLOTS; i++)
 	{
-		block_sector_t s;
-		swap_slot = &swap_table[i];
+		struct swap_entry *slot = &swap_table[i]; 
+		slot->empty = true;
+		slot->page = NULL;
+	}
+}
 
-		//Continue looping until you find an empty swap slot
-		if(!swap_slot->taken)
-		{
-			// write page into all 8 sectors of the swap block that represent that
-			// swap slot.
-			temp = page;
-			swap_slot->page = page;
-			s = i * 8;
+//loop through our swap_table and return the index of the first free sector
+block_sector_t
+find_empty_sector(){
+	bool found_empty = false;
 
-			write_to_swap(swap_space, s, temp);
-			swap_empty = false;
+	//loop through for empty spot
+	int i;
+	for(i = 0; i < NUM_SWAP_SLOTS; i++)
+	{
+		struct swap_entry *slot = &swap_table[i];
+		if(slot == slot->empty){
+			found_empty = true;
 			break;
 		}
-		else
-			swap_empty = true;
 	}
 
-	if (swap_empty)
-		PANIC ("Killed process because Frame table full and swap table full.");
-
-	// printf("swap_page completed\n");
-	return swap_slot;
-}
-//# Paul ends driving
-
-
-
-//# Paul drove here.
-void *
-get_page_from_swap(void *page)
-{
-	struct block *swap_space = block_get_role(BLOCK_SWAP);
-	struct swap_entry *swap_slot = NULL;
-	int i;
-	bool swap_empty = false;
-	int bytes_read = 0;
-
-	for(i = 0; i < NUM_SWAP_SLOTS; i++)
+	//if you can't find an empty spot panic the kernel
+	if(!found_empty)
 	{
-
-		block_sector_t s;
-		swap_slot = &swap_table[i];
-
-		//Continue looping until you find swap slot with page requested
-		if(swap_slot->page == page)
-		{
-			s = i * 8;
-			
-			//read data from swap into page
-			read_page_from_swap(swap_space, s, page);
-			
-			return;
-
-		}
+		PANIC("Swap Table is Full");
 	}
 
+	return i * 8;
 }
-//# Paul ends driving
+
+/*Places page "upage" into swap and updates the pagedir.
+  Also, stores the block_sector_t inside of the page struct
+  of where the page is in swap*/
+void
+swap_page(void *upage){
+	//find the page to swap in our supplemental page table
+	struct page *page_to_swap = find_page(upage);
+	ASSERT(page_to_swap != NULL);
+
+	//find the next empty sector to store this page
+	block_sector_t next_empty = find_empty_sector();
+
+	//The page stores its location in swap
+	page_to_swap->first_sector = next_empty;
+
+	//write to the swap_space
+	write_to_swap(swap_space, next_empty, upage);
+
+	page_to_swap->in_swap = true;
+
+	//update swap table
+	struct swap_entry *slot = &swap_table[next_empty / 8];
+	slot->empty = false;
+	slot->page = page_to_swap;
+}
+
+/* Returns the page given by "upage" from swap*/
+struct page *
+get_page_from_swap(void *upage){
+	//find the page in the supplemental page table
+	struct page *page_from_swap = find_page(upage);
+	ASSERT(page_from_swap->in_swap);
+
+	//get the location of this page in swap
+	block_sector_t first_sector = page_from_swap->first_sector;
+
+	//read the page in from swap
+	
+	read_page_from_swap(swap_space, first_sector, upage);
+
+	struct swap_entry *slot = &swap_table[first_sector / 8];
+	slot->empty = true;
+	slot->page = NULL;
+
+	return page_from_swap;
+}
 
 // # Adam driving
 //helper function to write data from user page to swap sectors
@@ -120,12 +123,12 @@ write_to_swap(struct block *swap_space, block_sector_t sector_to_write,
 	void *page)
 {
 	int count = 0;
-	int bytes_read = 0;
+	int bytes_written = 0;
 	while (count < 8)
 	{
-		block_write (swap_space, sector_to_write, page + bytes_read);
+		block_write (swap_space, sector_to_write, page + bytes_written);
 		sector_to_write++;
-		bytes_read += SIZE_OF_SECTORS;
+		bytes_written += SIZE_OF_SECTORS;
 		count++;
 	}
 }

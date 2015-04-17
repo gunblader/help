@@ -256,19 +256,19 @@ page_fault (struct intr_frame *f)
 
     if(fp->in_swap)
     { 
-      // printf("IN swap check\n");
-      // bring it back in and place it in an empty frame;
-      f->cur_page = get_page_from_swap(f->kva);
-      // fp->addr = fault_addr;
-      // update  the page directory
-      if(!(pagedir_get_page (cur_thread->pagedir, f->cur_page->addr) == NULL
-        && pagedir_set_page (cur_thread->pagedir, f->cur_page->addr, f->kva, fp->writable)))
-      {
-        // printf("IN swap: failed install\n");
-        return;
-      }
-        //set dirty bit to 1
-        pagedir_set_dirty(cur_thread->pagedir, fault_addr, 1);
+      // // printf("IN swap check\n");
+      // // bring it back in and place it in an empty frame;
+      // f->cur_page = get_page_from_swap(f->kva);
+      // // fp->addr = fault_addr;
+      // // update  the page directory
+      // if(!(pagedir_get_page (cur_thread->pagedir, f->cur_page->addr) == NULL
+      //   && pagedir_set_page (cur_thread->pagedir, f->cur_page->addr, f->kva, fp->writable)))
+      // {
+      //   // printf("IN swap: failed install\n");
+      //   return;
+      // }
+      //   //set dirty bit to 1
+      //   pagedir_set_dirty(cur_thread->pagedir, fault_addr, 1);
 
     }
     else

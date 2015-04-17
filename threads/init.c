@@ -100,7 +100,6 @@ main (void)
   malloc_init ();
   paging_init ();
   frame_init();
-  swap_init();
   // page_init();
 
   /* Segmentation. */
@@ -130,6 +129,7 @@ main (void)
   locate_block_devices ();
   filesys_init (format_filesys);
 #endif
+  swap_init();
 
   printf ("Boot complete.\n");
   

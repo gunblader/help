@@ -4,6 +4,7 @@
 #include <hash.h>
 #include "filesys/off_t.h"
 #include "vm/frame.h"
+#include "devices/block.h"
 
 struct page
 {
@@ -13,6 +14,7 @@ struct page
 	bool in_filesys; /* Bool to tell if the page is currently in the file system */
 	struct hash_elem page_table_elem; /* Hash Table elem for our supplemental page table */
 	bool stack_page; /* true if this page is a stack page */
+	block_sector_t first_sector; /* The index of where the page is in swap */
 
 	//This is the meta data to help with demand paging in page_fault
 	struct file *file;
