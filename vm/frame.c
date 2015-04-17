@@ -181,7 +181,7 @@ evict_frame()
 
 			//do we want the oldpage to store where it is in swap?
 			//void *swap_addr = swap_page((void *)oldpage->addr);
-			swap_page((void *)oldpage->addr);
+			swap_page((void *)oldpage->addr, f->kva);
 
 			//need to get rid of page directory entry for this frame
 			pagedir_clear_page(thread_current()->pagedir, oldpage->addr);

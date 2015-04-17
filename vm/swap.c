@@ -54,7 +54,7 @@ find_empty_sector(){
 	for(i = 0; i < NUM_SWAP_SLOTS; i++)
 	{
 		struct swap_entry *slot = &swap_table[i];
-		if(slot == slot->empty){
+		if(slot->empty){
 			found_empty = true;
 			break;
 		}
@@ -73,7 +73,7 @@ find_empty_sector(){
   Also, stores the block_sector_t inside of the page struct
   of where the page is in swap*/
 void
-swap_page(void *upage){
+swap_page(void *upage, void *kpage){
 	//find the page to swap in our supplemental page table
 	struct page *page_to_swap = find_page(upage);
 	ASSERT(page_to_swap != NULL);
@@ -85,7 +85,7 @@ swap_page(void *upage){
 	page_to_swap->first_sector = next_empty;
 
 	//write to the swap_space
-	write_to_swap(swap_space, next_empty, upage);
+	write_to_swap(swap_space, next_empty, kpage);
 
 	page_to_swap->in_swap = true;
 
@@ -114,6 +114,13 @@ get_page_from_swap(void *upage){
 	slot->page = NULL;
 
 	return page_from_swap;
+}
+
+void 
+remove_page_from_swap(struct page *p){
+	struct swap_entry *slot = &swap_table[p->first_sector / 8];
+	slot->empty = true;
+	slot->page = NULL;
 }
 
 // # Adam driving

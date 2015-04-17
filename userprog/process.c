@@ -203,7 +203,7 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
           if(p->in_swap)
           {
             //remove page "p" from swap table
-            
+            remove_page_from_swap(p);
           }
         }
         // #End Jacob Driving

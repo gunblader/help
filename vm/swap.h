@@ -23,7 +23,9 @@ struct swap_entry
 
 };
 
-
+void swap_page(void *upage, void *kpage);
+struct page *get_page_from_swap(void *upage);
+void remove_page_from_swap(struct page *p);
 
 #endif
 
