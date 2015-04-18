@@ -118,6 +118,10 @@ get_page_from_swap(void *upage, void *kpage){
 
 
 	struct swap_entry *slot = &swap_table[first_sector / 8];
+
+	
+	printf("index: %d\n", first_sector/8);
+	ASSERT(slot->page != NULL);
 	printf("swap entry: \n\tslot_num: %i\n\tempty: %i\n\tupage: 0x%x\n", 
 		slot->slot_num, slot->empty, slot->page->addr);
 	slot->empty = true;

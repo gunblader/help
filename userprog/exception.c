@@ -272,7 +272,7 @@ page_fault (struct intr_frame *f)
         return;
       }
         //set dirty bit to 1
-        pagedir_set_dirty(cur_thread->pagedir, fault_addr, 1);
+        // pagedir_set_dirty(cur_thread->pagedir, fault_addr, 1);
 
     }
     else

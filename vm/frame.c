@@ -162,26 +162,33 @@ evict_frame()
 	{
 		// printf("In Evict Frame While Loop\n");
 		f = &frame_table[i];
+		printf("Frame Table Entry: Frame #: %i, kva: 0x%x, Page in frame: 0x%x\n", 
+			i, f->kva, f->cur_page->addr);
 		// printf("Frame f's cur_page: 0x%x\n", f->cur_page->addr);
 		//this is the page we want to replace
 		// bool is_accessed = pagedir_is_accessed(cur_thread->pagedir, f->cur_page->addr);
 		// bool is_dirty = pagedir_is_dirty(cur_thread->pagedir, f->cur_page->addr);
+		ASSERT(f->cur_page != NULL);
 		if( !pagedir_is_accessed(cur_thread->pagedir, f->cur_page->addr) )
 		{
 			// printf("In Evict Frame conditional\n");
 			not_found = false;
-
 			/***perform eviction***/
 			printf("Evicting upage into swap from frame table: 0x%x\n", f->cur_page->addr);
 			//move old page into swap space
 			struct page *oldpage = f->cur_page;
-			//update bool that tells us where this page is
-			oldpage->in_swap = true;
-			// f->kva = NULL;
 
-			//do we want the oldpage to store where it is in swap?
-			//void *swap_addr = swap_page((void *)oldpage->addr);
-			swap_page((void *)oldpage->addr, f->kva);
+			if(pagedir_is_dirty(cur_thread->pagedir, f->cur_page->addr) || 
+				f->cur_page->stack_page)
+			{
+				//update bool that tells us where this page is
+				oldpage->in_swap = true;
+				// f->kva = NULL;
+
+				//do we want the oldpage to store where it is in swap?
+				//void *swap_addr = swap_page((void *)oldpage->addr);
+				swap_page(oldpage->addr, f->kva);
+			}
 
 			//need to get rid of page directory entry for this frame
 			pagedir_clear_page(thread_current()->pagedir, oldpage->addr);
@@ -196,7 +203,12 @@ evict_frame()
 			ASSERT(kva != NULL);
 
 			//add the page to this frame
-			frame_table[frame_to_evict++].kva = kva;
+			frame_table[frame_to_evict].kva = kva;
+			
+			frame_to_evict++;
+			if(frame_to_evict == num_frames){
+				frame_to_evict = 1;
+			}
 
 		}
 		//We set reference bit to 0
