@@ -64,7 +64,7 @@ get_frame()
 	//if you didn't find an empty frame, evict something.
 	if(!found_something)
 	{
-		printf("Frame Table full\n");
+		// printf("Frame Table full\n");
 		
 		//frame_table_print();
 		// ASSERT(0); //for now panic the kernel if frame table is full
@@ -162,8 +162,8 @@ evict_frame()
 	{
 		// printf("In Evict Frame While Loop\n");
 		f = &frame_table[i];
-		printf("Frame Table Entry: Frame #: %i, kva: 0x%x, Page in frame: 0x%x\n", 
-			i, f->kva, f->cur_page->addr);
+		// printf("Frame Table Entry: Frame #: %i, kva: 0x%x, Page in frame: 0x%x\n", 
+			// i, f->kva, f->cur_page->addr);
 		// printf("Frame f's cur_page: 0x%x\n", f->cur_page->addr);
 		//this is the page we want to replace
 		// bool is_accessed = pagedir_is_accessed(cur_thread->pagedir, f->cur_page->addr);
@@ -174,7 +174,7 @@ evict_frame()
 			// printf("In Evict Frame conditional\n");
 			not_found = false;
 			/***perform eviction***/
-			printf("Evicting upage into swap from frame table: 0x%x\n", f->cur_page->addr);
+			// printf("Evicting upage into swap from frame table: 0x%x\n", f->cur_page->addr);
 			//move old page into swap space
 			struct page *oldpage = f->cur_page;
 
