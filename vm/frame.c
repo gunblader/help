@@ -6,6 +6,7 @@
 #include "vm/swap.h"
 #include "threads/thread.h"
 #include "threads/loader.h"
+#include "threads/synch.h"
 
 // Used to track which frame we need to evict when the table is full for FIFO algorithm
 int frame_to_evict;
@@ -14,19 +15,22 @@ int frame_to_evict;
 int num_pages;
 bool num_pages_set;
 
-static int *evict_frame();
+static void *evict_frame();
 
 /*
 	Global Frame table list that contains all the available frames that pages
  	can be mapped to
 */
 struct frame *frame_table;
+struct lock *frame_alloc_lock;
 
 void
 frame_init(){
 	// printf("\n\nnum_frames = %i\n", num_frames);
 	frame_table = (struct frame *)malloc(num_frames * sizeof(struct frame));
 	frame_to_evict = 1;
+	frame_alloc_lock = (struct lock *)malloc(sizeof(struct lock));
+	lock_init(frame_alloc_lock);
 	// num_pages = 0;
 	// num_pages_set = false;
 }
@@ -34,10 +38,10 @@ frame_init(){
 void
 frame_table_print(){
 	int i;
-	for(i = 1; i < num_frames; i++){
+	for(i = 0; i < num_frames; i++){
 		struct frame *f = &frame_table[i];
-		printf("**********frame addr #%d: 0x%x, page addr: 0x%x\n", i, f->kva,
-		 f->cur_page->addr);
+		// printf("**********frame addr #%d: 0x%x, page addr: 0x%x, resident_bit: %i\n", i, f->kva,
+		 // f->cur_page->addr, f->cur_page->resident_bit);
 	}
 }
 
@@ -46,6 +50,7 @@ frame_table_print(){
 struct frame * 
 get_frame()
 {
+	lock_acquire(frame_alloc_lock);
 	bool found_something = false;
 	struct frame *f = NULL;
 	int *kva = NULL;         //kva = Kernel Vitual Address
@@ -66,7 +71,7 @@ get_frame()
 	{
 		// printf("Frame Table full\n");
 		
-		//frame_table_print();
+		// frame_table_print();
 		// ASSERT(0); //for now panic the kernel if frame table is full
 		kva = evict_frame();
 		// printf("Evicted Frame kva: 0x%x\n", kva);
@@ -95,63 +100,16 @@ get_frame()
 	// pagedir_set_accessed(thread_current()->pagedir, f->cur_page->addr, 0);
 	f->kva = kva;
 	// printf("frame kva: 0x%x\n", f->kva);
+
+	lock_release(frame_alloc_lock);
 	return f;
 	// #driving ends
 
 } // # End Jacob and Kenneth driving
 
-static int *
+static void *
 evict_frame()
 {
-	// //THIS NEEDS TO BE CHANGED LATER WHEN WE IMPLEMENT SWAP
-	// //remove first frame from frame_table
-	// frame_table[0].kva = NULL;
-	// //shift all elements in frame_table to the left
-	// int i;
-	// for(i = 0; i < num_frames - 1; i++)
-	// {
-	// 	struct frame *temp = &frame_table[i];
-	// 	temp = &frame_table[i+1];
-	// }
-	// //put new frame at the last index
-	// int *kva = (int *)palloc_get_page(PAL_USER);
-	// frame_table[num_frames - 1].kva = kva;
-	// return kva;
-
-
-
-
-	// // #Paul and Adam drove here
-	
-	// //move old page into swap space
-	// struct page *oldpage = frame_table[frame_to_evict].cur_page;
-	// //update bool that tells us where this page is
-	// oldpage->in_swap = true;
-	// frame_table[frame_to_evict].kva = NULL;
-
-	// swap_page((void *)oldpage->addr);
-
-	// //need to get rid of page directory entry for this frame
-	// pagedir_clear_page(thread_current()->pagedir, oldpage->addr);
-	// //free this frame
-	// palloc_free_page(oldpage->addr);
-
-	// //allocate a new page to put in the frame
-	// int *kva = (int *)palloc_get_page(PAL_USER);
-
-	// ASSERT(kva != NULL);
-
-	// //add the page to this frame
-	// frame_table[frame_to_evict++].kva = kva;
-
-	// if(frame_to_evict >= num_frames)
-	// 	frame_to_evict = 0;
-
-
-
-
-
-	// DONT THROW OUT DIRTY PAGES WHEN USING CLOCK*************
 	struct thread *cur_thread = thread_current();
 	int i = frame_to_evict;
 	bool not_found = true;
@@ -160,10 +118,11 @@ evict_frame()
 	// printf("Evicting Frame\n");
 	while(not_found)
 	{
+	ASSERT(i > 0);
 		// printf("In Evict Frame While Loop\n");
 		f = &frame_table[i];
-		// printf("Frame Table Entry: Frame #: %i, kva: 0x%x, Page in frame: 0x%x\n", 
-			// i, f->kva, f->cur_page->addr);
+		// printf("Frame Table Entry: Frame #: %i, kva: 0x%x, Page in frame: 0x%x, Accessed bit: %i\n", 
+			// i, f->kva, f->cur_page->addr, pagedir_is_accessed(cur_thread->pagedir, f->cur_page->addr));
 		// printf("Frame f's cur_page: 0x%x\n", f->cur_page->addr);
 		//this is the page we want to replace
 		// bool is_accessed = pagedir_is_accessed(cur_thread->pagedir, f->cur_page->addr);
@@ -177,6 +136,8 @@ evict_frame()
 			// printf("Evicting upage into swap from frame table: 0x%x\n", f->cur_page->addr);
 			//move old page into swap space
 			struct page *oldpage = f->cur_page;
+			// ASSERT(oldpage->resident_bit);
+			oldpage->resident_bit = 0;
 
 			if(pagedir_is_dirty(cur_thread->pagedir, f->cur_page->addr) || 
 				f->cur_page->stack_page)
@@ -195,10 +156,10 @@ evict_frame()
 			
 			//free this frame
 			// printf("Oldpage addr: 0x%x\n", oldpage->addr);
-			palloc_free_page(f->kva);
+			//palloc_free_page(f->kva);
 
 			//allocate a new page to put in the frame
-			kva = (int *)palloc_get_page(PAL_USER);
+			kva = f->kva;//(int *)palloc_get_page(PAL_USER);
 
 			ASSERT(kva != NULL);
 
@@ -226,7 +187,7 @@ evict_frame()
 	// #End of Paul and Adam driving
 }
 
-//removes the page with "uaddr" address from the frame table
+//returns the frame based on uaddr
 struct frame *
 lookup_frame(void *uaddr)
 {
