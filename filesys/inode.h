@@ -7,6 +7,13 @@
 
 struct bitmap;
 
+  /* Kenneth Drove here */
+  struct indirect_block
+  {
+    block_sector_t blocks[128];
+  };
+  /* Kenneth finished driving*/
+
 void inode_init (void);
 bool inode_create (block_sector_t, off_t);
 struct inode *inode_open (block_sector_t);
