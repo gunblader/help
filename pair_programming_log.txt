@@ -1,0 +1,180 @@
+3/29 12:30pm - 3pm - Jacob, Adam, Kenneth Drove - 2.5 hours
+Driver Order and Length:
+	Adam, 30 minutes
+	Kenneth, 30 minutes
+	Jacob, 30 minutes
+	Adam, 30 minutes
+	Kenneth, 30 minutes
+
+3/30 4pm - 7pm Jacob, Kenneth - 3 hours
+	Kenneth, 30 minutes
+	Jacob, 30 minutes
+	Kenneth 60 minutes
+	Jacob, 30 minutes
+	Kenneth, 30 minutes
+
+3/31 10am - 2pm Jacob, Kenneth - 4 hours
+	Jacob, 60 minutes
+	Kenneth, 60 minutes
+	Jacob, 60 minutes
+	Kenneth, 60 minutes
+
+4pm - 6pm, Jacob, Kenneth, Paul 2 hours
+	Kenneth, 30 minutes
+	Paul, 30 minutes
+	Jacob, 30 minutes
+	Kenneth, 30 minutes
+
+4/1 4pm - 7pm Jacob, Kenneth - 3 hours
+	Kenneth, 30 minutes
+	Jacob, 30 minutes
+	Kenneth 60 minutes
+	Jacob, 30 minutes
+	Kenneth, 30 minutes
+
+4/2 10am - 2pm Jacob, Kenneth - 4 hours
+	Jacob, 60 minutes
+	Kenneth, 60 minutes
+	Jacob, 60 minutes
+	Kenneth, 60 minutes
+
+4pm - 6pm, Jacob, Kenneth, Paul 2 hours
+	Kenneth, 30 minutes
+	Paul, 30 minutes
+	Jacob, 30 minutes
+	Kenneth, 30 minutes
+
+4/3 10am - 12pm Jacob - 2 hours
+	Jacob, 120 minutes
+
+4/4 10am - 12pm Jacob - 2 hours
+
+	12pm - 3pm, Jacob, Kenneth, 3 hours
+	Kenneth, 30 minutes
+	Jacob, 30 minutes,
+	Kenneth, 30 minutes
+	Jacob, 30 minutes
+	Kenneth, 30 minutes
+	Jacob, 30 minutes
+
+	3pm - 6pm, Jacob, Kenneth, Paul - 3 hours
+	Kenneth, 30 minutes
+	Paul, 30 minutes
+	Jacob, 30 minutes
+	Kenneth, 30 minutes
+	Paul, 30 minutes
+	Jacob, 30 minutes
+
+4/5 10am - 12pm Jacob - 2 hours
+
+	12pm - 3pm, Jacob, Kenneth, 3 hours
+	Kenneth, 30 minutes
+	Jacob, 30 minutes,
+	Kenneth, 30 minutes
+	Jacob, 30 minutes
+	Kenneth, 30 minutes
+	Jacob, 30 minutes
+
+	3pm - 6pm, Jacob, Kenneth, Paul - 3 hours
+	Kenneth, 30 minutes
+	Paul, 30 minutes
+	Jacob, 30 minutes
+	Kenneth, 30 minutes
+	Paul, 30 minutes
+	Jacob, 30 minutes
+
+4/6 10am - 12am, Jacob - 2 hours
+
+	2pm - 5:30pm Adam - 2.5 hours
+
+	5:30pm -7pm Adam, Jacob 1.5 hours
+	Jacob, 30 minutes
+	Adam, 30 minutes
+	Jacob, 30 minutes
+
+4/9 10am - 2pm Jacob, Kenneth - 4 hours
+	Jacob, 60 minutes
+	Kenneth, 60 minutes
+	Jacob, 60 minutes
+	Kenneth, 60 minutes
+
+4pm - 6pm, Jacob, Kenneth, Paul 2 hours
+	Kenneth, 30 minutes
+	Paul, 30 minutes
+	Jacob, 30 minutes
+	Kenneth, 30 minutes
+
+4/10 - 1 - 6pm, Jacob, Kenneth, Adam 
+	Jacob, 60 minutes
+	Adam, 60 min
+	Kenneth, 60 minutes
+	Jacob, 60 minutes
+	Adam, 60 minutes
+
+4/11 - 1pm - 6pm, Jacob, Adam, Paul
+	Jacob, 60 minutes
+	Paul, 60 minutes
+	Adam, 60 min
+	Jacob, 60 minutes
+	Adam, 60 minutes
+	
+
+4/12 - 1pm - 5pm, Jacob, Adam, Paul
+	Paul, 60 minutes
+	Jacob, 60 minutes
+	Adam, 60 min
+	Jacob, 60 minutes
+	Adam, 60 minutes
+
+4/13 10am - 12am, Jacob - 2 hours
+
+	2pm - 5:30pm Adam - 2.5 hours
+
+	5:30pm -7pm Adam, Jacob 1.5 hours
+	Jacob, 30 minutes
+	Adam, 30 minutes
+	Jacob, 30 minutes
+
+4/14 10am - 1pm Jacob - 4 hours
+	Jacob, 240 minutes
+
+	1pm - 6pm, Jacob and Adam
+	Adam, 30 minutes
+	Jacob, 30 minutes
+	Adam, 30 minutes
+	Adam, 30 minutes
+	Jacob, 30 minutes
+	Adam, 30 minutes
+	Adam, 30 minutes
+	Jacob, 30 minutes
+
+4/15 10am - 12am, Jacob - 2 hours
+
+	2pm - 5:30pm Adam - 2.5 hours
+
+	5:30pm -7pm Adam, Jacob 1.5 hours
+	Jacob, 30 minutes
+	Adam, 30 minutes
+	Jacob, 30 minutes
+
+4/16 10am - 2pm Jacob, Kenneth - 4 hours
+	Jacob, 60 minutes
+	Kenneth, 60 minutes
+	Jacob, 60 minutes
+	Kenneth, 60 minutes
+
+	2pm - 4pm Adam, Jacob, Kenneth - 2 hours
+	Adam, 30 minutes
+	Kenneth, 30 minutes
+	Jacob, 30 minutes
+	Adam, 30 minutes
+
+	4pm - 6pm, Jacob, Kenneth, Paul, Adam 2 hours
+	Kenneth, 30 minutes
+	Paul, 30 minutes
+	Jacob, 30 minutes
+	Adam, 30 minutes
+
+** 4/17 - 4/19 spent debugging **
+
+

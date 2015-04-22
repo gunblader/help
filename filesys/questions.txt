@@ -1,0 +1,2 @@
+4/21
+	1. How does the inode struct in inode.c keep track of the sector where the inode information is stored?
