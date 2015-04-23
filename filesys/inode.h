@@ -10,7 +10,7 @@ struct bitmap;
 /* Kenneth Drove here */
 struct indirect_block
 {
-block_sector_t blocks[128];
+	block_sector_t blocks[128];
 };
 
 static const size_t MAX_FILE_SIZE = (1<<23);

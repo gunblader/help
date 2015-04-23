@@ -52,8 +52,9 @@ bool
 free_map_indirect_allocate(size_t sectors, block_sector_t *direct_blocks,
   struct indirect_block *first_level, struct indirect_block *second_level)
 {
-  if(bitmap_count(free_map, 0, bitmap_size(free_map), true) < sectors)
+  if(bitmap_count(free_map, 0, bitmap_size(free_map), false) < sectors)
   {
+    printf("\tfree_map doesn't have %i free sectors\n", sectors);
     return false;
   }
 
@@ -62,17 +63,20 @@ free_map_indirect_allocate(size_t sectors, block_sector_t *direct_blocks,
   size_t second_level_index = 0;
   size_t second_level_offset = 0;
 
+  printf("****FREE-MAP-IA****:\n\tSectors: %u\n", sectors);
+
   //while the count is less than the number of total sectors to allocate
   while(count < sectors)
   {
-    //find the next free sector (TRUE = free; false = taken)
-    block_sector_t next_free = bitmap_scan_and_flip(free_map, 0, 1, true);
+    //find the next free sector
+    block_sector_t next_free = bitmap_scan_and_flip(free_map, 0, 1, false);
     if(next_free == BITMAP_ERROR)
       return false;
     //if we have allocated <=10 sectors, put them in direct_blocks
     if(count < 10)
     {
       //put them in direct_blocks
+      printf("direct_block[%i] allocated to %u\n", count, next_free);
       direct_blocks[count] = next_free;
     }
     //else if we have allocated <= (10 + 128) sectors, put the in first level
@@ -94,7 +98,7 @@ free_map_indirect_allocate(size_t sectors, block_sector_t *direct_blocks,
     }
     count++;
   }
-
+  printf("****END FREE-MAP-IA****\n");
   return true;
 }
 /* End Adam driving */
