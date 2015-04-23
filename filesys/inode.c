@@ -54,10 +54,39 @@ static block_sector_t
 byte_to_sector (const struct inode *inode, off_t pos) 
 {
   ASSERT (inode != NULL);
+  printf("inode length: %u, pos: %u\n", inode->data.length, pos);
   if (pos < inode->data.length)
-    return inode->data.start + pos / BLOCK_SECTOR_SIZE;
+  {
+    // return inode->data.start + pos / BLOCK_SECTOR_SIZE;
+    // return the sector that holds the byte that we need
+    block_sector_t sector = pos / BLOCK_SECTOR_SIZE;
+    printf("BYTE_TO_SECTOR:\nsector: %u\n", sector);
+    if(sector < 10)
+      return inode->data.direct_blocks[sector];
+    else if (sector < 138)
+      return inode->data.first_level->blocks[sector - 10];
+    else
+      return inode->data.second_level[(sector - 138)/128].blocks[(sector - 138) % 128];
+  }
   else
-    return -1;
+  {
+    //grow the file
+    if(pos > MAX_FILE_SIZE){
+      PANIC ("Trying to extend past maximum file size");
+    }
+    size_t new_sectors = pos - inode->data.length;
+    //check if there is enough free blocks to allocate to
+    if(free_map_indirect_allocate(new_sectors, inode->data.direct_blocks,
+      inode->data.first_level, inode->data.second_level))
+    {
+      //update the entries
+
+    }
+    else
+    {
+      PANIC ("Ran out of file system disk space");
+    }
+  }
 }
 
 /* List of open inodes, so that opening a single inode twice
@@ -84,6 +113,8 @@ inode_create (block_sector_t sector, off_t length)
 
   ASSERT (length >= 0);
 
+  printf("\nINODE_CREATE:\nsector: %u, length: %u\n", sector, length);
+
   /* If this assertion fails, the inode structure is not exactly
      one sector in size, and you should fix that. */
   // printf("Size of disk inode: %i\n", sizeof *disk_inode);
@@ -93,7 +124,9 @@ inode_create (block_sector_t sector, off_t length)
   if (disk_inode != NULL)
     {
       size_t sectors = bytes_to_sectors (length);
+      printf("sectors: %i\n", sectors);
       disk_inode->length = length;
+      printf("disk_inode length: %i\n", disk_inode->length);
       disk_inode->magic = INODE_MAGIC;
       //if (free_map_allocate (sectors, &disk_inode->start))
       // This checks the free list and allocates free blocks into our structs
@@ -113,20 +146,25 @@ inode_create (block_sector_t sector, off_t length)
               size_t sector_count = 0;
               for(i = 0; (i < 10) && sector_count < sectors; i++)
               {
+                printf("direct block index: %u\n", i);
                 block_write(fs_device, disk_inode->direct_blocks[i], zeros);
                 sector_count++;
               }
               //first level
+              printf("sector_count: %u\n", sector_count);
               for(i = 0; (i < 128) && sector_count < sectors; i++)
               {
+                printf("first level block index: %u\n", i);
                 block_write(fs_device, disk_inode->first_level->blocks[i], zeros);
                 sector_count++;
               }
               //second level
+              printf("sector_count: %u\n", sector_count);
               size_t idx = 0;
               i = 0;
               while(sector_count < sectors)
               {
+                printf("second level indirect index: %u, second_level index\n", idx, i);
                 block_write(fs_device, disk_inode->second_level[idx].blocks[i], zeros);
                 sector_count++;
                 i++;
@@ -151,6 +189,7 @@ inode_create (block_sector_t sector, off_t length)
 struct inode *
 inode_open (block_sector_t sector)
 {
+  printf("INODE_OPEN:\n");
   struct list_elem *e;
   struct inode *inode;
 
@@ -177,7 +216,9 @@ inode_open (block_sector_t sector)
   inode->open_cnt = 1;
   inode->deny_write_cnt = 0;
   inode->removed = false;
+  printf("inode sector: %u\n", inode->sector);
   block_read (fs_device, inode->sector, &inode->data);
+  printf("inode data length: %u\n", inode->data.length);
   return inode;
 }
 
@@ -301,9 +342,13 @@ inode_write_at (struct inode *inode, const void *buffer_, off_t size,
   const uint8_t *buffer = buffer_;
   off_t bytes_written = 0;
   uint8_t *bounce = NULL;
+  printf("WRITE AT:\nsize: %i, offset %i, inode length: %i\n", size, offset, inode->data.length);
 
   if (inode->deny_write_cnt)
+  {
+    printf("Deny write count was true\n");
     return 0;
+  }
 
   while (size > 0) 
     {

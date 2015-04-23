@@ -7,12 +7,14 @@
 
 struct bitmap;
 
-  /* Kenneth Drove here */
-  struct indirect_block
-  {
-    block_sector_t blocks[128];
-  };
-  /* Kenneth finished driving*/
+/* Kenneth Drove here */
+struct indirect_block
+{
+block_sector_t blocks[128];
+};
+
+static const size_t MAX_FILE_SIZE = (1<<23);
+/* Kenneth finished driving*/
 
 void inode_init (void);
 bool inode_create (block_sector_t, off_t);
