@@ -305,6 +305,7 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
 
     
   /* Open executable file. */
+    // printf("<><><><><><><><><><><><><>LOADING FILE<><><><><><><><><><><><><><><><><>\n");
     file = filesys_open (name);
     if (file == NULL) 
     {

@@ -54,7 +54,7 @@ free_map_indirect_allocate(size_t sectors, block_sector_t *direct_blocks,
 {
   if(bitmap_count(free_map, 0, bitmap_size(free_map), false) < sectors)
   {
-    printf("\tfree_map doesn't have %i free sectors\n", sectors);
+    // printf("\tfree_map doesn't have %i free sectors\n", sectors);
     return false;
   }
 
@@ -68,7 +68,7 @@ free_map_indirect_allocate(size_t sectors, block_sector_t *direct_blocks,
   bool set_first = false;
   bool set_second = false;
 
-  printf("****FREE-MAP-IA****:\n\tSectors: %u\n", sectors);
+  // printf("****FREE-MAP-IA****:\n\tSectors: %u\n", sectors);
 
   //while the count is less than the number of total sectors to allocate
   while(count < sectors)
@@ -76,20 +76,23 @@ free_map_indirect_allocate(size_t sectors, block_sector_t *direct_blocks,
     //find the next free sector
     block_sector_t next_free = bitmap_scan_and_flip(free_map, 0, 1, false);
     if(next_free == BITMAP_ERROR)
+    {
+      // printf("Bitmap error\n");
       return false;
+    }
     //if we have allocated <=10 sectors, put them in direct_blocks
     if(count < 10)
     {
       //put them in direct_blocks
       direct_blocks[count] = next_free;
-      printf("\tdirect_block[%i] allocated to %u\n", count, next_free);
+      // printf("\tdirect_block[%i] allocated to %u\n", count, next_free);
     }
     //else if we have allocated <= (10 + 128) sectors, put the in first level
     else if(count < 138)
     {
       //put in first_level
       first->blocks[first_index] = next_free;
-      printf("\tfirst_level->blocks[%i] allocated to %u\n", first_index, next_free);
+      // printf("\tfirst_level->blocks[%i] allocated to %u\n", first_index, next_free);
       first_index++;
       set_first = true;
     }
@@ -100,8 +103,8 @@ free_map_indirect_allocate(size_t sectors, block_sector_t *direct_blocks,
 
       second[second_level_index].blocks[second_level_offset] = next_free;
 
-      printf("\tsecond_level[%u].blocks[%u] allocated to %u\n", second_level_index,
-        second_level_offset, next_free);
+      // printf("\tsecond_level[%u].blocks[%u] allocated to %u\n", second_level_index,
+        // second_level_offset, next_free);
       
       second_level_offset++;
       second_level_index = (second_level_offset == 128) ? second_level_index++ : second_level_index;
@@ -115,15 +118,17 @@ free_map_indirect_allocate(size_t sectors, block_sector_t *direct_blocks,
     ASSERT(first_level != NULL);
     *first_level = bitmap_scan_and_flip(free_map, 0, 1, false);
     block_write(fs_device, *first_level, first);
-    printf("first level indirection block stored at sector %u\n", *first_level);
+    free(first);
+    // printf("first level indirection block stored at sector %u\n", *first_level);
   }
   if(set_second){
     *second_level = bitmap_scan_and_flip(free_map, 0, 1, false);
     block_write(fs_device, *second_level, second);
-    printf("second level indirection block stored at sector %u\n", *second_level);
+    free(second);
+    // printf("second level indirection block stored at sector %u\n", *second_level);
     
   }
-  printf("****END FREE-MAP-IA****\n");
+  // printf("****END FREE-MAP-IA****\n");
   return true;
 }
 /* End Adam driving */
@@ -142,7 +147,7 @@ void
 free_map_indexed_release(block_sector_t *direct_blocks,
   block_sector_t *first_level, block_sector_t *second_level, size_t sectors)
 {
-  printf("*****IN FREE MAP RELEASE*****\n");
+  // printf("*****IN FREE MAP RELEASE*****\n");
   struct indirect_block *first;
   block_read(fs_device, *first_level, first);
   struct indirect_block *second;
@@ -156,17 +161,17 @@ free_map_indexed_release(block_sector_t *direct_blocks,
   {
     if(count < 10)
     {
-      printf("previous setting: %i\n", bitmap_test(free_map, direct_blocks[count]));
+      // printf("previous setting: %i\n", bitmap_test(free_map, direct_blocks[count]));
       bitmap_set(free_map, direct_blocks[count], false);
     }
     else if(count < 138)
     {
-      printf("previous setting: %i\n", bitmap_test(free_map, first->blocks[count - 10]));
+      // printf("previous setting: %i\n", bitmap_test(free_map, first->blocks[count - 10]));
       bitmap_set(free_map, first->blocks[count - 10], false);
     }
     else
     {
-      printf("previous setting: %i\n", bitmap_test(free_map, second[second_level_index].blocks[second_level_offset]));
+      // printf("previous setting: %i\n", bitmap_test(free_map, second[second_level_index].blocks[second_level_offset]));
       bitmap_set(free_map, second[second_level_index].blocks[second_level_offset], false);
       second_level_offset++;
       second_level_index = (second_level_offset == 128) ? second_level_index++ : second_level_index;
@@ -182,10 +187,10 @@ free_map_open (void)
   free_map_file = file_open (inode_open (FREE_MAP_SECTOR));
   if (free_map_file == NULL)
     PANIC ("can't open free map");
-  printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<DOES READS>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+  // printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<DOES READS>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
   if (!bitmap_read (free_map, free_map_file))
     PANIC ("can't read free map");
-  printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Finished READS>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+  // printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Finished READS>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
 }
 
 /* Writes the free map to disk and closes the free map file. */
@@ -208,9 +213,9 @@ free_map_create (void)
   free_map_file = file_open (inode_open (FREE_MAP_SECTOR));
   if (free_map_file == NULL)
     PANIC ("can't open free map");
-    printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<DOES WRITES>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+    // printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<DOES WRITES>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
   if (!bitmap_write (free_map, free_map_file))
     PANIC ("can't write free map");
-    printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Finished WRITES>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+    // printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Finished WRITES>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
 
 }
