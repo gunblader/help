@@ -16,8 +16,11 @@ struct inode_disk
   {
     /* Kenneth and Adam drove here*/
     block_sector_t direct_blocks[10]; /* Hold the 10 direct blocks */
-    struct indirect_block *first_level; /* A pointer to an indirect_block that points to 128 blocks */
-    struct indirect_block *second_level; /* An array of indirect_blocks (128^2 total blocks) */
+    block_sector_t *first_level; /* Holds the location of the sector for the first indirection block*/
+    block_sector_t *second_level; /* Holds the location of the sector for the second indirection block*/
+
+    //struct indirect_block *first_level; /* A pointer to an indirect_block that points to 128 blocks */
+    // struct indirect_block *second_level; /* An array of indirect_blocks (128^2 total blocks) */
     /* End Driving*/
 
     block_sector_t start;               /* First data sector. */
@@ -54,28 +57,41 @@ static block_sector_t
 byte_to_sector (const struct inode *inode, off_t pos, bool write) 
 {
   ASSERT (inode != NULL);
-  printf("****BYTE_TO_SECTOR****:\n\tinode sector: %u, inode length: %u, pos: %u\n", inode->sector, inode->data.length, pos);
+  printf("****BYTE_TO_SECTOR****:\n\tinode sector: %u, sectors: %u, pos: %u\n", inode->sector, inode->data.length, pos);
+
+  size_t i = 0;
+  for(i = 0; i < 10; i++)
+  {
+    printf("direct_blocks[%u] = sector %u\n", i, inode->data.direct_blocks[i]);
+  }
+
   if (pos < inode->data.length)
   {
     // return inode->data.start + pos / BLOCK_SECTOR_SIZE;
     // return the sector that holds the byte that we need
     block_sector_t sector = pos / BLOCK_SECTOR_SIZE;
-    printf("idx: %u\n", sector);
+    printf("\tidx: %u\n", sector);
     // printf("\tsector: %u\n", sector);
     if(sector < 10)
     {
-      printf("returning direct sector %u\n", inode->data.direct_blocks[sector]);
+      printf("\treturning direct_sector[%u] = sector %u\n",sector, inode->data.direct_blocks[sector]);
       return inode->data.direct_blocks[sector];
+      // return sector;
     }
     else if (sector < 138)
     {
-      printf("returning first_level sector %u\n", inode->data.first_level->blocks[sector - 10]);
-      return inode->data.first_level->blocks[sector - 10];
+      struct indirect_block *first;
+      block_read(fs_device, *inode->data.first_level, first);
+      printf("\treturning first_level->blocks[%u] = sector %u\n", sector - 10, first->blocks[sector - 10]);
+      return first->blocks[sector - 10];
+      // return sector;
     }
     else
     {
-      printf("returning second_level sector %u\n", inode->data.second_level[(sector - 138)/128].blocks[(sector - 138) % 128]);
-      return inode->data.second_level[(sector - 138)/128].blocks[(sector - 138) % 128];
+      struct indirect_block *second;
+      block_read(fs_device, inode->data.second_level[(sector - 138)/128], second);
+      printf("\treturning second_level sector %u\n", second->blocks[(sector - 138) % 128]);
+      return second->blocks[(sector - 138) % 128];
     }
   }
   else
@@ -141,11 +157,11 @@ inode_create (block_sector_t sector, off_t length)
   if (disk_inode != NULL)
     {
       size_t sectors = bytes_to_sectors (length);
-      printf("\tsectors: %i\n", sectors);
+      // printf("\tsectors: %i\n", sectors);
       disk_inode->length = length;
       printf("\tdisk_inode length: %i\n", disk_inode->length);
       disk_inode->magic = INODE_MAGIC;
-      
+
       disk_inode->first_level = malloc(sizeof(struct indirect_block));
       disk_inode->second_level = malloc(128 * sizeof(struct indirect_block));
       //if (free_map_allocate (sectors, &disk_inode->start))
@@ -153,49 +169,49 @@ inode_create (block_sector_t sector, off_t length)
         if(free_map_indirect_allocate(sectors, disk_inode->direct_blocks,
             disk_inode->first_level, disk_inode->second_level))
         {
-          if (sectors > 0) 
-            {
-              static char zeros[BLOCK_SECTOR_SIZE];
-              size_t i;
+          // if (sectors > 0) 
+          //   {
+          //     static char zeros[BLOCK_SECTOR_SIZE];
+          //     size_t i;
               
-              // for (i = 0; i < sectors; i++) 
-              //   block_write (fs_device, disk_inode->start + i, zeros);
+          //     // for (i = 0; i < sectors; i++) 
+          //     //   block_write (fs_device, disk_inode->start + i, zeros);
 
-              //Write zeros to our sectors given by our fs
-              size_t sector_count = 0;
-              for(i = 0; (i < 10) && sector_count < sectors; i++)
-              {
-                printf("\tdirect_block[%i] sector allocated to: %u\n", i, disk_inode->direct_blocks[i]);
-                block_write(fs_device, disk_inode->direct_blocks[i], zeros);
-                sector_count++;
-              }
-              //first level
-              printf("\tsector_count: %u\n", sector_count);
-              for(i = 0; (i < 128) && sector_count < sectors; i++)
-              {
-                printf("\tfirst level block sector: %u\n", disk_inode->first_level->blocks[i]);
-                block_write(fs_device, disk_inode->first_level->blocks[i], zeros);
-                sector_count++;
-              }
-              //second level
-              printf("\tsector_count: %u\n", sector_count);
-              size_t idx = 0;
-              i = 0;
-              while(sector_count < sectors)
-              {
-                printf("\tsecond level indirect index: %u, second_level block sector\n", idx, disk_inode->second_level[idx].blocks[i]);
-                block_write(fs_device, disk_inode->second_level[idx].blocks[i], zeros);
-                sector_count++;
-                i++;
-                //if we reach the end of this indirection block, get the next one
-                if(i == 128)
-                {
-                  idx++;
-                  i = 0;
-                }
-              }
-              printf("\tLength at end of create: %u\n", disk_inode->length);
-            }
+          //     //Write zeros to our sectors given by our fs
+          //     size_t sector_count = 0;
+          //     for(i = 0; (i < 10) && sector_count < sectors; i++)
+          //     {
+          //       printf("\tdirect_block[%i] sector allocated to: %u\n", i, disk_inode->direct_blocks[i]);
+          //       block_write(fs_device, disk_inode->direct_blocks[i], zeros);
+          //       sector_count++;
+          //     }
+          //     //first level
+          //     printf("\tsector_count: %u\n", sector_count);
+          //     for(i = 0; (i < 128) && sector_count < sectors; i++)
+          //     {
+          //       printf("\tfirst level block sector: %u\n", disk_inode->first_level->blocks[i]);
+          //       block_write(fs_device, disk_inode->first_level->blocks[i], zeros);
+          //       sector_count++;
+          //     }
+          //     //second level
+          //     printf("\tsector_count: %u\n", sector_count);
+          //     size_t idx = 0;
+          //     i = 0;
+          //     while(sector_count < sectors)
+          //     {
+          //       printf("\tsecond level indirect index: %u, second_level block sector\n", idx, disk_inode->second_level[idx].blocks[i]);
+          //       block_write(fs_device, disk_inode->second_level[idx].blocks[i], zeros);
+          //       sector_count++;
+          //       i++;
+          //       //if we reach the end of this indirection block, get the next one
+          //       if(i == 128)
+          //       {
+          //         idx++;
+          //         i = 0;
+          //       }
+          //     }
+          //     printf("\tLength at end of create: %u\n", disk_inode->length);
+          //   }
           // printf("%d\n", sector);
           block_write (fs_device, sector, disk_inode);
           success = true;
@@ -222,10 +238,10 @@ inode_open (block_sector_t sector)
   for (e = list_begin (&open_inodes); e != list_end (&open_inodes);
        e = list_next (e)) 
     {
-      printf("<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>\n");
       inode = list_entry (e, struct inode, elem);
       if (inode->sector == sector) 
         {
+      printf("Reopening previous open inode\n");
           inode_reopen (inode);
           return inode; 
         }
@@ -246,6 +262,13 @@ inode_open (block_sector_t sector)
   printf("\tinode sector: %u\n", inode->sector);
   block_read (fs_device, inode->sector, &inode->data);
   printf("\tinode data length: %u\n", inode->data.length);
+
+  // int i = 0;
+  // while(i < 10){
+  //   printf("IN OPEN ---> direct_blocks[%u] = sector %u\n", i, inode-<data.direct_blocks[i]);
+  //   i++;
+  // }
+
   printf("****END INODE OPEN****\n\n");
   // print_open_list();
   return inode;
@@ -310,9 +333,12 @@ inode_close (struct inode *inode)
       /* Deallocate blocks if removed. */
       if (inode->removed) 
         {
+          printf("8888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888\n");
           free_map_release (inode->sector, 1);
-          free_map_release (inode->data.start,
-                            bytes_to_sectors (inode->data.length)); 
+          // free_map_release (inode->data.start,
+          //                   bytes_to_sectors (inode->data.length));
+          free_map_indexed_release(inode->data.direct_blocks, inode->data.first_level, 
+            inode->data.second_level, bytes_to_sectors (inode->data.length)); 
         }
 
       free (inode); 
@@ -338,7 +364,7 @@ inode_read_at (struct inode *inode, void *buffer_, off_t size, off_t offset)
   off_t bytes_read = 0;
   uint8_t *bounce = NULL;
 
-  printf("\n****READ AT****:\nsize: %i, offset %i, inode length: %i\n", size, offset, inode->data.length);
+  printf("\n****SECTOR %u READ AT****:\nsize: %i, offset %i, inode length: %i\n", inode->sector, size, offset, inode->data.length);
 
   while (size > 0) 
     {
@@ -398,7 +424,7 @@ inode_write_at (struct inode *inode, const void *buffer_, off_t size,
   const uint8_t *buffer = buffer_;
   off_t bytes_written = 0;
   uint8_t *bounce = NULL;
-  printf("****WRITE AT****:\nsize: %i, offset %i, inode length: %i\n", size, offset, inode->data.length);
+  printf("****SECTOR %u WRITE AT****:\nsize: %i, offset %i, inode length: %i\n", inode->sector, size, offset, inode->data.length);
 
   if (inode->deny_write_cnt)
   {
