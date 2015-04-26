@@ -27,6 +27,8 @@ free_map_init (void)
 bool
 free_map_allocate (size_t cnt, block_sector_t *sectorp)
 {
+  // printf("cnt: %u, BEFORE\n", cnt);
+  // bitmap_dump(free_map);
   block_sector_t sector = bitmap_scan_and_flip (free_map, 0, cnt, false);
   if (sector != BITMAP_ERROR
       && free_map_file != NULL
@@ -37,7 +39,40 @@ free_map_allocate (size_t cnt, block_sector_t *sectorp)
     }
   if (sector != BITMAP_ERROR)
     *sectorp = sector;
+  // printf("AFTER\n");
+  // bitmap_dump(free_map);
+  // printf("out yeah\n");
   return sector != BITMAP_ERROR;
+}
+
+
+/* Checks the free map to see if the given "sector" is free.
+    If it is, we return that sector, else we return the next available
+    sector */
+block_sector_t
+is_sector_free(block_sector_t sector)
+{
+  // printf("Asked for sector: %u\nBEFORE:\n", sector);
+  // bitmap_dump(free_map);
+  //if it is empty, return that sector
+  if(!bitmap_test(free_map, sector) || sector == FREE_MAP_SECTOR
+   || sector == ROOT_DIR_SECTOR)
+  {
+    return sector;
+  }
+  else
+  {
+    block_sector_t new_sector = bitmap_scan_and_flip(free_map, 0, 1, false);
+    if (new_sector != BITMAP_ERROR
+      && free_map_file != NULL
+      && !bitmap_write (free_map, free_map_file))
+    {
+      // printf("Bitmap error\n");
+      return false;
+    }
+    // printf("That sector is taken. New sector given: %u\n", new_sector);
+    return new_sector;
+  }
 }
 
 /* Adam drove here */
@@ -54,7 +89,7 @@ free_map_indirect_allocate(size_t sectors, block_sector_t *direct_blocks,
 {
   if(bitmap_count(free_map, 0, bitmap_size(free_map), false) < sectors)
   {
-    printf("\tfree_map doesn't have %i free sectors\n", sectors);
+    // printf("\tfree_map doesn't have %i free sectors\n", sectors);
     return false;
   }
 
@@ -68,16 +103,19 @@ free_map_indirect_allocate(size_t sectors, block_sector_t *direct_blocks,
   bool set_first = false;
   bool set_second = false;
 
-  printf("****FREE-MAP-IA****:\n\tSectors: %u\n", sectors);
+  // printf("****FREE-MAP-IA****:\n\tSectors: %u\n", sectors);
 
   //while the count is less than the number of total sectors to allocate
   while(count < sectors)
   {
     //find the next free sector
     block_sector_t next_free = bitmap_scan_and_flip(free_map, 0, 1, false);
-    if(next_free == BITMAP_ERROR)
+    if (next_free != BITMAP_ERROR
+      && free_map_file != NULL
+      && !bitmap_write (free_map, free_map_file))
     {
-      printf("Bitmap error\n");
+      // printf("Bitmap error\n");
+      // bitmap_set_multiple (free_map, next_free, 1, false);
       return false;
     }
     //if we have allocated <=10 sectors, put them in direct_blocks
@@ -85,14 +123,14 @@ free_map_indirect_allocate(size_t sectors, block_sector_t *direct_blocks,
     {
       //put them in direct_blocks
       direct_blocks[count] = next_free;
-      printf("\tdirect_block[%i] allocated to %u\n", count, next_free);
+      // printf("\tdirect_block[%i] allocated to %u\n", count, next_free);
     }
     //else if we have allocated <= (10 + 128) sectors, put the in first level
     else if(count < 138)
     {
       //put in first_level
       first->blocks[first_index] = next_free;
-      printf("\tfirst_level->blocks[%i] allocated to %u\n", first_index, next_free);
+      // printf("\tfirst_level->blocks[%i] allocated to %u\n", first_index, next_free);
       first_index++;
       set_first = true;
     }
@@ -103,8 +141,8 @@ free_map_indirect_allocate(size_t sectors, block_sector_t *direct_blocks,
 
       second[second_level_index].blocks[second_level_offset] = next_free;
 
-      printf("\tsecond_level[%u].blocks[%u] allocated to %u\n", second_level_index,
-        second_level_offset, next_free);
+      // printf("\tsecond_level[%u].blocks[%u] allocated to %u\n", second_level_index,
+        // second_level_offset, next_free);
       
       second_level_offset++;
       second_level_index = (second_level_offset == 128) ? second_level_index++ : second_level_index;
@@ -115,17 +153,35 @@ free_map_indirect_allocate(size_t sectors, block_sector_t *direct_blocks,
     count++;
   }
 
-    ASSERT(first_level != NULL);
-    *first_level = bitmap_scan_and_flip(free_map, 0, 1, false);
-    block_write(fs_device, *first_level, first);
-    free(first);
-    printf("first level indirection block stored at sector %u\n", *first_level);
+  *first_level = bitmap_scan_and_flip(free_map, 0, 1, false);
+  block_write(fs_device, *first_level, first);
+  free(first);
+  // printf("first level indirection block stored at sector %u\n", *first_level);
 
-    *second_level = bitmap_scan_and_flip(free_map, 0, 1, false);
-    block_write(fs_device, *second_level, second);
-    free(second);
-    printf("second level indirection block stored at sector %u\n", *second_level);
-  printf("****END FREE-MAP-IA****\n");
+  if (*first_level != BITMAP_ERROR
+    && free_map_file != NULL
+    && !bitmap_write (free_map, free_map_file))
+  {
+    // printf("Bitmap error\n");
+    return false;
+  }
+
+  *second_level = bitmap_scan_and_flip(free_map, 0, 1, false);
+  block_write(fs_device, *second_level, second);
+  free(second);
+  // printf("second level indirection block stored at sector %u\n", *second_level);
+
+  if (*second_level != BITMAP_ERROR
+    && free_map_file != NULL
+    && !bitmap_write (free_map, free_map_file))
+  {
+    // printf("Bitmap error\n");
+    return false;
+  }
+
+  // printf("AFTER:\n");
+  // bitmap_dump(free_map);
+  // printf("****END FREE-MAP-IA****\n");
   return true;
 }
 /* End Adam driving */
@@ -138,7 +194,7 @@ append_to_free_map(size_t current_sectors,
 {
   if(bitmap_count(free_map, 0, bitmap_size(free_map), false) < 1)
   {
-    printf("\tfree_map doesn't have %i free sectors\n", 1);
+    // printf("\tfree_map doesn't have %i free sectors\n", 1);
     return -1;
   }
 
@@ -150,9 +206,9 @@ append_to_free_map(size_t current_sectors,
   bool set_second = false;
   block_sector_t next_free = -1;
 
-  printf("*** IN APPEND_TO_FREE_MAP ***\n");
-  printf("\t*first_level: %u\n", *first_level);
-  printf("\t*second_level: %u\n", *second_level);
+  // printf("*** IN APPEND_TO_FREE_MAP ***\n");
+  // printf("\t*first_level: %u\n", *first_level);
+  // printf("\t*second_level: %u\n", *second_level);
 
   if(first_level != NULL && first != NULL)
     block_read(fs_device, *first_level, first);
@@ -161,11 +217,20 @@ append_to_free_map(size_t current_sectors,
 
   // allocated count sectors to this inode
   next_free = bitmap_scan_and_flip(free_map, 0, 1, false);
-  printf("\tnext_free: %u\n", next_free);
+
+  if (next_free != BITMAP_ERROR
+        && free_map_file != NULL
+        && !bitmap_write (free_map, free_map_file))
+  {
+        // printf("Bitmap error\n");
+        return false;
+  }
+
+  // printf("\tnext_free: %u\n", next_free);
   if(current_sectors < 10)
   {
     direct_blocks[current_sectors] = next_free;
-    printf("\tdirect_blocks[%u] = sector %u\n", current_sectors, direct_blocks[current_sectors]);
+    // printf("\tdirect_blocks[%u] = sector %u\n", current_sectors, direct_blocks[current_sectors]);
   }
   else if(current_sectors < 138)
   {
@@ -191,7 +256,7 @@ append_to_free_map(size_t current_sectors,
     free(second);
 
 
-  printf("*** END OF APPEND_TO_FREE_MAP ***\n");
+  // printf("*** END OF APPEND_TO_FREE_MAP ***\n");
   return next_free;
 }
 /* End Kenneth and Adam driving */
@@ -226,23 +291,24 @@ free_map_indexed_release(block_sector_t *direct_blocks,
   {
     if(count < 10)
     {
-      printf("previous setting: %i\n", bitmap_test(free_map, direct_blocks[count]));
+      // printf("previous setting: %i\n", bitmap_test(free_map, direct_blocks[count]));
       bitmap_set(free_map, direct_blocks[count], false);
     }
     else if(count < 138)
     {
-      printf("previous setting: %i\n", bitmap_test(free_map, first->blocks[count - 10]));
+      // printf("previous setting: %i\n", bitmap_test(free_map, first->blocks[count - 10]));
       bitmap_set(free_map, first->blocks[count - 10], false);
     }
     else
     {
-      printf("previous setting: %i\n", bitmap_test(free_map, second[second_level_index].blocks[second_level_offset]));
+      // printf("previous setting: %i\n", bitmap_test(free_map, second[second_level_index].blocks[second_level_offset]));
       bitmap_set(free_map, second[second_level_index].blocks[second_level_offset], false);
       second_level_offset++;
       second_level_index = (second_level_offset == 128) ? second_level_index++ : second_level_index;
       second_level_offset = second_level_offset % 128;
     }
   }
+  bitmap_write(free_map, free_map_file);
 }
 
 /* Opens the free map file and reads it from disk. */
@@ -252,10 +318,10 @@ free_map_open (void)
   free_map_file = file_open (inode_open (FREE_MAP_SECTOR));
   if (free_map_file == NULL)
     PANIC ("can't open free map");
-  printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<DOES READS>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+  // printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<DOES READS>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
   if (!bitmap_read (free_map, free_map_file))
     PANIC ("can't read free map");
-  printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Finished READS>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+  // printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Finished READS>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
 }
 
 /* Writes the free map to disk and closes the free map file. */
@@ -278,9 +344,9 @@ free_map_create (void)
   free_map_file = file_open (inode_open (FREE_MAP_SECTOR));
   if (free_map_file == NULL)
     PANIC ("can't open free map");
-    printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<DOES WRITES>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+    // printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<DOES WRITES>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
   if (!bitmap_write (free_map, free_map_file))
     PANIC ("can't write free map");
-    printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Finished WRITES>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+    // printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Finished WRITES>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
 
 }

@@ -16,6 +16,8 @@ bool free_map_allocate (size_t, block_sector_t *);
 bool free_map_indirect_allocate(size_t sectors, block_sector_t *direct_blocks,
 	block_sector_t *first_level, block_sector_t *second_level);
 
+block_sector_t is_sector_free(block_sector_t sector);
+
 block_sector_t append_to_free_map(size_t current_sectors, 
 	block_sector_t* direct_blocks, block_sector_t* first_level, 
 	block_sector_t* second_level);

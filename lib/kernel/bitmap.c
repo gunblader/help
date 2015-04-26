@@ -224,8 +224,10 @@ bitmap_set_multiple (struct bitmap *b, size_t start, size_t cnt, bool value)
   ASSERT (start <= b->bit_cnt);
   ASSERT (start + cnt <= b->bit_cnt);
 
-  for (i = 0; i < cnt; i++)
+  for (i = 0; i < cnt; i++){
     bitmap_set (b, start + i, value);
+    // printf("resetting bit %u to %i\n", start + i, value);
+  }
 }
 
 /* Returns the number of bits in B between START and START + CNT,
