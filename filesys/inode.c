@@ -5,6 +5,7 @@
 #include <string.h>
 #include "filesys/filesys.h"
 #include "filesys/free-map.h"
+#include "threads/thread.h"
 #include "threads/malloc.h"
 
 /* Identifies an inode. */
@@ -57,8 +58,9 @@ static block_sector_t
 byte_to_sector (const struct inode *inode, off_t pos, bool write) 
 {
   ASSERT (inode != NULL);
-  // printf("****BYTE_TO_SECTOR****:\n\tinode sector: %u, sectors: %u, pos: %u\n", inode->sector, bytes_to_sectors(inode->data.length), pos);
 
+  // printf("****BYTE_TO_SECTOR****:\n\tinode sector: %u, sectors: %u, pos: %u\n", inode->sector, bytes_to_sectors(inode->data.length), pos);
+  // printf("\tinode length is: %i\n", inode->data.length);
   if (pos < inode->data.length)
   {
     // return inode->data.start + pos / BLOCK_SECTOR_SIZE;
@@ -121,6 +123,7 @@ byte_to_sector (const struct inode *inode, off_t pos, bool write)
     size_t old_sectors = bytes_to_sectors(inode->data.length);
     //check if there is enough free blocks to allocate to
     // printf("\told_sectors: %u\n", old_sectors);
+    
     block_sector_t next_free = append_to_free_map(old_sectors, inode->data.direct_blocks, 
       inode->data.first_level, inode->data.second_level);
 
@@ -165,7 +168,7 @@ inode_create (block_sector_t sector, off_t length)
 
   ASSERT (length >= 0);
 
-  // printf("\n****INODE_CREATE****:\n");
+  // printf("\n\n\n****INODE_CREATE****:\n\n\n");
   // sector = is_sector_free(sector);
 
   // printf("sector: %u, length: %u\n", sector, length);
@@ -178,6 +181,7 @@ inode_create (block_sector_t sector, off_t length)
   disk_inode = calloc (1, sizeof *disk_inode);
   if (disk_inode != NULL)
     {
+      // printf("\tTHREAD NAME: %s\n", thread_current()->name);
       size_t sectors = bytes_to_sectors (length);
       // printf("\tsectors: %i\n", sectors);
       disk_inode->length = length;
@@ -241,7 +245,7 @@ inode_create (block_sector_t sector, off_t length)
         } 
       free (disk_inode);
     }
-    // printf("****END INODE CREATE****\n\n");
+    // printf("\n\n****END INODE CREATE****\n\n");
   return success;
 }
 
@@ -386,7 +390,7 @@ inode_read_at (struct inode *inode, void *buffer_, off_t size, off_t offset)
   off_t bytes_read = 0;
   uint8_t *bounce = NULL;
 
-  // printf("\n****SECTOR %u READ AT****:\nsize: %i, offset %i, inode length: %i\n", inode->sector, size, offset, inode->data.length);
+  // printf("\n****SECTOR %u READ AT****:\n\tsize: %i, offset %i, inode length: %i\n", inode->sector, size, offset, inode->data.length);
 
   while (size > 0) 
     {
@@ -447,7 +451,8 @@ inode_write_at (struct inode *inode, const void *buffer_, off_t size,
   const uint8_t *buffer = buffer_;
   off_t bytes_written = 0;
   uint8_t *bounce = NULL;
-  // printf("****SECTOR %u WRITE AT****:\nsize: %i, offset %i, inode length: %i\n", inode->sector, size, offset, inode->data.length);
+
+  // printf("\n****SECTOR %u WRITE AT****:\n\tsize: %i, offset %i, inode length: %i\n", inode->sector, size, offset, inode->data.length);
 
   if (inode->deny_write_cnt)
   {

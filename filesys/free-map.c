@@ -58,7 +58,7 @@ is_sector_free(block_sector_t sector)
   if(!bitmap_test(free_map, sector) || sector == FREE_MAP_SECTOR
    || sector == ROOT_DIR_SECTOR)
   {
-    return sector;
+    return -1;
   }
   else
   {
@@ -246,15 +246,19 @@ append_to_free_map(size_t current_sectors,
     set_second = true;
   }
 
-    ASSERT(first_level != NULL);
+  if (first_level != NULL)
+  {
     // *first_level = bitmap_scan_and_flip(free_map, 0, 1, false);
     block_write(fs_device, *first_level, first);
     free(first);
- 
+  }
+
+  if (second_level != NULL)
+  {
     // *second_level = bitmap_scan_and_flip(free_map, 0, 1, false);
     block_write(fs_device, *second_level, second);
     free(second);
-
+  }
 
   // printf("*** END OF APPEND_TO_FREE_MAP ***\n");
   return next_free;
