@@ -416,8 +416,8 @@ int write (int fd, const void *buffer, unsigned size){
     return 0;
   }
   off_t bytes_written = file_write(cur_file_info->file, buffer, size);
-
   lock_release(&lock);
+  // printf("\n***IN WRITE: bytes_written: %d\n", bytes_written);
 	return (int)bytes_written;
 }
 

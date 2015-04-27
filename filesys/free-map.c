@@ -154,30 +154,30 @@ free_map_indirect_allocate(size_t sectors, block_sector_t *direct_blocks,
   }
 
   *first_level = bitmap_scan_and_flip(free_map, 0, 1, false);
-  block_write(fs_device, *first_level, first);
-  free(first);
-  // printf("first level indirection block stored at sector %u\n", *first_level);
-
   if (*first_level != BITMAP_ERROR
     && free_map_file != NULL
     && !bitmap_write (free_map, free_map_file))
   {
-    // printf("Bitmap error\n");
+    printf("Bitmap error\n");
     return false;
   }
+  block_write(fs_device, *first_level, first);
+  free(first);
+  // printf("first level indirection block stored at sector %u\n", *first_level);
+
 
   *second_level = bitmap_scan_and_flip(free_map, 0, 1, false);
-  block_write(fs_device, *second_level, second);
-  free(second);
-  // printf("second level indirection block stored at sector %u\n", *second_level);
-
   if (*second_level != BITMAP_ERROR
     && free_map_file != NULL
     && !bitmap_write (free_map, free_map_file))
   {
-    // printf("Bitmap error\n");
+    printf("Bitmap error\n");
     return false;
   }
+  block_write(fs_device, *second_level, second);
+  free(second);
+  // printf("second level indirection block stored at sector %u\n", *second_level);
+
 
   // printf("AFTER:\n");
   // bitmap_dump(free_map);
@@ -281,7 +281,7 @@ void
 free_map_indexed_release(block_sector_t *direct_blocks,
   block_sector_t *first_level, block_sector_t *second_level, size_t sectors)
 {
-  // printf("*****IN FREE MAP RELEASE*****\n");
+  printf("*****IN FREE MAP RELEASE*****\n");
   struct indirect_block *first = malloc(sizeof(struct indirect_block));
   block_read(fs_device, *first_level, first);
   struct indirect_block *second = malloc(128 * sizeof(struct indirect_block));
