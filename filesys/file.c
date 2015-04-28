@@ -156,6 +156,14 @@ file_seek (struct file *file, off_t new_pos)
   ASSERT (file != NULL);
   ASSERT (new_pos >= 0);
   file->pos = new_pos;
+  /* Adam and Kenneth drove here*/
+  off_t diff = new_pos - inode_length(file->inode);
+  if(diff != 0)
+  {
+    char *zeros = calloc(diff, sizeof(off_t));
+    inode_write_at(file->inode, zeros, diff, inode_length(file->inode));
+  }
+  /* End driving */
 }
 
 /* Returns the current position in FILE as a byte offset from the
