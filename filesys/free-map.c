@@ -236,6 +236,7 @@ append_to_free_map(size_t current_sectors,
   {
     //put in first_level
     first->blocks[current_sectors-10] = next_free;
+    // printf("\tfirst->blocks[%u] = sector %u\n", current_sectors-10, first->blocks[current_sectors-10]);
     set_first = true;
   }
   else
@@ -281,7 +282,7 @@ void
 free_map_indexed_release(block_sector_t *direct_blocks,
   block_sector_t *first_level, block_sector_t *second_level, size_t sectors)
 {
-  printf("*****IN FREE MAP RELEASE*****\n");
+  // printf("*****IN FREE MAP RELEASE*****\n");
   struct indirect_block *first = malloc(sizeof(struct indirect_block));
   block_read(fs_device, *first_level, first);
   struct indirect_block *second = malloc(128 * sizeof(struct indirect_block));
