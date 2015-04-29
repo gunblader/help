@@ -208,6 +208,51 @@ syscall_handler (struct intr_frame *f UNUSED)
       fd = *(int *)user_esp;
       close (fd);
       break;
+
+    /* Directory System calls */
+    case SYS_CHDIR:
+      user_esp++;
+      verify_user(user_esp);
+      char *dir = *(int *)user_esp;
+      verify_user(dir);
+
+      f->eax = chdir(dir);
+      break;
+    case SYS_MKDIR:
+      user_esp++;
+      verify_user(user_esp);
+      char *dir = *(int *)user_esp;
+      verify_user(dir);
+
+      f->eax = mkdir(dir);
+      break;
+    case SYS_READDIR:
+      user_esp++;
+      verify_user(user_esp);
+      fd = *(int *)user_esp;
+      user_esp++;
+      verify_user(user_esp);
+      char *name = *(int *)user_esp;
+      verify_user(name);
+
+      f->eax = readdir(fd, name);
+      break;
+    case SYS_ISDIR:
+      user_esp++;
+      verify_user(user_esp);
+      fd = *(int *)fd;
+
+      f->eax = isdir(fd);
+      break;
+    case SYS_INUMBER:
+      user_esp++;
+      verify_user(user_esp);
+      fd = *(int *)user_esp;
+
+      f->eax = inumber(fd);
+      break;
+
+
     default:
 
       break;
@@ -476,3 +521,47 @@ get_file_from_fd(int fd){
   return cur_file_info;
 }
 // #Kenneth, Jacob and Paul finished driving here
+
+/* Directory System Calls */
+
+/* Changes the current working directory of the process to dir,
+ which may be relative or absolute. Returns true if successful, false on failure.*/
+bool
+chdir (const char *dir)
+{
+
+}
+
+/* Creates the directory named dir, which may be relative or absolute. Returns true if successful,
+ false on failure. Fails if dir already exists or if any directory name in dir, besides the last, 
+ does not already exist. That is, mkdir("/a/b/c") succeeds only if "/a/b" already exists and 
+ "/a/b/c" does not. */
+bool 
+mkdir (const char *dir)
+{
+
+}
+
+/* Reads a directory entry from file descriptor fd, which must represent a directory. If successful, 
+stores the null-terminated file name in name, which must have room for READDIR_MAX_LEN + 1 bytes, 
+and returns true. If no entries are left in the directory, returns false. */
+bool
+readdir (int fd, char *name) 
+{
+
+}
+
+/* Returns true if fd represents a directory, false if it represents an ordinary file.  */
+bool
+isdir (int fd) 
+{
+
+}
+
+/* Returns the inode number of the inode associated with fd, which may represent an 
+ordinary file or a directory. */
+int
+inumber (int fd)
+{
+
+}
