@@ -10,6 +10,7 @@
 struct dir 
   {
     struct inode *inode;                /* Backing store. */
+    struct dir *parent_dir;
     off_t pos;                          /* Current position. */
   };
 

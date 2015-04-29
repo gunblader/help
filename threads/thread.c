@@ -192,6 +192,8 @@ thread_create (const char *name, int priority,
   // printf("Name: %s\n", thread_current()->name);
   // printf("Child's name: %s\n", t->name);
   t->parent = thread_current();
+  //sets the childs current directory to the parents
+  t->curdir = t->parent->curdir;
   //END
   tid = t->tid = allocate_tid ();
 

@@ -106,6 +106,8 @@ struct thread
     struct list fd_list;
     struct file *file;
 
+    struct dir *curdir;
+
     struct semaphore sema_wait_process;
     struct semaphore sema_thread_create;
     struct semaphore pause_thread_exit;
