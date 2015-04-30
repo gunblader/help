@@ -22,12 +22,54 @@ struct dir_entry
     bool in_use;                        /* In use or free? */
   };
 
+/*Kenneth and Jacob driving*/
+//Uses the "path" to get to the dir that contains the filename
+struct dir *
+get_dir(char *path)
+{
+  struct dir *cur = (*path == "/") ? dir_open_root() : thread_current()->curdir;
+  char *token, *save_ptr;
+
+  for(token = strtok_r (s, "/", &save_ptr); token != NULL;
+        token = strtok_r (NULL, "/", &save_ptr))
+  {
+    if(!strcmp(token, ".."))
+    {
+      //back up to the previous directory
+      cur = cur->parent_dir;
+      // thread_current()->curdir = cur;
+    }
+    else if(!strcmp(token, "."))
+    {
+      //get the current directoy and continue
+      cur = thread_current()->curdir;
+      // continue;
+    }
+    else
+    {
+      //look in 'cur' for an entry where name == token
+      struct inode *dir_inode = NULL;
+      if(!dir_lookup(cur, token, &dir_inode))
+      {
+        PANIC ("There was an error in looking up the directory");
+      }
+
+      //set cur to the new directory
+      cur = dir_open(dir_inode);
+    }
+  }
+
+  return cur;
+}
+//end driving
+
+
 /* Creates a directory with space for ENTRY_CNT entries in the
    given SECTOR.  Returns true if successful, false on failure. */
 bool
 dir_create (block_sector_t sector, size_t entry_cnt)
 {
-  return inode_create (sector, entry_cnt * sizeof (struct dir_entry));
+  return inode_create (sector, entry_cnt * sizeof (struct dir_entry);
 }
 
 /* Opens and returns the directory for the given INODE, of which

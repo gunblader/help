@@ -12,6 +12,8 @@
 #include "filesys/filesys.h"
 #include <list.h>
 #include "filesys/file.h"
+#include <string.h>
+#include "filesys/free-map.h"
 
 
 typedef int pid_t;
@@ -33,6 +35,12 @@ void seek (int fd, unsigned position);
 unsigned tell (int fd);
 void close (int fd);
 struct file_info *get_file_from_fd(int fd);
+char *get_file(char *path);
+bool chdir (const char *dir);
+bool mkdir (const char *dir);
+bool readdir (int fd, char *name);
+bool isdir (int fd);
+int inumber (int fd);
 
 // #Jacob Drove Here:
 // Create a global lock to provide mutual exclusion for the
@@ -221,10 +229,10 @@ syscall_handler (struct intr_frame *f UNUSED)
     case SYS_MKDIR:
       user_esp++;
       verify_user(user_esp);
-      char *dir = *(int *)user_esp;
-      verify_user(dir);
+      char *directory = *(int *)user_esp;
+      verify_user(directory);
 
-      f->eax = mkdir(dir);
+      f->eax = mkdir(directory);
       break;
     case SYS_READDIR:
       user_esp++;
@@ -541,7 +549,31 @@ chdir (const char *dir)
 bool 
 mkdir (const char *dir)
 {
+  //parse the dir path
+  
+  //allocate a sector to store the new directory inode
+  block_sector_t new_directory_sector = 0;
+  if(!free_map_allocate(1, &new_directory_sector))
+  {
+    printf("NOT ENOUGH SECTORS IN FREEMAP\n");
+    return false;
+  }
+  //create the directory with the given sector
+  if(!dir_create(new_directory_sector))
+  {
+    printf("CREATING THE FILE FAILED\n");
+    return false;
+  }
+  //add the created directory to its parent's entries (dir_add)
+  struct dir *parent_directory = ;
+  char *dir_name = ;
+  if(!dir_add(parent_directory, dir_name, new_directory_sector))
+  {
+    printf("ADDING THE DIRECTORY FAILED\n");
+    return false;
+  }
 
+  return true;
 }
 
 /* Reads a directory entry from file descriptor fd, which must represent a directory. If successful, 
