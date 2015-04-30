@@ -565,9 +565,19 @@ mkdir (const char *dir)
     return false;
   }
   //add the created directory to its parent's entries (dir_add)
-  struct dir *parent_directory = ;
-  char *dir_name = ;
-  if(!dir_add(parent_directory, dir_name, new_directory_sector))
+  // struct inode *parent_directory = NULL;
+  char *dir_name = NULL;
+
+
+  // Adam drove here 
+  struct dir *cur = (*path == "/") ? dir_open_root() : thread_current()->curdir;
+  struct inode *cur_inode = dir_get_inode(cur);
+  
+  if(!parse(dir, cur_inode, dir_name))
+    return false;
+
+
+  if(!dir_add(dir_open(cur_inode), dir_name, new_directory_sector))
   {
     printf("ADDING THE DIRECTORY FAILED\n");
     return false;

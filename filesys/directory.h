@@ -14,7 +14,11 @@
 struct inode;
 
 /* Opening and closing directories. */
+
+// Kenneth, Adam, and Jacob drove here
 struct dir *get_dir(char *path);
+bool parse (char *path, struct inode *inode, char *token);
+
 bool dir_create (block_sector_t sector, size_t entry_cnt);
 struct dir *dir_open (struct inode *);
 struct dir *dir_open_root (void);

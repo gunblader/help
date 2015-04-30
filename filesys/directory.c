@@ -30,7 +30,7 @@ get_dir(char *path)
   struct dir *cur = (*path == "/") ? dir_open_root() : thread_current()->curdir;
   char *token, *save_ptr;
 
-  for(token = strtok_r (s, "/", &save_ptr); token != NULL;
+  for(token = strtok_r (token, "/", &save_ptr); token != NULL;
         token = strtok_r (NULL, "/", &save_ptr))
   {
     if(!strcmp(token, ".."))
@@ -51,7 +51,10 @@ get_dir(char *path)
       struct inode *dir_inode = NULL;
       if(!dir_lookup(cur, token, &dir_inode))
       {
-        PANIC ("There was an error in looking up the directory");
+
+        // PANIC ("There was an error in looking up the directory");
+        
+        return NULL;
       }
 
       //set cur to the new directory
@@ -61,7 +64,56 @@ get_dir(char *path)
 
   return cur;
 }
-//end driving
+
+// Adam, Jacob, and Robert drove here
+bool
+parse (char *path, struct inode *inode, char *token) {
+
+  // Grab first token from path
+  if(token == NULL)
+  {
+    token = strtok_r (path, "/", &token);
+  }
+  // Get the next token from the remaining path
+  token = strtok_r (NULL, "/", &token))
+
+  // Save the previous inode and previous token in case we are at the end
+  // of the path. We need to set inode and token to the parent's inode
+  // and the name of the new directory respectively
+  struct inode *prev_inode = inode;
+  char *prev_token = (char *)memcpy(prev_token, token, strlen(token));
+
+  // open the directory to search
+  struct dir *cur_dir = dir_open(inode);
+  
+  // if directory TOKEN from PATH is in cur_dir, return true and call 
+  // parse again with the remaining path
+  if(dir_lookup(cur_dir, token, inode))
+    return parse(path, inode, token);
+  // else we are at the end of the path and we have the correct inode and token
+  // so we need to set our return values and return true if token == NULL
+  // if token != NULL -> we encountered an error in the path and we will return
+  // false
+  else{
+
+    token = prev_token;
+    inode = prev_inode;
+    
+    return token == NULL ? true : false;
+  }
+
+
+  // //parsing
+  // if (dir_lookup( cur_dir, token,
+  //           inode))
+  //   // inode = inode_open(cur_dir->sector)
+  //   return true
+  // else /*last token doesnt exist*/
+  //   // inode = inode_open(cur_dir->sector)
+  //   token = last token
+  //   return false
+}
+
 
 
 /* Creates a directory with space for ENTRY_CNT entries in the
