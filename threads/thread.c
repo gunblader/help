@@ -14,6 +14,7 @@
 #ifdef USERPROG
 #include "userprog/process.h"
 #include "userprog/syscall.h"
+#include "filesys/filesys.h"
 #endif
 
 /* Random value for struct thread's `magic' member.
@@ -193,7 +194,10 @@ thread_create (const char *name, int priority,
   // printf("Child's name: %s\n", t->name);
   t->parent = thread_current();
   //sets the childs current directory to the parents
-  t->curdir = t->parent->curdir;
+  if(!strcmp(name, "idle"))
+    t->curdir_sector = ROOT_DIR_SECTOR;
+  else
+    t->curdir_sector = t->parent->curdir_sector;
   //END
   tid = t->tid = allocate_tid ();
 

@@ -82,7 +82,8 @@ parse (char *path, struct inode *inode, char *token) {
   // of the path. We need to set inode and token to the parent's inode
   // and the name of the new directory respectively
   struct inode *prev_inode = inode;
-  char *prev_token = (char *)memcpy(prev_token, token, strlen(token));
+  char *prev_token = malloc(14 * sizeof(char));
+  memcpy(prev_token, token, strlen(token));
 
   // open the directory to search
   struct dir *cur_dir = dir_open(inode);
@@ -98,6 +99,7 @@ parse (char *path, struct inode *inode, char *token) {
   else{
 
     token = prev_token;
+    printf("Token: %s\n", token);
     inode = prev_inode;
     
     return token == NULL;

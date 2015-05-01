@@ -569,10 +569,12 @@ mkdir (const char *dir)
 
 
   // Adam drove here 
-  struct dir *cur = (*dir == "/") ? dir_open_root() : thread_current()->curdir;
-  struct inode *cur_inode = dir_get_inode(cur);
+  // struct dir *cur = (*dir == "/") ? dir_open_root() : thread_current()->curdir;
+  block_sector_t curdir_sector = (*dir == "/") ? ROOT_DIR_SECTOR : thread_current()->curdir_sector;
+  // struct inode *cur_inode = dir_get_inode(cur);
+  struct inode *cur_inode = inode_open(curdir_sector);
   
-  if(!parse(cur, cur_inode, dir_name))
+  if(!parse(dir, cur_inode, dir_name))
   {
     printf("PARSING FAILED\n");
     return false;

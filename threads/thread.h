@@ -5,6 +5,7 @@
 #include <list.h>
 #include <stdint.h>
 #include "synch.h"
+#include "devices/block.h"
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -106,7 +107,8 @@ struct thread
     struct list fd_list;
     struct file *file;
 
-    struct dir *curdir;
+    // struct dir *curdir;
+    block_sector_t curdir_sector;
 
     struct semaphore sema_wait_process;
     struct semaphore sema_thread_create;
