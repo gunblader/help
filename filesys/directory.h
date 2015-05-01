@@ -17,7 +17,7 @@ struct inode;
 
 // Kenneth, Adam, and Jacob drove here
 // struct dir *get_dir(char *path);
-bool parse (char *path, struct inode *inode, char **token, char *save_ptr);
+bool parse (char *path, struct inode **inode, char **token, char *save_ptr);
 
 bool dir_create (block_sector_t sector, size_t entry_cnt);
 struct dir *dir_open (struct inode *);

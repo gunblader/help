@@ -332,7 +332,11 @@ bool create (const char *file_name, unsigned initial_size)
 {
   // #Adam Drove here
   lock_acquire(&lock);
-
+  if(strlen(file_name) == 0)
+  {
+    lock_release(&lock);
+    return false;
+  }
   bool result = false;
   result = filesys_create(file_name, initial_size);
   lock_release(&lock);
@@ -541,28 +545,36 @@ bool
 chdir (const char *dir)
 {
   //check if the path is absolute or relative
-  // char *dir_name;
-  // char *save_ptr;
-  // block_sector_t curdir_sector = (*dir == "/") ? ROOT_DIR_SECTOR : thread_current()->curdir_sector;
-  // struct inode *cur_inode = inode_open(curdir_sector);
+  char *dir_name = NULL;
+  char *save_ptr = NULL;
+  block_sector_t curdir_sector = (*dir == "/") ? ROOT_DIR_SECTOR : thread_current()->curdir_sector;
+  struct inode *cur_inode = inode_open(curdir_sector);
   
-  // //parse the path
-  // if(!parse(dir, cur_inode, &dir_name, save_ptr))
-  // {
-  //   printf("PARSING FAILED\n");
-  //   return false;
-  // }
+  //parse the path
+  printf("\tcur_inode sector: %u\n", inode_get_inumber(cur_inode));
+  char *dir_cpy = malloc(strlen(dir) + 1);
+  strlcpy(dir_cpy, dir, strlen(dir) + 1);
+  printf("\tdir_cpy: %s\n", dir_cpy);
+  if(!parse(dir_cpy, &cur_inode, &dir_name, save_ptr))
+  {
+    printf("PARSING FAILED\n");
+    return false;
+  }
+
+  printf("cur_inode %u, dir_name: %s%s\n", inode_get_inumber(cur_inode), dir_name);
   
-  // //use that returned char* to find the changed directory
-  // struct inode *new_dir_inode;
-  // if(!dir_lookup(dir_open(cur_inode), dir_name, &new_dir_inode)))
-  // {
-  //   printf("DIRECTORY NOT FOUND\n");
-  //   return false;
-  // }
+  //use that returned char* to find the changed directory
+  struct inode *new_dir_inode;
+  if(!dir_lookup(dir_open(cur_inode), dir_name, &new_dir_inode))
+  {
+    printf("DIRECTORY NOT FOUND\n");
+    return false;
+  }
   
-  // //update our threads cwd
-  // thread_current()->curdir_sector = inode_get_inumber(new_dir_inode);
+  //update our threads cwd
+  thread_current()->curdir_sector = inode_get_inumber(new_dir_inode);
+
+  return true;
 
 }
 
@@ -573,6 +585,7 @@ chdir (const char *dir)
 bool 
 mkdir (const char *dir)
 {
+  // printf("\tmkdir(%s)\n", dir);
   ASSERT(dir != NULL); 
   //allocate a sector to store the new directory inode
   block_sector_t new_directory_sector = 0;
@@ -590,7 +603,7 @@ mkdir (const char *dir)
   //add the created directory to its parent's entries (dir_add)
   // struct inode *parent_directory = NULL;
   char *dir_name = NULL;
-  char *save_ptr;
+  char *save_ptr = NULL;
 
 
   // Adam drove here 
@@ -598,14 +611,14 @@ mkdir (const char *dir)
   block_sector_t curdir_sector = (*dir == "/") ? ROOT_DIR_SECTOR : thread_current()->curdir_sector;
   // struct inode *cur_inode = dir_get_inode(cur);
   struct inode *cur_inode = inode_open(curdir_sector);
-  
-  if(!parse(dir, cur_inode, &dir_name, save_ptr))
+
+  if(!parse(dir, &cur_inode, &dir_name, save_ptr))
   {
     printf("PARSING FAILED\n");
     return false;
   }
 
-
+  // printf("\tcur_inode sector: %u, dir_name: %s, new_directory_sector: %u\n", inode_get_inumber(cur_inode), dir_name, new_directory_sector);
   if(!dir_add(dir_open(cur_inode), dir_name, new_directory_sector))
   {
     printf("ADDING THE DIRECTORY FAILED\n");

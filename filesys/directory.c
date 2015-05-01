@@ -10,7 +10,6 @@
 struct dir 
   {
     struct inode *inode;                /* Backing store. */
-    struct dir *parent_dir;
     off_t pos;                          /* Current position. */
   };
 
@@ -64,13 +63,12 @@ struct dir_entry
 
 //   return cur;
 // }
-
 // Adam, Jacob, and Robert drove here
 bool
-parse (char *path, struct inode *inode, char **token, char *save_ptr) {
+parse (char *path, struct inode **inode, char **token, char *save_ptr) {
 
   // Grab first token from path
-  printf("path: %s, token: %s\n", path, *token);
+  printf("\tpath: %s, token: %s\n", path, *token);
   if(*token == NULL)
   {
     *token = strtok_r (path, "/", &save_ptr);
@@ -79,30 +77,39 @@ parse (char *path, struct inode *inode, char **token, char *save_ptr) {
   else
     *token = strtok_r (NULL, "/", &save_ptr);
 
+  if(*token == NULL)
+  {
+    printf("\ttoken is null\n");
+    return false;
+  }
+
   // Save the previous inode and previous token in case we are at the end
   // of the path. We need to set inode and token to the parent's inode
   // and the name of the new directory respectively
-  struct inode *prev_inode = inode;
+  struct inode *prev_inode = *inode;
   // char *prev_token = (char *)memcpy(prev_token, token, strlen(token));
   char *prev_token = *token;
 
   // open the directory to search
-  struct dir *cur_dir = dir_open(inode);
+  struct dir *cur_dir = dir_open(*inode);
   
   // if directory TOKEN from PATH is in cur_dir, return true and call 
   // parse again with the remaining path
-  if(dir_lookup(cur_dir, *token, &inode))
+  if(dir_lookup(cur_dir, *token, inode))
     return parse(path, inode, token, save_ptr);
   // else we are at the end of the path and we have the correct inode and token
   // so we need to set our return values and return true if token == NULL
   // if token != NULL -> we encountered an error in the path and we will return
   // false
   else{
+    //check if name already exists
+    // if(lookup(cur_dir, *token, NULL, NULL))
+    //   return false;
 
     *token = prev_token;
     // printf("Token: %s\n", token);
-    inode = prev_inode;
-    printf("returning file_name %s in directory sector %u\n", *token, inode_get_inumber(inode));
+    *inode = prev_inode;
+    printf("\treturning file_name %s in directory sector %u\n", *token, inode_get_inumber(*inode));
     return *token != NULL;
   }
 
@@ -117,7 +124,6 @@ parse (char *path, struct inode *inode, char **token, char *save_ptr) {
   //   token = last token
   //   return false
 }
-
 
 
 /* Creates a directory with space for ENTRY_CNT entries in the

@@ -6,6 +6,7 @@
 #include "filesys/free-map.h"
 #include "filesys/inode.h"
 #include "filesys/directory.h"
+#include "threads/thread.h"
 
 /* Partition that contains the file system. */
 struct block *fs_device;
@@ -45,17 +46,61 @@ filesys_done (void)
 bool
 filesys_create (const char *name, off_t initial_size) 
 {
+  // block_sector_t inode_sector = 0;
+  // struct dir *dir = dir_open_root ();
+  // // struct dir *dir = get_dir(name);
+  // bool success = (dir != NULL
+  //                 && free_map_allocate(1, &inode_sector)
+  //                 && inode_create (inode_sector, initial_size)
+  //                 && dir_add (dir, name, inode_sector));
+  // if (!success && inode_sector != 0) 
+  //   free_map_release (inode_sector, 1);
+  // dir_close (dir);
+  // return success;
   block_sector_t inode_sector = 0;
-  struct dir *dir = dir_open_root ();
-  // struct dir *dir = get_dir(name);
-  bool success = (dir != NULL
-                  && free_map_allocate(1, &inode_sector)
-                  && inode_create (inode_sector, initial_size)
-                  && dir_add (dir, name, inode_sector));
-  if (!success && inode_sector != 0) 
-    free_map_release (inode_sector, 1);
-  dir_close (dir);
-  return success;
+  if(!free_map_allocate(1, &inode_sector))
+  {
+    if(inode_sector != 0)
+      free_map_release(inode_sector, 1);
+    return false;
+  }
+  //create the inode
+  if(!inode_create(inode_sector, initial_size))
+  {
+    if(inode_sector != 0)
+      free_map_release(inode_sector, 1);
+    return false;
+  }
+
+  char *file_name = NULL;
+  char *save_ptr = NULL;
+  block_sector_t curdir_sector = (*name == "/") ? ROOT_DIR_SECTOR : thread_current()->curdir_sector;
+  struct inode *cur_inode = inode_open(curdir_sector);
+  
+  //parse the path
+  char *path_cpy = malloc(strlen(name) + 1);
+  strlcpy(path_cpy, name, strlen(name) + 1);
+  // printf("path_cpy: %s\n", path_cpy);
+  if(!parse(path_cpy, &cur_inode, &file_name, save_ptr))
+  {
+    if(inode_sector != 0)
+      free_map_release(inode_sector, 1);
+    return false;
+  }
+
+  //Adds this file to its new  directory
+  struct dir *dir = dir_open(cur_inode);
+  if(!dir_add(dir, file_name, inode_sector))
+  {
+    if(inode_sector != 0)
+      free_map_release(inode_sector, 1);
+    return false;
+  }
+
+  // printf("\tCreating File with name: %s, in dir_inode: %u\n", file_name, inode_get_inumber(cur_inode));
+  dir_close(dir);
+  return true;
+
 }
 
 /* Opens the file with the given NAME.

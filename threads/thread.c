@@ -105,6 +105,8 @@ thread_init (void)
   init_thread (initial_thread, "main", PRI_DEFAULT);
   initial_thread->status = THREAD_RUNNING;
   initial_thread->tid = allocate_tid ();
+  //set the initial thread curdir to root
+  initial_thread->curdir_sector = ROOT_DIR_SECTOR;
 }
 
 /* Starts preemptive thread scheduling by enabling interrupts.
