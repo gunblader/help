@@ -549,8 +549,7 @@ chdir (const char *dir)
 bool 
 mkdir (const char *dir)
 {
-  //parse the dir path
-  
+  ASSERT(dir != NULL); 
   //allocate a sector to store the new directory inode
   block_sector_t new_directory_sector = 0;
   if(!free_map_allocate(1, &new_directory_sector))
@@ -559,7 +558,7 @@ mkdir (const char *dir)
     return false;
   }
   //create the directory with the given sector
-  if(!dir_create(new_directory_sector))
+  if(!dir_create(new_directory_sector, 16))
   {
     printf("CREATING THE FILE FAILED\n");
     return false;
@@ -570,11 +569,14 @@ mkdir (const char *dir)
 
 
   // Adam drove here 
-  struct dir *cur = (*path == "/") ? dir_open_root() : thread_current()->curdir;
+  struct dir *cur = (*dir == "/") ? dir_open_root() : thread_current()->curdir;
   struct inode *cur_inode = dir_get_inode(cur);
   
-  if(!parse(dir, cur_inode, dir_name))
+  if(!parse(cur, cur_inode, dir_name))
+  {
+    printf("PARSING FAILED\n");
     return false;
+  }
 
 
   if(!dir_add(dir_open(cur_inode), dir_name, new_directory_sector))

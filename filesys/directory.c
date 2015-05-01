@@ -24,46 +24,46 @@ struct dir_entry
 
 /*Kenneth and Jacob driving*/
 //Uses the "path" to get to the dir that contains the filename
-struct dir *
-get_dir(char *path)
-{
-  struct dir *cur = (*path == "/") ? dir_open_root() : thread_current()->curdir;
-  char *token, *save_ptr;
+// struct dir *
+// get_dir(char *path)
+// {
+//   struct dir *cur = (*path == "/") ? dir_open_root() : thread_current()->curdir;
+//   char *token, *save_ptr;
 
-  for(token = strtok_r (token, "/", &save_ptr); token != NULL;
-        token = strtok_r (NULL, "/", &save_ptr))
-  {
-    if(!strcmp(token, ".."))
-    {
-      //back up to the previous directory
-      cur = cur->parent_dir;
-      // thread_current()->curdir = cur;
-    }
-    else if(!strcmp(token, "."))
-    {
-      //get the current directoy and continue
-      cur = thread_current()->curdir;
-      // continue;
-    }
-    else
-    {
-      //look in 'cur' for an entry where name == token
-      struct inode *dir_inode = NULL;
-      if(!dir_lookup(cur, token, &dir_inode))
-      {
+//   for(token = strtok_r (path, "/", &save_ptr); token != NULL;
+//         token = strtok_r (NULL, "/", &save_ptr))
+//   {
+//     if(!strcmp(token, ".."))
+//     {
+//       //back up to the previous directory
+//       cur = cur->parent_dir;
+//       // thread_current()->curdir = cur;
+//     }
+//     else if(!strcmp(token, "."))
+//     {
+//       //get the current directoy and continue
+//       cur = thread_current()->curdir;
+//       // continue;
+//     }
+//     else
+//     {
+//       //look in 'cur' for an entry where name == token
+//       struct inode *dir_inode = NULL;
+//       if(!dir_lookup(cur, token, &dir_inode))
+//       {
 
-        // PANIC ("There was an error in looking up the directory");
+//         // PANIC ("There was an error in looking up the directory");
         
-        return NULL;
-      }
+//         return NULL;
+//       }
 
-      //set cur to the new directory
-      cur = dir_open(dir_inode);
-    }
-  }
+//       //set cur to the new directory
+//       cur = dir_open(dir_inode);
+//     }
+//   }
 
-  return cur;
-}
+//   return cur;
+// }
 
 // Adam, Jacob, and Robert drove here
 bool
@@ -75,7 +75,8 @@ parse (char *path, struct inode *inode, char *token) {
     token = strtok_r (path, "/", &token);
   }
   // Get the next token from the remaining path
-  token = strtok_r (NULL, "/", &token))
+  else
+    token = strtok_r (NULL, "/", &token);
 
   // Save the previous inode and previous token in case we are at the end
   // of the path. We need to set inode and token to the parent's inode
@@ -88,7 +89,7 @@ parse (char *path, struct inode *inode, char *token) {
   
   // if directory TOKEN from PATH is in cur_dir, return true and call 
   // parse again with the remaining path
-  if(dir_lookup(cur_dir, token, inode))
+  if(dir_lookup(cur_dir, token, &inode))
     return parse(path, inode, token);
   // else we are at the end of the path and we have the correct inode and token
   // so we need to set our return values and return true if token == NULL
@@ -99,7 +100,7 @@ parse (char *path, struct inode *inode, char *token) {
     token = prev_token;
     inode = prev_inode;
     
-    return token == NULL ? true : false;
+    return token == NULL;
   }
 
 
@@ -121,7 +122,7 @@ parse (char *path, struct inode *inode, char *token) {
 bool
 dir_create (block_sector_t sector, size_t entry_cnt)
 {
-  return inode_create (sector, entry_cnt * sizeof (struct dir_entry);
+  return inode_create (sector, entry_cnt * sizeof (struct dir_entry));
 }
 
 /* Opens and returns the directory for the given INODE, of which
@@ -175,6 +176,7 @@ dir_close (struct dir *dir)
 struct inode *
 dir_get_inode (struct dir *dir) 
 {
+  ASSERT(dir != NULL);
   return dir->inode;
 }
 
