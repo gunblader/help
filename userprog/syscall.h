@@ -17,5 +17,6 @@ struct dir;
 struct inode;
 
 void syscall_init (void);
+bool end_parse(char *path, struct inode **parent_inode);
 
 #endif /* userprog/syscall.h */

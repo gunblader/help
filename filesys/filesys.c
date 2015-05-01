@@ -111,14 +111,30 @@ filesys_create (const char *name, off_t initial_size)
 struct file *
 filesys_open (const char *name)
 {
-  struct dir *dir = dir_open_root ();
-  struct inode *inode = NULL;
+  // struct dir *dir = dir_open_root ();
+  // struct inode *inode = NULL;
 
-  if (dir != NULL)
-    dir_lookup (dir, name, &inode);
-  dir_close (dir);
+  // if (dir != NULL)
+  //   dir_lookup (dir, name, &inode);
+  // dir_close (dir);
 
-  return file_open (inode);
+  // return file_open (inode);
+
+
+  block_sector_t curdir_sector = (*name == "/") ? ROOT_DIR_SECTOR : thread_current()->curdir_sector;
+  struct inode *cur_inode = inode_open(curdir_sector);
+  
+  //parse the path
+  char *path_cpy = malloc(strlen(name) + 1);
+  strlcpy(path_cpy, name, strlen(name) + 1);
+
+  if(!end_parse(path_cpy, &cur_inode))
+  {
+    printf("PARSING FAILED\n");
+    return NULL;
+  }
+
+  return file_open (cur_inode);
 }
 
 /* Deletes the file named NAME.

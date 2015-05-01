@@ -372,8 +372,9 @@ bool remove (const char *file_name)
 int open (const char *file_name)
 {
   // #Adam Drove here
-  if(file_name == NULL)
+  if(file_name == NULL || strlen(file_name) == 0)
     return -1;
+
   lock_acquire(&lock);
   
   struct file *file = NULL;
@@ -535,7 +536,25 @@ get_file_from_fd(int fd){
 }
 // #Kenneth, Jacob and Paul finished driving here
 
+bool
+end_parse(char *path, struct inode **parent_inode)
+{
+  struct dir *cur_dir;
 
+  char *token, *save_ptr;
+
+   for (token = strtok_r (path, " ", &save_ptr); token != NULL;
+        token = strtok_r (NULL, " ", &save_ptr))
+     {
+      cur_dir = dir_open(*parent_inode);
+      if(!dir_lookup(cur_dir, token, parent_inode))
+      {
+        return false;
+      }
+     }
+
+     return true;
+}
 
 /* Directory System Calls */
 
@@ -551,28 +570,34 @@ chdir (const char *dir)
   struct inode *cur_inode = inode_open(curdir_sector);
   
   //parse the path
-  printf("\tcur_inode sector: %u\n", inode_get_inumber(cur_inode));
+  // printf("\tcur_inode sector: %u\n", inode_get_inumber(cur_inode));
   char *dir_cpy = malloc(strlen(dir) + 1);
   strlcpy(dir_cpy, dir, strlen(dir) + 1);
-  printf("\tdir_cpy: %s\n", dir_cpy);
-  if(!parse(dir_cpy, &cur_inode, &dir_name, save_ptr))
+  // printf("\tdir_cpy: %s\n", dir_cpy);
+  // if(!parse(dir_cpy, &cur_inode, &dir_name, save_ptr))
+  // {
+  //   printf("PARSING FAILED\n");
+  //   return false;
+  // }
+  if(!end_parse(dir_cpy, &cur_inode))
   {
     printf("PARSING FAILED\n");
     return false;
   }
 
-  printf("cur_inode %u, dir_name: %s%s\n", inode_get_inumber(cur_inode), dir_name);
+  // printf("\tcur_inode %u\n", inode_get_inumber(cur_inode));
   
-  //use that returned char* to find the changed directory
-  struct inode *new_dir_inode;
-  if(!dir_lookup(dir_open(cur_inode), dir_name, &new_dir_inode))
-  {
-    printf("DIRECTORY NOT FOUND\n");
-    return false;
-  }
+  // //use that returned char* to find the changed directory
+  // struct inode *new_dir_inode;
+  // if(!dir_lookup(dir_open(cur_inode), dir_name, &new_dir_inode))
+  // {
+  //   printf("DIRECTORY NOT FOUND\n");
+  //   return false;
+  // }
   
   //update our threads cwd
-  thread_current()->curdir_sector = inode_get_inumber(new_dir_inode);
+  // thread_current()->curdir_sector = inode_get_inumber(new_dir_inode);
+  thread_current()->curdir_sector = inode_get_inumber(cur_inode);
 
   return true;
 
@@ -597,7 +622,7 @@ mkdir (const char *dir)
   //create the directory with the given sector
   if(!dir_create(new_directory_sector, 16))
   {
-    printf("CREATING THE FILE FAILED\n");
+    printf("CREATING THE DIRECTORY FAILED\n");
     return false;
   }
   //add the created directory to its parent's entries (dir_add)
