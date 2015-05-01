@@ -67,42 +67,43 @@ struct dir_entry
 
 // Adam, Jacob, and Robert drove here
 bool
-parse (char *path, struct inode *inode, char *token) {
+parse (char *path, struct inode *inode, char **token, char *save_ptr) {
 
   // Grab first token from path
-  if(token == NULL)
+  printf("path: %s, token: %s\n", path, *token);
+  if(*token == NULL)
   {
-    token = strtok_r (path, "/", &token);
+    *token = strtok_r (path, "/", &save_ptr);
   }
   // Get the next token from the remaining path
   else
-    token = strtok_r (NULL, "/", &token);
+    *token = strtok_r (NULL, "/", &save_ptr);
 
   // Save the previous inode and previous token in case we are at the end
   // of the path. We need to set inode and token to the parent's inode
   // and the name of the new directory respectively
   struct inode *prev_inode = inode;
-  char *prev_token = malloc(14 * sizeof(char));
-  memcpy(prev_token, token, strlen(token));
+  // char *prev_token = (char *)memcpy(prev_token, token, strlen(token));
+  char *prev_token = *token;
 
   // open the directory to search
   struct dir *cur_dir = dir_open(inode);
   
   // if directory TOKEN from PATH is in cur_dir, return true and call 
   // parse again with the remaining path
-  if(dir_lookup(cur_dir, token, &inode))
-    return parse(path, inode, token);
+  if(dir_lookup(cur_dir, *token, &inode))
+    return parse(path, inode, token, save_ptr);
   // else we are at the end of the path and we have the correct inode and token
   // so we need to set our return values and return true if token == NULL
   // if token != NULL -> we encountered an error in the path and we will return
   // false
   else{
 
-    token = prev_token;
-    printf("Token: %s\n", token);
+    *token = prev_token;
+    // printf("Token: %s\n", token);
     inode = prev_inode;
-    
-    return token == NULL;
+    printf("returning file_name %s in directory sector %u\n", *token, inode_get_inumber(inode));
+    return *token != NULL;
   }
 
 
