@@ -130,7 +130,7 @@ filesys_open (const char *name)
 
   if(!end_parse(path_cpy, &cur_inode))
   {
-    printf("PARSING FAILED\n");
+    // printf("PARSING FAILED\n");
     return NULL;
   }
 

@@ -384,6 +384,7 @@ int open (const char *file_name)
     return -1;
   }
   file = filesys_open(file_name);
+
   if(file == NULL){
     lock_release(&lock);
     return -1;
