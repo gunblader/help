@@ -65,12 +65,12 @@ struct dir_entry
 // }
 
 
-// Adam, Jacob, and Kenneth drove here
+// Adam, Jacob, and Kenneth drove hered
 bool
 parse (char *path, struct inode **inode, char **token, char *save_ptr) {
 
   // Grab first token from path
-  printf("\tpath: %s, token: %s\n", path, *token);
+  // printf("\tpath: %s, token: %s\n", path, *token);
   if(*token == NULL)
   {
     *token = strtok_r (path, "/", &save_ptr);
@@ -81,7 +81,7 @@ parse (char *path, struct inode **inode, char **token, char *save_ptr) {
 
   if(*token == NULL)
   {
-    printf("\ttoken is null\n");
+    // printf("\ttoken is null\n");
     // *token = prev_token;
     // *inode = prev_inode;
     return false;
@@ -113,7 +113,7 @@ parse (char *path, struct inode **inode, char **token, char *save_ptr) {
     *token = prev_token;
     // printf("Token: %s\n", token);
     *inode = prev_inode;
-    printf("\treturning file_name %s in directory sector %u\n", *token, inode_get_inumber(*inode));
+    // printf("\treturning file_name %s in directory sector %u\n", *token, inode_get_inumber(*inode));
     return *token != NULL;
   }
 
