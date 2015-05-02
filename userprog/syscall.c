@@ -541,15 +541,17 @@ bool
 end_parse(char *path, struct inode **parent_inode)
 {
   struct dir *cur_dir;
-
+  // printf("***END_PARSE***\n");
+  // printf("\t*path = %s\n\tparent inode = %u", path, inode_get_inumber(*parent_inode));
   char *token, *save_ptr;
 
-   for (token = strtok_r (path, " ", &save_ptr); token != NULL;
-        token = strtok_r (NULL, " ", &save_ptr))
+   for (token = strtok_r (path, "/", &save_ptr); token != NULL;
+        token = strtok_r (NULL, "/", &save_ptr))
      {
       cur_dir = dir_open(*parent_inode);
       if(!dir_lookup(cur_dir, token, parent_inode))
       {
+        // printf("%s\n", );
         return false;
       }
      }
@@ -582,7 +584,7 @@ chdir (const char *dir)
   // }
   if(!end_parse(dir_cpy, &cur_inode))
   {
-    printf("PARSING FAILED\n");
+    // printf("PARSING FAILED\n");
     return false;
   }
 

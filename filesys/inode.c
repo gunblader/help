@@ -182,7 +182,7 @@ inode_init (void)
    device.
    Returns true if successful.
    Returns false if memory or disk allocation fails. */
-	bool
+bool
 inode_create (block_sector_t sector, off_t length)
 {
 	struct inode_disk *disk_inode = NULL;
@@ -210,7 +210,7 @@ inode_create (block_sector_t sector, off_t length)
 		disk_inode->magic = INODE_MAGIC;
 
 		disk_inode->first_level = malloc(sizeof(struct indirect_block));
-		disk_inode->second_level = malloc(128 * sizeof(struct indirect_block));
+		disk_inode->second_level = malloc(sizeof(struct indirect_block));
 		//if (free_map_allocate (sectors, &disk_inode->start))
 		// This checks the free list and allocates free blocks into our structs
 		if(free_map_indirect_allocate(sectors, disk_inode->direct_blocks,

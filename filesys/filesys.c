@@ -144,11 +144,32 @@ filesys_open (const char *name)
 bool
 filesys_remove (const char *name) 
 {
-  struct dir *dir = dir_open_root ();
-  bool success = dir != NULL && dir_remove (dir, name);
-  dir_close (dir); 
+  // struct dir *dir = dir_open_root ();
+  // bool success = dir != NULL && dir_remove (dir, name);
+  // dir_close (dir); 
 
-  return success;
+  // return success;
+
+  block_sector_t curdir_sector = (*name == "/") ? ROOT_DIR_SECTOR : thread_current()->curdir_sector;
+  struct inode *cur_inode = inode_open(curdir_sector);
+
+  //parse the path
+  char *file_name = NULL;
+  char *save_ptr = NULL;
+
+  char *path_cpy = malloc(strlen(name) + 1);
+  strlcpy(path_cpy, name, strlen(name) + 1);
+  bool success = false;
+  
+  if(!parse(path_cpy, &cur_inode, &file_name, &save_ptr))
+  {
+    printf("PARSING FAILED\n");
+    return NULL;
+  }
+  
+  struct dir *dir = dir_open(cur_inode);
+  return dir != NULL && dir_remove(dir, file_name);
+
 }
 
 /* Formats the file system. */
