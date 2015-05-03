@@ -128,13 +128,17 @@ filesys_open (const char *name)
   char *path_cpy = malloc(strlen(name) + 1);
   strlcpy(path_cpy, name, strlen(name) + 1);
 
-  if(!end_parse(path_cpy, &cur_inode))
+  char *file_name = NULL;
+  if(!end_parse(path_cpy, &cur_inode, &file_name))
   {
     // printf("PARSING FAILED\n");
     return NULL;
   }
 
-  return file_open (cur_inode);
+  // printf("\tfile_name: %s\n", file_name);
+  struct inode *temp = NULL;
+  dir_lookup(dir_open(cur_inode), file_name, &temp);
+  return file_open (temp);
 }
 
 /* Deletes the file named NAME.
@@ -144,31 +148,31 @@ filesys_open (const char *name)
 bool
 filesys_remove (const char *name) 
 {
-  struct dir *dir = dir_open_root ();
-  bool success = dir != NULL && dir_remove (dir, name);
-  dir_close (dir); 
+  // struct dir *dir = dir_open_root ();
+  // bool success = dir != NULL && dir_remove (dir, name);
+  // dir_close (dir); 
 
-  return success;
+  // return success;
 
-  // block_sector_t curdir_sector = (*name == "/") ? ROOT_DIR_SECTOR : thread_current()->curdir_sector;
-  // struct inode *cur_inode = inode_open(curdir_sector);
+  block_sector_t curdir_sector = (*name == "/") ? ROOT_DIR_SECTOR : thread_current()->curdir_sector;
+  struct inode *cur_inode = inode_open(curdir_sector);
 
-  // //parse the path
-  // char *file_name = NULL;
-  // char *save_ptr = NULL;
+  //parse the path
+  char *file_name = NULL;
+  char *save_ptr = NULL;
 
-  // char *path_cpy = malloc(strlen(name) + 1);
-  // strlcpy(path_cpy, name, strlen(name) + 1);
-  // bool success = false;
+  char *path_cpy = malloc(strlen(name) + 1);
+  strlcpy(path_cpy, name, strlen(name) + 1);
+  bool success = false;
   
-  // if(!parse(path_cpy, &cur_inode, &file_name, &save_ptr))
-  // {
-  //   printf("PARSING FAILED\n");
-  //   return NULL;
-  // }
+  if(!end_parse(path_cpy, &cur_inode, &file_name))
+  {
+    // printf("PARSING FAILED\n");
+    return NULL;
+  }
   
-  // struct dir *dir = dir_open(cur_inode);
-  // return dir != NULL && dir_remove(dir, file_name);
+  struct dir *dir = dir_open(cur_inode);
+  return dir != NULL && dir_remove(dir, file_name);
 
 }
 
@@ -180,6 +184,17 @@ do_format (void)
   free_map_create ();
   if (!dir_create (ROOT_DIR_SECTOR, 16))
     PANIC ("root directory creation failed");
+
+  /* Kenneth drove here */
+  struct dir *root = dir_open_root();
+  
+  if(!dir_add(root, ".", ROOT_DIR_SECTOR) 
+    || !dir_add(root, "..", ROOT_DIR_SECTOR))
+  {
+    PANIC("ADDING . and .. TO ROOT FAILED");
+  }
+  /* End driving */
+
   free_map_close ();
   printf ("done.\n");
 }

@@ -537,26 +537,64 @@ get_file_from_fd(int fd){
 }
 // #Kenneth, Jacob and Paul finished driving here
 
-bool
-end_parse(char *path, struct inode **parent_inode)
+// bool
+// end_parse(char *path, struct inode **parent_inode)
+// {
+//   struct dir *cur_dir;
+//   // printf("***END_PARSE***\n");
+//   // printf("\t*path = %s\n\tparent inode = %u", path, inode_get_inumber(*parent_inode));
+//   char *token, *save_ptr;
+
+//    for (token = strtok_r (path, "/", &save_ptr); token != NULL;
+//         token = strtok_r (NULL, "/", &save_ptr))
+//      {
+//       cur_dir = dir_open(*parent_inode);
+//       if(!dir_lookup(cur_dir, token, parent_inode))
+//       {
+//         // printf("%s\n", );
+//         return false;
+//       }
+//      }
+
+//      return true;
+// }
+
+/*
+  Returns true when we every member in the 'path' exists
+  returns false if the last member in the 'path' doesn't exist
+  The caller should handle the false case
+*/
+bool end_parse(char *path, struct inode **parent_inode, char **name)
 {
+  // printf("\t*****IN END_PARSE*****\n");
+  // printf("\tpath: %s\n", path);
   struct dir *cur_dir;
-  // printf("***END_PARSE***\n");
-  // printf("\t*path = %s\n\tparent inode = %u", path, inode_get_inumber(*parent_inode));
-  char *token, *save_ptr;
-
-   for (token = strtok_r (path, "/", &save_ptr); token != NULL;
-        token = strtok_r (NULL, "/", &save_ptr))
-     {
-      cur_dir = dir_open(*parent_inode);
-      if(!dir_lookup(cur_dir, token, parent_inode))
-      {
-        // printf("%s\n", );
-        return false;
-      }
-     }
-
-     return true;
+  struct inode *prev_inode = NULL;
+  char *token = NULL;
+  char *save_ptr = NULL;
+  for(token = strtok_r(path, "/", &save_ptr); token != NULL; token = strtok_r(NULL, "/", &save_ptr))
+  {
+    // printf("\tcurrent token: %s\n", token);
+    prev_inode = *parent_inode;
+    // printf("\tprev_inode: %u\n", inode_get_inumber(prev_inode));
+    cur_dir = dir_open(*parent_inode);
+    // printf("\tcur_dir: %u\n", inode_get_inumber(dir_get_inode(cur_dir)));
+    if(!dir_lookup(cur_dir, token, parent_inode))
+    {
+      *name = token;
+      // printf("\tWASN'T FOUND\n\tname: %s\n", *name);
+      *parent_inode = dir_get_inode(cur_dir);
+      // printf("\tparent_inode: %u\n", inode_get_inumber(*parent_inode));
+      // printf("\t*****EXITING END_PARSE (FALSE)*****\n");
+      return false;
+    }
+    *name = token;
+    // printf("\tname: %s\n", *name);
+  }
+  *parent_inode = prev_inode;
+  // printf("\tparent_inode: %u\n", inode_get_inumber(*parent_inode));
+  // printf("\t*****EXITING END_PARSE (TRUE)*****\n");
+  return true;
 }
 
 /* Directory System Calls */
@@ -582,7 +620,7 @@ chdir (const char *dir)
   //   printf("PARSING FAILED\n");
   //   return false;
   // }
-  if(!end_parse(dir_cpy, &cur_inode))
+  if(!end_parse(dir_cpy, &cur_inode, &dir_name))
   {
     // printf("PARSING FAILED\n");
     return false;
@@ -600,7 +638,10 @@ chdir (const char *dir)
   
   //update our threads cwd
   // thread_current()->curdir_sector = inode_get_inumber(new_dir_inode);
-  thread_current()->curdir_sector = inode_get_inumber(cur_inode);
+  struct inode *temp = NULL;
+  dir_lookup(dir_open(cur_inode), dir_name, &temp);
+  // printf("\tnew cwd: %u\n", inode_get_inumber(temp));
+  thread_current()->curdir_sector = inode_get_inumber(temp);
 
   return true;
 
@@ -622,7 +663,7 @@ mkdir (const char *dir)
     printf("NOT ENOUGH SECTORS IN FREEMAP\n");
     return false;
   }
-  //create the directory with the given sector
+  //create the directory with the given sector.
   if(!dir_create(new_directory_sector, 16))
   {
     printf("CREATING THE DIRECTORY FAILED\n");
@@ -642,7 +683,7 @@ mkdir (const char *dir)
 
   if(!parse(dir, &cur_inode, &dir_name, save_ptr))
   {
-    printf("PARSING FAILED\n");
+    // printf("PARSING FAILED\n");
     return false;
   }
 
@@ -650,6 +691,16 @@ mkdir (const char *dir)
   if(!dir_add(dir_open(cur_inode), dir_name, new_directory_sector))
   {
     printf("ADDING THE DIRECTORY FAILED\n");
+    return false;
+  }
+
+  //add the "." and ".."
+  struct dir *new_dir = dir_open(inode_open(new_directory_sector));
+
+  if(!dir_add(new_dir, ".", new_directory_sector) 
+    || !dir_add(new_dir, "..", inode_get_inumber(cur_inode)))
+  {
+    printf("ADDING . and .. FAILED\n");
     return false;
   }
 
