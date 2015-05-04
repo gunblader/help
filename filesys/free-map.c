@@ -257,6 +257,7 @@ append_to_free_map(size_t current_sectors,
   if (second_level != NULL)
   {
     // *second_level = bitmap_scan_and_flip(free_map, 0, 1, false);
+    ASSERT(second != NULL);
     block_write(fs_device, *second_level, second);
     free(second);
   }

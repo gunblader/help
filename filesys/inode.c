@@ -31,6 +31,7 @@ struct inode_disk
 };
 
 
+
 /* Returns the number of sectors to allocate for an inode SIZE
    bytes long. */
 	static inline size_t
@@ -48,7 +49,22 @@ struct inode
 	bool removed;                       /* True if deleted, false otherwise. */
 	int deny_write_cnt;                 /* 0: writes ok, >0: deny writes. */
 	struct inode_disk data;             /* Inode content. */
+	bool isdir;
+	off_t pos;
 };
+
+
+bool 
+set_isdir(struct inode *inode, bool isdir)
+{
+	inode->isdir = isdir;
+}
+
+bool
+get_isdir(struct inode *inode)
+{
+	return inode->isdir;
+}
 
 block_sector_t
 get_sector_from_index(struct inode *inode, block_sector_t sector)
@@ -305,6 +321,7 @@ inode_open (block_sector_t sector)
 	inode->open_cnt = 1;
 	inode->deny_write_cnt = 0;
 	inode->removed = false;
+	inode->pos = 0;
 	// printf("\tinode sector: %u\n", inode->sector);
 	block_read (fs_device, inode->sector, &inode->data);
 	// printf("\tinode data length: %u\n", inode->data.length);
@@ -458,6 +475,18 @@ inode_read_at (struct inode *inode, void *buffer_, off_t size, off_t offset)
 	free (bounce);
 	// printf("****END READ AT****\n\n");
 	return bytes_read;
+}
+
+off_t
+inode_get_pos(struct inode *inode){
+	return inode->pos;
+}
+
+void
+inode_increment_pos(struct inode *inode, off_t offset)
+{
+	inode->pos += offset;
+	block_write(fs_device, inode->sector, inode);
 }
 
 /* Writes SIZE bytes from BUFFER into INODE, starting at OFFSET.

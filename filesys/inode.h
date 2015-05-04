@@ -6,6 +6,7 @@
 #include "devices/block.h"
 
 struct bitmap;
+struct inode;
 
 /* Kenneth Drove here */
 struct indirect_block
@@ -16,6 +17,9 @@ struct indirect_block
 static const size_t MAX_FILE_SIZE = (1<<23);
 /* Kenneth finished driving*/
 
+bool set_isdir(struct inode *inode, bool isdir);
+bool get_isdir(struct inode *inode);
+
 void inode_init (void);
 bool inode_create (block_sector_t, off_t);
 struct inode *inode_open (block_sector_t);
@@ -24,6 +28,8 @@ block_sector_t inode_get_inumber (const struct inode *);
 void inode_close (struct inode *);
 void inode_remove (struct inode *);
 off_t inode_read_at (struct inode *, void *, off_t size, off_t offset);
+off_t inode_get_pos(struct inode *inode);
+void inode_increment_pos(struct inode *inode, off_t offset);
 off_t inode_write_at (struct inode *, const void *, off_t size, off_t offset);
 void inode_deny_write (struct inode *);
 void inode_allow_write (struct inode *);

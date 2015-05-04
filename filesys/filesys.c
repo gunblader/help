@@ -74,9 +74,12 @@ filesys_create (const char *name, off_t initial_size)
 
   char *file_name = NULL;
   char *save_ptr = NULL;
-  block_sector_t curdir_sector = (*name == "/") ? ROOT_DIR_SECTOR : thread_current()->curdir_sector;
+  block_sector_t curdir_sector = (*name == "/") ? 
+    ROOT_DIR_SECTOR : thread_current()->curdir_sector;
   struct inode *cur_inode = inode_open(curdir_sector);
   
+  set_isdir(cur_inode, false);
+
   //parse the path
   char *path_cpy = malloc(strlen(name) + 1);
   strlcpy(path_cpy, name, strlen(name) + 1);

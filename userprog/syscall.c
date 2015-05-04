@@ -14,9 +14,10 @@
 #include "filesys/file.h"
 #include <string.h>
 #include "filesys/free-map.h"
+#include "lib/user/syscall.h"
 
 
-typedef int pid_t;
+// typedef int pid_t;
 
 void verify_user(void *user_esp);
 bool check_num_args(int argc, int expected);
@@ -76,9 +77,28 @@ void verify_user(void *user_esp){
     thread_exit();
   }
 }
+
 // Explain here what this does in a comment
-bool check_num_args(int argc, int expected){
+bool 
+check_num_args(int argc, int expected){
   return argc-1 < expected ? true: false;
+}
+
+// Returns the file_info struct that has the same file descriptor member as FD
+struct file_info *
+get_file_from_fd(int fd){
+  struct list_elem *e = NULL;
+  struct file_info *cur_file_info = NULL;
+  //find the current file info if it exists
+  for(e = list_begin(&file_list); e != list_end(&file_list); e = list_next(e)){
+    struct file_info *temp = list_entry(e, struct file_info, file_list_elem);
+    if(temp->fd == fd){
+      cur_file_info = temp;
+      break;
+    }
+  }
+
+  return cur_file_info;
 }
 
 
@@ -520,21 +540,7 @@ void close (int fd){
   lock_release(&lock);
 }
 
-struct file_info *
-get_file_from_fd(int fd){
-  struct list_elem *e = NULL;
-  struct file_info *cur_file_info = NULL;
-  //find the current file info if it exists
-  for(e = list_begin(&file_list); e != list_end(&file_list); e = list_next(e)){
-    struct file_info *temp = list_entry(e, struct file_info, file_list_elem);
-    if(temp->fd == fd){
-      cur_file_info = temp;
-      break;
-    }
-  }
 
-  return cur_file_info;
-}
 // #Kenneth, Jacob and Paul finished driving here
 
 // bool
@@ -677,7 +683,8 @@ mkdir (const char *dir)
 
   // Adam drove here 
   // struct dir *cur = (*dir == "/") ? dir_open_root() : thread_current()->curdir;
-  block_sector_t curdir_sector = (*dir == "/") ? ROOT_DIR_SECTOR : thread_current()->curdir_sector;
+  block_sector_t curdir_sector = (*dir == "/") ? 
+    ROOT_DIR_SECTOR : thread_current()->curdir_sector;
   // struct inode *cur_inode = dir_get_inode(cur);
   struct inode *cur_inode = inode_open(curdir_sector);
 
@@ -704,23 +711,46 @@ mkdir (const char *dir)
     return false;
   }
 
+
+
   return true;
 }
 
-/* Reads a directory entry from file descriptor fd, which must represent a directory. If successful, 
-stores the null-terminated file name in name, which must have room for READDIR_MAX_LEN + 1 bytes, 
-and returns true. If no entries are left in the directory, returns false. */
+// Adam and Jacob driving
+/* Reads a directory entry from file descriptor fd, which must represent a directory. 
+   If successful, stores the null-terminated file name in name, which must have room 
+   for READDIR_MAX_LEN + 1 bytes, and returns true. If no entries are left in the
+   directory, returns false. */
 bool
 readdir (int fd, char *name) 
 {
-
+  // printf("***READDIR***\n\tstrlen(name) = %d\n\tREADDDIR_MAX_LEN + 1 = %d\n",strlen(name)+1, READDIR_MAX_LEN+1);
+  // if((strlen(name) + 1) <= (READDIR_MAX_LEN + 1))
+  // {
+  //   ASSERT(0);
+  //   return false;
+  // }
+  struct file_info *f = get_file_from_fd(fd);
+  if(f == NULL)
+    return false;
+  else{
+    struct inode *inode = file_get_inode(f->file);
+    return dir_readdir(dir_open(inode), name);
+  }
 }
 
 /* Returns true if fd represents a directory, false if it represents an ordinary file.  */
 bool
 isdir (int fd) 
 {
-
+  struct file_info *temp = get_file_from_fd(fd);
+  if(temp != NULL)
+  {
+    struct inode *inode = file_get_inode(temp->file);
+    return get_isdir(inode);
+  }
+  else
+    return false;
 }
 
 /* Returns the inode number of the inode associated with fd, which may represent an 
@@ -728,5 +758,12 @@ ordinary file or a directory. */
 int
 inumber (int fd)
 {
+  struct file_info *f = get_file_from_fd(fd);
+  struct inode *inode = file_get_inode(f->file);
 
+  if(f != NULL)
+    return inode_get_inumber(inode);
+  else 
+    return -1;
 }
+// End driving
