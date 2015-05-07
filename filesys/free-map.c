@@ -4,6 +4,7 @@
 #include "filesys/file.h"
 #include "filesys/filesys.h"
 #include "filesys/inode.h"
+#include "devices/block.h"
 
 static struct file *free_map_file;   /* Free map file. */
 static struct bitmap *free_map;      /* Free map, one bit per sector. */
@@ -85,7 +86,7 @@ is_sector_free(block_sector_t sector)
 */
 bool
 free_map_indirect_allocate(size_t sectors, block_sector_t *direct_blocks,
-  block_sector_t *first_level, block_sector_t *second_level)
+  block_sector_t first_level, block_sector_t second_level)
 {
   if(bitmap_count(free_map, 0, bitmap_size(free_map), false) < sectors)
   {
@@ -106,7 +107,7 @@ free_map_indirect_allocate(size_t sectors, block_sector_t *direct_blocks,
   bool set_first = false;
   bool set_second = false;
 
-  // printf("****FREE-MAP-IA****:\n\tSectors: %u\n", sectors);
+  printf("****FREE-MAP-IA****:\n\tSectors: %u\n", sectors);
 
   //while the count is less than the number of total sectors to allocate
   while(count < sectors)
@@ -126,14 +127,14 @@ free_map_indirect_allocate(size_t sectors, block_sector_t *direct_blocks,
     {
       //put them in direct_blocks
       direct_blocks[count] = next_free;
-      // printf("\tdirect_block[%i] allocated to %u\n", count, next_free);
+      printf("\tdirect_block[%i] allocated to %u\n", count, next_free);
     }
     //else if we have allocated <= (10 + 128) sectors, put the in first level
     else if(count < 138)
     {
       //put in first_level
       first->blocks[first_index] = next_free;
-      // printf("\tfirst_level->blocks[%i] allocated to %u\n", first_index, next_free);
+      printf("\tfirst_level->blocks[%i] allocated to %u\n", first_index, next_free);
       first_index++;
       set_first = true;
     }
@@ -144,8 +145,8 @@ free_map_indirect_allocate(size_t sectors, block_sector_t *direct_blocks,
 
       second[second_level_index].blocks[second_level_offset] = next_free;
 
-      // printf("\tsecond_level[%u].blocks[%u] allocated to %u\n", second_level_index,
-        // second_level_offset, next_free);
+      printf("\tsecond_level[%u].blocks[%u] allocated to %u\n", second_level_index,
+        second_level_offset, next_free);
       
       second_level_offset++;
       second_level_index = (second_level_offset == 128) ? second_level_index++ : second_level_index;
@@ -156,35 +157,34 @@ free_map_indirect_allocate(size_t sectors, block_sector_t *direct_blocks,
     count++;
   }
 
-  *first_level = bitmap_scan_and_flip(free_map, 0, 1, false);
-  if (*first_level != BITMAP_ERROR
+  first_level = bitmap_scan_and_flip(free_map, 0, 1, false);
+  if (first_level != BITMAP_ERROR
     && free_map_file != NULL
     && !bitmap_write (free_map, free_map_file))
   {
     printf("Bitmap error\n");
     return false;
   }
-  block_write(fs_device, *first_level, first);
+  block_write(fs_device, first_level, first);
   free(first);
-  // printf("first level indirection block stored at sector %u\n", *first_level);
+  printf("first level indirection block stored at sector %u\n", first_level);
 
 
-  *second_level = bitmap_scan_and_flip(free_map, 0, 1, false);
-  if (*second_level != BITMAP_ERROR
+  second_level = bitmap_scan_and_flip(free_map, 0, 1, false);
+  if (second_level != BITMAP_ERROR
     && free_map_file != NULL
     && !bitmap_write (free_map, free_map_file))
   {
     printf("Bitmap error\n");
     return false;
   }
-  block_write(fs_device, *second_level, second);
   free(second);
-  // printf("second level indirection block stored at sector %u\n", *second_level);
+  printf("second level indirection block stored at sector %u\n", second_level);
 
 
   // printf("AFTER:\n");
   // bitmap_dump(free_map);
-  // printf("****END FREE-MAP-IA****\n");
+  printf("****END FREE-MAP-IA****\n");
   return true;
 }
 /* End Adam driving */
@@ -192,8 +192,8 @@ free_map_indirect_allocate(size_t sectors, block_sector_t *direct_blocks,
 /* Kenneth and Adam driving */
 block_sector_t
 append_to_free_map(size_t current_sectors, 
-  block_sector_t* direct_blocks, block_sector_t* first_level, 
-  block_sector_t* second_level)
+  block_sector_t* direct_blocks, block_sector_t first_level, 
+  block_sector_t second_level)
 {
   if(bitmap_count(free_map, 0, bitmap_size(free_map), false) < 1)
   {
@@ -213,10 +213,10 @@ append_to_free_map(size_t current_sectors,
   // printf("\t*first_level: %u\n", *first_level);
   // printf("\t*second_level: %u\n", *second_level);
 
-  if(first_level != NULL && first != NULL)
-    block_read(fs_device, *first_level, first);
-  if(second_level != NULL && second != NULL)
-    block_read(fs_device, *second_level, second);
+  if(&first_level != NULL && first != NULL)
+    block_read(fs_device, first_level, first);
+  if(&second_level != NULL && second != NULL)
+    block_read(fs_device, second_level, second);
 
   // allocated count sectors to this inode
   next_free = bitmap_scan_and_flip(free_map, 0, 1, false);
@@ -250,19 +250,19 @@ append_to_free_map(size_t current_sectors,
     set_second = true;
   }
 
-  if (first_level != NULL)
+  if (&first_level != NULL)
   {
     // *first_level = bitmap_scan_and_flip(free_map, 0, 1, false);
     ASSERT(first != NULL);
-    block_write(fs_device, *first_level, first);
+    block_write(fs_device, first_level, first);
   }
   free(first);
 
-  if (second_level != NULL)
+  if (&second_level != NULL)
   {
     // *second_level = bitmap_scan_and_flip(free_map, 0, 1, false);
     ASSERT(second != NULL);
-    block_write(fs_device, *second_level, second);
+    block_write(fs_device, second_level, second);
   }
   free(second);
 
@@ -285,13 +285,13 @@ free_map_release (block_sector_t sector, size_t cnt)
 // #Kenneth Drove here
 void
 free_map_indexed_release(block_sector_t *direct_blocks,
-  block_sector_t *first_level, block_sector_t *second_level, size_t sectors)
+  block_sector_t first_level, block_sector_t second_level, size_t sectors)
 {
   // printf("*****IN FREE MAP RELEASE*****\n");
   struct indirect_block *first = malloc(sizeof(struct indirect_block));
-  block_read(fs_device, *first_level, first);
+  block_read(fs_device, first_level, first);
   struct indirect_block *second = malloc(128 * sizeof(struct indirect_block));
-  block_read(fs_device, *second_level, second);
+  block_read(fs_device, second_level, second);
 
   size_t second_level_index = 0;
   size_t second_level_offset = 0;

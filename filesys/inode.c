@@ -17,8 +17,8 @@ struct inode_disk
 {
 	/* Kenneth and Adam drove here*/
 	block_sector_t direct_blocks[10]; /* Hold the 10 direct blocks */
-	block_sector_t *first_level; /* Holds the location of the sector for the first indirection block*/
-	block_sector_t *second_level; /* Holds the location of the sector for the second indirection block*/
+	block_sector_t first_level; /* Holds the location of the sector for the first indirection block*/
+	block_sector_t second_level; /* Holds the location of the sector for the second indirection block*/
 
 	//struct indirect_block *first_level; /* A pointer to an indirect_block that points to 128 blocks */
 	// struct indirect_block *second_level; /* An array of indirect_blocks (128^2 total blocks) */
@@ -69,8 +69,8 @@ get_isdir(struct inode *inode)
 block_sector_t
 get_sector_from_index(struct inode *inode, block_sector_t sector)
 {
-		// printf("**** IN GET SECTOR FROM INDEX ****\n");
-		// printf("\tsector: %u\n", sector);
+		printf("**** IN GET SECTOR FROM INDEX ****\n");
+		printf("\tsector: %u\n", sector);
 		if(sector < 10)
 		{
 			// size_t i;
@@ -86,8 +86,8 @@ get_sector_from_index(struct inode *inode, block_sector_t sector)
 		else if (sector < 138)
 		{
 			struct indirect_block *first = malloc(sizeof(struct indirect_block));
-			// printf("\tfirst level sector: %u\n", *inode->data.first_level);
-			block_read(fs_device, *inode->data.first_level, first);
+			printf("\tfirst level sector: %u\n", inode->data.first_level);
+			block_read(fs_device, inode->data.first_level, first);
 			// size_t i;
 			// for(i = 0; i < 128; i++)
 			// {
@@ -96,17 +96,17 @@ get_sector_from_index(struct inode *inode, block_sector_t sector)
 
 			block_sector_t temp = first->blocks[sector - 10];
 			free(first);
-			// printf("\treturning first_level->blocks[%u] = sector %u\n", sector - 10, temp);
+			printf("\treturning first_level->blocks[%u] = sector %u\n", sector - 10, temp);
 			return temp;
 		}
 		else
 		{
 			// printf("second_level[(sector - 138)/128] = sector %u\n", inode->data.second_level[(sector - 138)/128]);
 
-			struct indirect_block *second = malloc(sizeof(struct indirect_block));
-			block_read(fs_device, inode->data.second_level[(sector - 138)/128], second);
-			// printf("\treturning second_level sector %u\n", second->blocks[(sector - 138) % 128]);
-			block_sector_t temp = second->blocks[(sector-138) % 128];
+			struct indirect_block *second = malloc(128 * sizeof(struct indirect_block));
+			block_read(fs_device, inode->data.second_level, second);
+			printf("\treturning second_level sector %u\n", second[(sector - 138)/128].blocks[(sector - 138) % 128]);
+			block_sector_t temp = second[(sector - 138)/128].blocks[(sector-138) % 128];
 			free(second);
 			return temp;
 		}
@@ -225,8 +225,8 @@ inode_create (block_sector_t sector, off_t length)
 		// printf("\tdisk_inode length: %i\n", disk_inode->length);
 		disk_inode->magic = INODE_MAGIC;
 
-		disk_inode->first_level = malloc(sizeof(struct indirect_block));
-		disk_inode->second_level = malloc(sizeof(struct indirect_block));
+		// disk_inode->first_level = malloc(sizeof(struct indirect_block));
+		// disk_inode->second_level = malloc(sizeof(struct indirect_block));
 		//if (free_map_allocate (sectors, &disk_inode->start))
 		// This checks the free list and allocates free blocks into our structs
 		if(free_map_indirect_allocate(sectors, disk_inode->direct_blocks,
