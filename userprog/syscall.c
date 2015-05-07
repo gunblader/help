@@ -495,6 +495,10 @@ int write (int fd, const void *buffer, unsigned size){
     lock_release(&lock);
     return 0;
   }
+  // if(get_isdir(file_get_inode(cur_file_info->file))){
+  //   lock_release(&lock);
+  //   return -1;
+  // }
   off_t bytes_written = file_write(cur_file_info->file, buffer, size);
   lock_release(&lock);
   // printf("\n***IN WRITE: bytes_written: %d\n", bytes_written);
@@ -568,7 +572,7 @@ void close (int fd){
 /*
   Returns true when we every member in the 'path' exists
   returns false if the last member in the 'path' doesn't exist
-  The caller should handle the false case
+  The caller should handle the false case.
 */
 bool end_parse(char *path, struct inode **parent_inode, char **name)
 {
@@ -592,12 +596,16 @@ bool end_parse(char *path, struct inode **parent_inode, char **name)
       *parent_inode = dir_get_inode(cur_dir);
       // printf("\tparent_inode: %u\n", inode_get_inumber(*parent_inode));
       // printf("\t*****EXITING END_PARSE (FALSE)*****\n");
+      // dir_close(cur_dir);
       return false;
     }
     *name = token;
+    dir_close(cur_dir);
+    // free(cur_dir);
     // printf("\tname: %s\n", *name);
   }
   *parent_inode = prev_inode;
+  // dir_close(cur_dir);
   // printf("\tparent_inode: %u\n", inode_get_inumber(*parent_inode));
   // printf("\t*****EXITING END_PARSE (TRUE)*****\n");
   return true;
@@ -645,10 +653,12 @@ chdir (const char *dir)
   //update our threads cwd
   // thread_current()->curdir_sector = inode_get_inumber(new_dir_inode);
   struct inode *temp = NULL;
-  dir_lookup(dir_open(cur_inode), dir_name, &temp);
+  struct dir *directory = dir_open(cur_inode);
+  dir_lookup(directory, dir_name, &temp);
   // printf("\tnew cwd: %u\n", inode_get_inumber(temp));
   thread_current()->curdir_sector = inode_get_inumber(temp);
-
+  free(dir_cpy);
+  dir_close(directory);
   return true;
 
 }
@@ -688,14 +698,15 @@ mkdir (const char *dir)
   // struct inode *cur_inode = dir_get_inode(cur);
   struct inode *cur_inode = inode_open(curdir_sector);
 
-  if(!parse(dir, &cur_inode, &dir_name, save_ptr))
+  if(end_parse(dir, &cur_inode, &dir_name))
   {
     // printf("PARSING FAILED\n");
     return false;
   }
 
   // printf("\tcur_inode sector: %u, dir_name: %s, new_directory_sector: %u\n", inode_get_inumber(cur_inode), dir_name, new_directory_sector);
-  if(!dir_add(dir_open(cur_inode), dir_name, new_directory_sector))
+  struct dir *directory = dir_open(cur_inode);
+  if(!dir_add(directory, dir_name, new_directory_sector))
   {
     printf("ADDING THE DIRECTORY FAILED\n");
     return false;
@@ -711,7 +722,8 @@ mkdir (const char *dir)
     return false;
   }
 
-
+  dir_close(directory);
+  dir_close(new_dir);
 
   return true;
 }
@@ -735,7 +747,10 @@ readdir (int fd, char *name)
     return false;
   else{
     struct inode *inode = file_get_inode(f->file);
-    return dir_readdir(dir_open(inode), name);
+    struct dir *dir = dir_open(inode);
+    bool success = dir_readdir(dir, name);
+    // dir_close(dir);
+    return success;
   }
 }
 

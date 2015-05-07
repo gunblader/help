@@ -280,6 +280,8 @@ inode_create (block_sector_t sector, off_t length)
 			success = true;
 
 		} 
+		// free(disk_inode->first_level);
+		// free(disk_inode->second_level);
 		free (disk_inode);
 	}
 	// printf("\n\n****END INODE CREATE****\n\n");

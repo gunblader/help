@@ -140,6 +140,8 @@ dir_create (block_sector_t sector, size_t entry_cnt)
   {
     struct inode *inode = inode_open(sector);
     set_isdir(inode, true);
+    if(sector != ROOT_DIR_SECTOR)
+      inode_close(inode);
   }
   return result;
 }
@@ -343,16 +345,17 @@ dir_readdir (struct dir *dir, char name[NAME_MAX + 1])
   while (inode_read_at (dir->inode, &e, sizeof e, inode_get_pos(dir->inode)) == sizeof e) 
     {
       inode_increment_pos(dir->inode, sizeof e);
-      printf("***current pos: %d\n", inode_get_pos(dir->inode));
+      // printf("***current pos: %d\n", inode_get_pos(dir->inode));
       // dir->pos += sizeof e;
       if (e.in_use && strcmp(e.name, ".") && strcmp(e.name, ".."))
         {
           strlcpy (name, e.name, NAME_MAX + 1);
           printf("\tname = %s\n", e.name);
-          printf("***END DIR_READDIR\n\n");
+          // printf("***END DIR_READDIR\n\n");
           return true;
         } 
     }
+    printf("\tDidn't find anything else!\n");
     printf("***END DIR_READDIR\n\n");
   return false;
 }

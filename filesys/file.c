@@ -162,6 +162,7 @@ file_seek (struct file *file, off_t new_pos)
   {
     char *zeros = calloc(diff, sizeof(off_t));
     inode_write_at(file->inode, zeros, diff, inode_length(file->inode));
+    free(zeros);
   }
   /* End driving */
 }

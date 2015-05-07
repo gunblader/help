@@ -100,6 +100,9 @@ free_map_indirect_allocate(size_t sectors, block_sector_t *direct_blocks,
   struct indirect_block *first = malloc(sizeof(struct indirect_block));
   struct indirect_block *second = malloc(128 * sizeof(struct indirect_block));
 
+  ASSERT(first != NULL);
+  ASSERT(second != NULL);
+
   bool set_first = false;
   bool set_second = false;
 
@@ -250,17 +253,18 @@ append_to_free_map(size_t current_sectors,
   if (first_level != NULL)
   {
     // *first_level = bitmap_scan_and_flip(free_map, 0, 1, false);
+    ASSERT(first != NULL);
     block_write(fs_device, *first_level, first);
-    free(first);
   }
+  free(first);
 
   if (second_level != NULL)
   {
     // *second_level = bitmap_scan_and_flip(free_map, 0, 1, false);
     ASSERT(second != NULL);
     block_write(fs_device, *second_level, second);
-    free(second);
   }
+  free(second);
 
   // printf("*** END OF APPEND_TO_FREE_MAP ***\n");
   return next_free;
@@ -315,6 +319,8 @@ free_map_indexed_release(block_sector_t *direct_blocks,
     }
   }
   bitmap_write(free_map, free_map_file);
+  free(first);
+  free(second);
 }
 
 /* Opens the free map file and reads it from disk. */

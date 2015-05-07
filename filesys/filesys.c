@@ -84,7 +84,7 @@ filesys_create (const char *name, off_t initial_size)
   char *path_cpy = malloc(strlen(name) + 1);
   strlcpy(path_cpy, name, strlen(name) + 1);
   // printf("path_cpy: %s\n", path_cpy);
-  if(!parse(path_cpy, &cur_inode, &file_name, save_ptr))
+  if(end_parse(path_cpy, &cur_inode, &file_name))
   {
     if(inode_sector != 0)
       free_map_release(inode_sector, 1);
@@ -97,10 +97,12 @@ filesys_create (const char *name, off_t initial_size)
   {
     if(inode_sector != 0)
       free_map_release(inode_sector, 1);
+    dir_close(dir);
     return false;
   }
 
   // printf("\tCreating File with name: %s, in dir_inode: %u\n", file_name, inode_get_inumber(cur_inode));
+  free(path_cpy);
   dir_close(dir);
   return true;
 
@@ -140,7 +142,14 @@ filesys_open (const char *name)
 
   // printf("\tfile_name: %s\n", file_name);
   struct inode *temp = NULL;
-  dir_lookup(dir_open(cur_inode), file_name, &temp);
+  struct dir *dir = dir_open(cur_inode);
+  if(!dir_lookup(dir, file_name, &temp)){
+    printf("LOOKUP FAILED\n");
+    return NULL;
+  }
+  if(curdir_sector != ROOT_DIR_SECTOR)
+      dir_close(dir);
+  free(path_cpy);
   return file_open (temp);
 }
 
@@ -175,7 +184,10 @@ filesys_remove (const char *name)
   }
   
   struct dir *dir = dir_open(cur_inode);
-  return dir != NULL && dir_remove(dir, file_name);
+  success = dir != NULL && dir_remove(dir, file_name);
+  free(path_cpy);
+  dir_close(dir);
+  return success;
 
 }
 
@@ -196,6 +208,7 @@ do_format (void)
   {
     PANIC("ADDING . and .. TO ROOT FAILED");
   }
+  dir_close(root);
   /* End driving */
 
   free_map_close ();
