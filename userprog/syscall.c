@@ -579,7 +579,7 @@ bool end_parse(char *path, struct inode **parent_inode, char **name)
   // printf("\t*****IN END_PARSE*****\n");
   // printf("\tpath: %s\n", path);
   struct dir *cur_dir;
-  struct inode *prev_inode = NULL;
+  struct inode *prev_inode = *parent_inode;
   char *token = NULL;
   char *save_ptr = NULL;
   for(token = strtok_r(path, "/", &save_ptr); token != NULL; token = strtok_r(NULL, "/", &save_ptr))
@@ -707,6 +707,7 @@ mkdir (const char *dir)
     // printf("PARSING FAILED\n");
     return false;
   }
+  // printf("This directory's parent dir is in sector %u\n", inode_get_inumber(cur_inode));
 
   // printf("\tcur_inode sector: %u, dir_name: %s, new_directory_sector: %u\n", inode_get_inumber(cur_inode), dir_name, new_directory_sector);
   struct dir *directory = dir_open(cur_inode);
@@ -726,8 +727,8 @@ mkdir (const char *dir)
     return false;
   }
 
-  dir_close(directory);
-  dir_close(new_dir);
+  // dir_close(directory);
+  // dir_close(new_dir);
 
   return true;
 }
@@ -751,7 +752,7 @@ readdir (int fd, char *name)
     return false;
   else{
     struct inode *inode = file_get_inode(f->file);
-    struct dir *dir = dir_open(inode);
+    struct dir *dir = f->file;//dir_open(inode);
     bool success = dir_readdir(dir, name);
     // dir_close(dir);
     return success;

@@ -59,6 +59,7 @@ filesys_create (const char *name, off_t initial_size)
   //   free_map_release (inode_sector, 1);
   // dir_close (dir);
   // return success;
+  // printf("Filesys_create: name: %s\n", name);
   block_sector_t inode_sector = 0;
   if(!free_map_allocate(1, &inode_sector))
   {
@@ -96,15 +97,16 @@ filesys_create (const char *name, off_t initial_size)
   struct dir *dir = dir_open(cur_inode);
   if(!dir_add(dir, file_name, inode_sector))
   {
+    // printf("file_name %s failed to be added to the directory\n", file_name);
     if(inode_sector != 0)
       free_map_release(inode_sector, 1);
-    dir_close(dir);
+    // dir_close(dir);
     return false;
   }
 
   // printf("\tCreating File with name: %s, in dir_inode: %u\n", file_name, inode_get_inumber(cur_inode));
   free(path_cpy);
-  dir_close(dir);
+  // dir_close(dir);
   return true;
 
 }
@@ -148,8 +150,8 @@ filesys_open (const char *name)
     printf("LOOKUP FAILED\n");
     return NULL;
   }
-  if(curdir_sector != ROOT_DIR_SECTOR)
-      dir_close(dir);
+  // if(curdir_sector != ROOT_DIR_SECTOR)
+  //     dir_close(dir);
   free(path_cpy);
   return file_open (temp);
 }
@@ -157,7 +159,7 @@ filesys_open (const char *name)
 /* Deletes the file named NAME.
    Returns true if successful, false on failure.
    Fails if no file named NAME exists,
-   or if an internal memory allocation fails. */
+   or if an internal memory allocation fails. NANANABOO*/
 bool
 filesys_remove (const char *name) 
 {
@@ -166,7 +168,7 @@ filesys_remove (const char *name)
   // dir_close (dir); 
 
   // return success;
-
+  // printf("path: %s\n", name);
   block_sector_t curdir_sector = (*name == '/') ? ROOT_DIR_SECTOR : thread_current()->curdir_sector;
   struct inode *cur_inode = inode_open(curdir_sector);
 
@@ -179,14 +181,36 @@ filesys_remove (const char *name)
   
   if(!end_parse(path_cpy, &cur_inode, &file_name))
   {
-    // printf("PARSING FAILED\n");
-    return NULL;
+    printf("PARSING FAILED\n");
+    return false;
   }
+
+  if(file_name == NULL)
+    return false;
   
   struct dir *dir = dir_open(cur_inode);
+
+  /* Remove if the directory is empty */
+  struct inode *inode = NULL;
+  if(!dir_lookup(dir, file_name, &inode))
+  {
+    return false;
+  }
+  if(get_isdir(inode))
+  {
+    char temp[NAME_MAX + 1];
+    struct dir *tempdir = dir_open(inode);
+    if(dir_readdir(tempdir, temp))
+    {
+      // printf("This directory is not empty\n");
+      return false;
+    }
+  }
+  
+  // printf("file_name: %s\n", file_name);
   success = dir != NULL && dir_remove(dir, file_name);
   free(path_cpy);
-  dir_close(dir);
+  // dir_close(dir);
   return success;
 
 }
@@ -208,7 +232,7 @@ do_format (void)
   {
     PANIC("ADDING . and .. TO ROOT FAILED");
   }
-  dir_close(root);
+  // dir_close(root);
   /* End driving */
 
   free_map_close ();

@@ -340,7 +340,7 @@ bool
 dir_readdir (struct dir *dir, char name[NAME_MAX + 1])
 {
   // ASSERT(0);
-  printf("***DIR_READDIR***\n");
+  // printf("***DIR_READDIR***\n");
   struct dir_entry e;
   while (inode_read_at (dir->inode, &e, sizeof e, inode_get_pos(dir->inode)) == sizeof e) 
     {
@@ -350,12 +350,12 @@ dir_readdir (struct dir *dir, char name[NAME_MAX + 1])
       if (e.in_use && strcmp(e.name, ".") && strcmp(e.name, ".."))
         {
           strlcpy (name, e.name, NAME_MAX + 1);
-          printf("\tname = %s\n", e.name);
+          // printf("\tname = %s\n", e.name);
           // printf("***END DIR_READDIR\n\n");
           return true;
         } 
     }
-    printf("\tDidn't find anything else!\n");
-    printf("***END DIR_READDIR\n\n");
+    // printf("\tDidn't find anything else!\n");
+    // printf("***END DIR_READDIR\n\n");
   return false;
 }
