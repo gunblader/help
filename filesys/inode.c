@@ -130,7 +130,7 @@ byte_to_sector (struct inode *inode, off_t pos, bool write)
 {
 	ASSERT (inode != NULL);
 
-	// printf("****BYTE_TO_SECTOR****:\n\tinode sector: %u, sectors: %u, pos: %u\n", inode->sector, bytes_to_sectors(inode->data.length), pos);
+	// printf("****BYTE_TO_SECTOR****:\n);
 	// printf("\tinode length is: %i\n", inode->data.length);
 	block_sector_t sector = pos / BLOCK_SECTOR_SIZE;
 	
@@ -167,7 +167,7 @@ byte_to_sector (struct inode *inode, off_t pos, bool write)
 		else
 		{
 			next_free = append_to_free_map(old_sectors, inode->data.direct_blocks, 
-				inode->data.first_level, inode->data.second_level);
+				&inode->data.first_level, &inode->data.second_level);
 			// printf("\tAppending a new sector to end of file: %u\n", next_free);
 
 		}

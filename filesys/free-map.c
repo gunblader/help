@@ -226,8 +226,8 @@ free_map_indirect_allocate(size_t sectors, block_sector_t *direct_blocks,
 /* Kenneth and Adam driving */
 block_sector_t
 append_to_free_map(size_t current_sectors, 
-  block_sector_t* direct_blocks, block_sector_t first_level, 
-  block_sector_t second_level)
+  block_sector_t* direct_blocks, block_sector_t *first_level, 
+  block_sector_t *second_level)
 {
   if(bitmap_count(free_map, 0, bitmap_size(free_map), false) < 1)
   {
@@ -236,21 +236,25 @@ append_to_free_map(size_t current_sectors,
   }
 
   int count = 0;
-  struct indirect_block *first = malloc(sizeof(struct indirect_block));
-  struct indirect_block *second = malloc(128 * sizeof(struct indirect_block));
+  // struct indirect_block *first = malloc(sizeof(struct indirect_block));
+  // struct indirect_block *second = malloc(128 * sizeof(struct indirect_block));
+
+  block_sector_t first[128];
+  block_sector_t second[128];
+
   size_t second_level_offset = 0;
-  bool set_first = false;
-  bool set_second = false;
+  // bool set_first = false;
+  // bool set_second = false;
   block_sector_t next_free = -1;
 
   // printf("*** IN APPEND_TO_FREE_MAP ***\n");
   // printf("\t*first_level: %u\n", *first_level);
   // printf("\t*second_level: %u\n", *second_level);
 
-  if(&first_level != NULL && first != NULL)
-    block_read(fs_device, first_level, first);
-  if(&second_level != NULL && second != NULL)
-    block_read(fs_device, second_level, second);
+  if(first_level != NULL && first != NULL)
+    block_read(fs_device, *first_level, first);
+  if(second_level != NULL && second != NULL)
+    block_read(fs_device, *second_level, second);
 
   // allocated count sectors to this inode
   next_free = bitmap_scan_and_flip(free_map, 0, 1, false);
@@ -260,7 +264,7 @@ append_to_free_map(size_t current_sectors,
         && !bitmap_write (free_map, free_map_file))
   {
         // printf("Bitmap error\n");
-        return false;
+        return -1;
   }
 
   // printf("\tnext_free: %u\n", next_free);
@@ -272,33 +276,40 @@ append_to_free_map(size_t current_sectors,
   else if(current_sectors < 138)
   {
     //put in first_level
-    first->blocks[current_sectors-10] = next_free;
-    // printf("\tfirst->blocks[%u] = sector %u\n", current_sectors-10, first->blocks[current_sectors-10]);
-    set_first = true;
+    // first->blocks[current_sectors-10] = next_free;
+    first[current_sectors - 10] = next_free;
+    // printf("\tfirst_level[%u] = sector %u\n", current_sectors-10, first[current_sectors-10]);
+    // set_first = true;
   }
   else
   {
     //put in second_level
-    second_level_offset = (current_sectors-138) % 128;
-    second[(current_sectors-138)/128].blocks[second_level_offset] = next_free;
-    set_second = true;
+    block_sector_t second_first[128];
+    // second_level_offset = (current_sectors-138) % 128;
+    // second[(current_sectors-138)/128].blocks[second_level_offset] = next_free;
+    block_read(fs_device, second[(current_sectors - 138)/128], second_first);
+    // printf("Get first level from second[%u] = %u\n", (current_sectors - 138)/128, second[(current_sectors - 138)/128]);
+    second_first[(current_sectors-138) % 128] = next_free;
+    // printf("second_first[%u] = %u\n", (current_sectors-138) % 128, second_first[(current_sectors-138) % 128]);
+    block_write(fs_device, second[(current_sectors - 138)/128], second_first);
+    // set_second = true;
   }
 
-  if (&first_level != NULL)
+  if (first_level != NULL)
   {
     // *first_level = bitmap_scan_and_flip(free_map, 0, 1, false);
     ASSERT(first != NULL);
-    block_write(fs_device, first_level, first);
+    block_write(fs_device, *first_level, first);
   }
-  free(first);
+  // free(first);
 
-  if (&second_level != NULL)
+  if (second_level != NULL)
   {
     // *second_level = bitmap_scan_and_flip(free_map, 0, 1, false);
     ASSERT(second != NULL);
-    block_write(fs_device, second_level, second);
+    block_write(fs_device, *second_level, second);
   }
-  free(second);
+  // free(second);
 
   // printf("*** END OF APPEND_TO_FREE_MAP ***\n");
   return next_free;

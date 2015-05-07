@@ -7,6 +7,8 @@
 #include "filesys/inode.h"
 #include "filesys/directory.h"
 #include "threads/thread.h"
+#include "threads/malloc.h"
+#include "userprog/syscall.h"
 
 /* Partition that contains the file system. */
 struct block *fs_device;
@@ -73,8 +75,7 @@ filesys_create (const char *name, off_t initial_size)
   }
 
   char *file_name = NULL;
-  char *save_ptr = NULL;
-  block_sector_t curdir_sector = (*name == "/") ? 
+  block_sector_t curdir_sector = (*name == '/') ? 
     ROOT_DIR_SECTOR : thread_current()->curdir_sector;
   struct inode *cur_inode = inode_open(curdir_sector);
   
@@ -126,7 +127,7 @@ filesys_open (const char *name)
   // return file_open (inode);
 
 
-  block_sector_t curdir_sector = (*name == "/") ? ROOT_DIR_SECTOR : thread_current()->curdir_sector;
+  block_sector_t curdir_sector = (*name == '/') ? ROOT_DIR_SECTOR : thread_current()->curdir_sector;
   struct inode *cur_inode = inode_open(curdir_sector);
   
   //parse the path
@@ -166,12 +167,11 @@ filesys_remove (const char *name)
 
   // return success;
 
-  block_sector_t curdir_sector = (*name == "/") ? ROOT_DIR_SECTOR : thread_current()->curdir_sector;
+  block_sector_t curdir_sector = (*name == '/') ? ROOT_DIR_SECTOR : thread_current()->curdir_sector;
   struct inode *cur_inode = inode_open(curdir_sector);
 
   //parse the path
   char *file_name = NULL;
-  char *save_ptr = NULL;
 
   char *path_cpy = malloc(strlen(name) + 1);
   strlcpy(path_cpy, name, strlen(name) + 1);
