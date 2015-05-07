@@ -64,7 +64,7 @@ filesys_create (const char *name, off_t initial_size)
       free_map_release(inode_sector, 1);
     return false;
   }
-  //create the inode
+  //create the inode.
   if(!inode_create(inode_sector, initial_size))
   {
     if(inode_sector != 0)
