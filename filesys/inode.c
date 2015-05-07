@@ -69,8 +69,8 @@ get_isdir(struct inode *inode)
 block_sector_t
 get_sector_from_index(struct inode *inode, block_sector_t sector)
 {
-		printf("**** IN GET SECTOR FROM INDEX ****\n");
-		printf("\tsector: %u\n", sector);
+		// printf("**** IN GET SECTOR FROM INDEX ****\n");
+		// printf("\tsector: %u\n", sector);
 		if(sector < 10)
 		{
 			// size_t i;
@@ -85,8 +85,10 @@ get_sector_from_index(struct inode *inode, block_sector_t sector)
 		}
 		else if (sector < 138)
 		{
-			struct indirect_block *first = malloc(sizeof(struct indirect_block));
-			printf("\tfirst level sector: %u\n", inode->data.first_level);
+			// struct indirect_block *first = malloc(sizeof(struct indirect_block));
+			block_sector_t first[128];
+			// struct indirect_block first[128];
+			// printf("\tfirst level sector: %u\n", inode->data.first_level);
 			block_read(fs_device, inode->data.first_level, first);
 			// size_t i;
 			// for(i = 0; i < 128; i++)
@@ -94,20 +96,27 @@ get_sector_from_index(struct inode *inode, block_sector_t sector)
 			//   printf("\tfirst_level->blocks[%u] = sector %u\n", i, first->blocks[i]);
 			// }
 
-			block_sector_t temp = first->blocks[sector - 10];
-			free(first);
-			printf("\treturning first_level->blocks[%u] = sector %u\n", sector - 10, temp);
+			block_sector_t temp = first[sector - 10];
+			// free(first);
+			// printf("\treturning first_level[%u] = sector %u\n", sector - 10, temp);
 			return temp;
 		}
 		else
 		{
 			// printf("second_level[(sector - 138)/128] = sector %u\n", inode->data.second_level[(sector - 138)/128]);
 
-			struct indirect_block *second = malloc(128 * sizeof(struct indirect_block));
+			// struct indirect_block *second = malloc(128 * sizeof(struct indirect_block));
+			block_sector_t second[128];
 			block_read(fs_device, inode->data.second_level, second);
-			printf("\treturning second_level sector %u\n", second[(sector - 138)/128].blocks[(sector - 138) % 128]);
-			block_sector_t temp = second[(sector - 138)/128].blocks[(sector-138) % 128];
-			free(second);
+			// printf("This first level is stored at sector %u\n", second[(sector-138)/128]);
+			// printf("\treturning second_level sector %u\n", second[(sector - 138)/128].blocks[(sector - 138) % 128]);
+			block_sector_t first[128];
+			block_read(fs_device, second[(sector - 138)/128], first);
+
+			// block_sector_t temp = second[(sector - 138)/128].blocks[(sector-138) % 128];
+			block_sector_t temp = first[(sector-138) % 128];
+			// printf("returning second[%u] --> first[%u] = %u\n", (sector-138)/128, (sector-138) % 128, temp);
+			// free(second);
 			return temp;
 		}
 }
@@ -230,7 +239,7 @@ inode_create (block_sector_t sector, off_t length)
 		//if (free_map_allocate (sectors, &disk_inode->start))
 		// This checks the free list and allocates free blocks into our structs
 		if(free_map_indirect_allocate(sectors, disk_inode->direct_blocks,
-					disk_inode->first_level, disk_inode->second_level))
+					&disk_inode->first_level, &disk_inode->second_level))
 		{
 			// if (sectors > 0) 
 			//   {

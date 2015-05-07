@@ -654,7 +654,11 @@ chdir (const char *dir)
   // thread_current()->curdir_sector = inode_get_inumber(new_dir_inode);
   struct inode *temp = NULL;
   struct dir *directory = dir_open(cur_inode);
-  dir_lookup(directory, dir_name, &temp);
+  if(!dir_lookup(directory, dir_name, &temp))
+  {
+    printf("Something went wrong with the lookup\n");
+    return false;
+  }
   // printf("\tnew cwd: %u\n", inode_get_inumber(temp));
   thread_current()->curdir_sector = inode_get_inumber(temp);
   free(dir_cpy);
