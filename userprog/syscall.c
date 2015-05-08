@@ -766,10 +766,12 @@ readdir (int fd, char *name)
     return false;
   else{
     struct inode *inode = file_get_inode(f->file);
-    struct dir *dir = f->file;//dir_open(inode);
+    struct dir *dir = f->file;
+    // struct dir *dir = dir_open(inode);
     bool success = dir_readdir(dir, name);
-    // printf("%s\n", name);
+    // printf("readdir name: %s\n", name);
     // dir_close(dir);
+    // printf("READDIR returns %d\n", success);
     return success;
   }
 }

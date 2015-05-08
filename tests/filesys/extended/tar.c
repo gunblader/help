@@ -68,6 +68,7 @@ make_tar_archive (const char *archive_name, char *files[], size_t file_cnt)
       printf ("%s: open failed\n", archive_name);
       return false;
     }
+
   for (i = 0; i < file_cnt; i++) 
     {
       char file_name[128];
@@ -84,6 +85,7 @@ make_tar_archive (const char *archive_name, char *files[], size_t file_cnt)
     success = false;
       // printf("<<<<<Success = %i>>>>>\n", success);
   close (archive_fd);
+  // printf("Success: %i\n", success);
   return success;
 }
 
@@ -98,21 +100,21 @@ archive_file (char file_name[], size_t file_name_size,
 
       if (inumber (file_fd) != inumber (archive_fd)) 
         {
-          // printf("file_name %s\n", file_name);
           if (!isdir (file_fd))
             success = archive_ordinary_file (file_name, file_fd,
                                              archive_fd, write_error);
           else
             success = archive_directory (file_name, file_name_size, file_fd,
                                          archive_fd, write_error);      
-        
         }
       else
         {
           /* Nothing to do: don't try to archive the archive file. */
           success = true;
         }
+  
       close (file_fd);
+
       return success;
     }
   else
@@ -129,9 +131,11 @@ archive_ordinary_file (const char *file_name, int file_fd,
   bool read_error = false;
   bool success = true;
   int file_size = filesize (file_fd);
+
   if (!write_header (file_name, USTAR_REGULAR, file_size,
                      archive_fd, write_error))
     return false;
+
   while (file_size > 0) 
     {
       static char buf[512];
@@ -152,7 +156,7 @@ archive_ordinary_file (const char *file_name, int file_fd,
 
       file_size -= chunk_size;
     }
-    // printf("%d\n", success);
+
   return success;
 }
 
