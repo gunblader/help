@@ -51,8 +51,20 @@ struct inode
 	struct inode_disk data;             /* Inode content. */
 	bool isdir;
 	off_t pos;
+	bool isopen;
 };
 
+void
+set_isopen(struct inode *inode, bool val)
+{
+	inode->isopen = val;
+}
+
+bool
+get_isopen(struct inode *inode)
+{
+	return inode->isopen;
+}
 
 bool 
 set_isdir(struct inode *inode, bool isdir)
@@ -297,6 +309,10 @@ inode_open (block_sector_t sector)
 	inode->deny_write_cnt = 0;
 	inode->removed = false;
 	inode->pos = 0;
+
+
+	// inode->isopen = true;
+
 	// printf("\tinode sector: %u\n", inode->sector);
 	block_read (fs_device, inode->sector, &inode->data);
 	// printf("\tinode data length: %u\n", inode->data.length);
@@ -368,6 +384,8 @@ inode_close (struct inode *inode)
 		/* Remove from inode list and release lock. */
 		// printf("<<<<<REMOVING FROM INODE LIST>>>>>\n");
 		list_remove (&inode->elem);
+
+		block_write(fs_device, inode->sector, &inode->data);
 
 		/* Deallocate blocks if removed. */
 		if (inode->removed) 

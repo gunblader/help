@@ -26,6 +26,9 @@ bool set_isdir(struct inode *inode, bool isdir);
 bool get_isdir(struct inode *inode);
 struct inode_disk * get_data(struct inode *inode);
 
+bool get_isopen(struct inode *inode);
+bool get_removed(struct inode *inode);
+
 void inode_init (void);
 bool inode_create (block_sector_t, off_t);
 struct inode *inode_open (block_sector_t);

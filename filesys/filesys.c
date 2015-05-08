@@ -29,6 +29,10 @@ filesys_init (bool format)
 
   if (format) 
     do_format ();
+  else
+  {
+    struct dir *root = dir_open_root();
+  }
 
   free_map_open ();
 }
@@ -188,7 +192,7 @@ filesys_remove (const char *name)
   
   if(!end_parse(path_cpy, &cur_inode, &file_name))
   {
-    printf("PARSING FAILED\n");
+    // printf("PARSING FAILED\n");
     return false;
   }
 
@@ -201,12 +205,17 @@ filesys_remove (const char *name)
   struct inode *inode = NULL;
   if(!dir_lookup(dir, file_name, &inode))
   {
+    // printf("LOOKUP FAILED\n");
     return false;
   }
   if(get_isdir(inode))
   {
     char temp[NAME_MAX + 1];
+    // if(get_isopen(inode))
+    //   return false;
     struct dir *tempdir = dir_open(inode);
+    // if(!get_removed(inode))
+    //   return false;
     if(dir_readdir(tempdir, temp))
     {
       // printf("This directory is not empty\n");
@@ -218,7 +227,7 @@ filesys_remove (const char *name)
       // printf("Don't allow removal of cwd\n");
       return false;
     }
-    // 
+    
   }
   
   // printf("file_name: %s\n", file_name);

@@ -140,6 +140,7 @@ dir_create (block_sector_t sector, size_t entry_cnt)
   {
     struct inode *inode = inode_open(sector);
     set_isdir(inode, true);
+    set_isopen(inode, false);
     if(sector != ROOT_DIR_SECTOR){
       block_write(fs_device, sector, get_data(inode));
       inode_close(inode);
@@ -158,6 +159,7 @@ dir_open (struct inode *inode)
     {
       dir->inode = inode;
       dir->pos = 0;
+      set_isopen(dir->inode, true);
       return dir;
     }
   else

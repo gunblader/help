@@ -614,7 +614,7 @@ bool end_parse(char *path, struct inode **parent_inode, char **name)
 
 /* Directory System Calls */
 
-/* Changes the current working directory of the process to dir,
+/* Changes the current working directory of the process to dir,.......................
  which may be relative or absolute. Returns true if successful, false on failure*/
 bool
 chdir (const char *dir)
