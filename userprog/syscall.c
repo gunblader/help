@@ -388,7 +388,7 @@ bool remove (const char *file_name)
 }
 
 /* Opens the file called file. Returns a nonnegative integer handle called
- a "file descriptor" (fd) or -1 if the file could not be opened */
+ a "file descriptor" (fd) or -1 if the file could not be opened........... */
 int open (const char *file_name)
 {
   // #Adam Drove here

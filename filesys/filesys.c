@@ -82,6 +82,13 @@ filesys_create (const char *name, off_t initial_size)
   char *file_name = NULL;
   block_sector_t curdir_sector = (*name == '/') ? 
     ROOT_DIR_SECTOR : thread_current()->curdir_sector;
+
+  if(curdir_sector == NULL)
+  {
+    //we removed the current directory
+    return NULL;
+  }
+
   struct inode *cur_inode = inode_open(curdir_sector);
   
   set_isdir(inode_open(inode_sector), false);
@@ -134,6 +141,13 @@ filesys_open (const char *name)
 
   // printf("FILESYS_OPEN\n");
   block_sector_t curdir_sector = (*name == '/') ? ROOT_DIR_SECTOR : thread_current()->curdir_sector;
+  
+  if(curdir_sector == NULL)
+  {
+    //we removed the current directory
+    return NULL;
+  }
+
   struct inode *cur_inode = inode_open(curdir_sector);
   
   //parse the path
@@ -181,6 +195,13 @@ filesys_remove (const char *name)
   // return success;
   // printf("path: %s\n", name);
   block_sector_t curdir_sector = (*name == '/') ? ROOT_DIR_SECTOR : thread_current()->curdir_sector;
+  
+  if(curdir_sector == NULL)
+  {
+    //we removed the current directory
+    return NULL;
+  }
+
   struct inode *cur_inode = inode_open(curdir_sector);
 
   //parse the path
@@ -225,7 +246,10 @@ filesys_remove (const char *name)
     {
       //don't allow the removal of your cwd
       // printf("Don't allow removal of cwd\n");
-      return false;
+      success = dir != NULL && dir_remove(dir, file_name);
+
+      thread_current()->curdir_sector = NULL;
+      return success;
     }
     
   }
