@@ -26,8 +26,9 @@ struct inode_disk
 
 	block_sector_t start;               /* First data sector. */
 	off_t length;                       /* File size in bytes. */
+	bool isdir;													/* true if this inode is a dir */
 	unsigned magic;                     /* Magic number. */
-	uint32_t unused[113];               /* Not used. */
+	uint32_t unused[112];               /* Not used. */
 };
 
 
@@ -49,33 +50,21 @@ struct inode
 	bool removed;                       /* True if deleted, false otherwise. */
 	int deny_write_cnt;                 /* 0: writes ok, >0: deny writes. */
 	struct inode_disk data;             /* Inode content. */
-	bool isdir;
 	off_t pos;
-	bool isopen;
 };
 
-void
-set_isopen(struct inode *inode, bool val)
-{
-	inode->isopen = val;
-}
-
-bool
-get_isopen(struct inode *inode)
-{
-	return inode->isopen;
-}
-
-bool 
+void 
 set_isdir(struct inode *inode, bool isdir)
 {
-	inode->isdir = isdir;
+	ASSERT(inode != NULL);
+	inode->data.isdir = isdir;
+	block_write(fs_device, inode->sector, &inode->data);
 }
 
 bool
 get_isdir(struct inode *inode)
 {
-	return inode->isdir;
+	return inode->data.isdir;
 }
 
 struct inode_disk *
@@ -189,7 +178,7 @@ byte_to_sector (struct inode *inode, off_t pos, bool write)
 			// printf("\tAppending a new sector to end of file: %u\n", next_free);
 
 		}
-		// block_write(fs_device, inode->sector, &inode->data);
+		block_write(fs_device, inode->sector, &inode->data);
 		// inode->data.length += (pos - inode->data.length);
 		// printf("\tUPDATED LENGTH: %d\n", inode->data.length);
 
@@ -252,6 +241,7 @@ inode_create (block_sector_t sector, off_t length)
 		disk_inode->length = length;
 		// printf("\tdisk_inode length: %i\n", disk_inode->length);
 		disk_inode->magic = INODE_MAGIC;
+		disk_inode->isdir = false;
 
 		// disk_inode->first_level = malloc(sizeof(struct indirect_block));
 		// disk_inode->second_level = malloc(sizeof(struct indirect_block));
@@ -491,7 +481,6 @@ inode_increment_pos(struct inode *inode, off_t offset)
 inode_write_at (struct inode *inode, const void *buffer_, off_t size,
 		off_t offset) 
 {
-
 	const uint8_t *buffer = buffer_;
 	off_t bytes_written = 0;
 	uint8_t *bounce = NULL;

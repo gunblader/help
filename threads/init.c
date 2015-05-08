@@ -318,7 +318,6 @@ run_actions (char **argv)
 #endif
       {NULL, 0, NULL},
     };
-
   while (*argv != NULL)
     {
       const struct action *a;

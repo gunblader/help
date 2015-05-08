@@ -9,20 +9,20 @@ struct bitmap;
 struct inode;
 
 /* Kenneth Drove here */
-struct indirect_block
-{
-	block_sector_t blocks[128];
-};
+// struct indirect_block
+// {
+// 	block_sector_t blocks[128];
+// };
 
-struct double_indirect_block
-{
-	block_sector_t first_level_blocks[128];
-};
+// struct double_indirect_block
+// {
+// 	block_sector_t first_level_blocks[128];
+// };
 
 static const size_t MAX_FILE_SIZE = (1<<23);
 /* Kenneth finished driving*/
 
-bool set_isdir(struct inode *inode, bool isdir);
+void set_isdir(struct inode *inode, bool isdir);
 bool get_isdir(struct inode *inode);
 struct inode_disk * get_data(struct inode *inode);
 

@@ -32,6 +32,7 @@ filesys_init (bool format)
   else
   {
     struct dir *root = dir_open_root();
+    set_isdir(dir_get_inode(root), true);
   }
 
   free_map_open ();
@@ -69,6 +70,7 @@ filesys_create (const char *name, off_t initial_size)
   {
     if(inode_sector != 0)
       free_map_release(inode_sector, 1);
+    // printf("<1>\n");
     return false;
   }
   //create the inode.
@@ -76,6 +78,7 @@ filesys_create (const char *name, off_t initial_size)
   {
     if(inode_sector != 0)
       free_map_release(inode_sector, 1);
+    // printf("<2>\n");
     return false;
   }
 
@@ -86,7 +89,8 @@ filesys_create (const char *name, off_t initial_size)
   if(curdir_sector == NULL)
   {
     //we removed the current directory
-    return NULL;
+    // printf("<3>\n");
+    return false;
   }
 
   struct inode *cur_inode = inode_open(curdir_sector);
@@ -101,6 +105,7 @@ filesys_create (const char *name, off_t initial_size)
   {
     if(inode_sector != 0)
       free_map_release(inode_sector, 1);
+    // printf("<4>\n");
     return false;
   }
 
@@ -112,6 +117,7 @@ filesys_create (const char *name, off_t initial_size)
     if(inode_sector != 0)
       free_map_release(inode_sector, 1);
     // dir_close(dir);
+    // printf("<5>\n");
     return false;
   }
 
@@ -140,11 +146,13 @@ filesys_open (const char *name)
   // return file_open (inode);
 
   // printf("FILESYS_OPEN\n");
+  // printf("path: %s\n", name);
   block_sector_t curdir_sector = (*name == '/') ? ROOT_DIR_SECTOR : thread_current()->curdir_sector;
   
   if(curdir_sector == NULL)
   {
     //we removed the current directory
+    // printf("return null because we are asking for the current working dir\n");
     return NULL;
   }
 
@@ -164,11 +172,13 @@ filesys_open (const char *name)
   if(file_name == NULL)
   {
     //we know that we are trying to open root
+    // printf("Exiting filsys_open to open root\n");
     return file_open(inode_open(ROOT_DIR_SECTOR));
   }
   // printf("\tfile_name: %s\n", file_name);
   struct inode *temp = NULL;
   struct dir *dir = dir_open(cur_inode);
+  // printf("\tinode sector: %u\n", inode_get_inumber(cur_inode));
   if(!dir_lookup(dir, file_name, &temp)){
     // printf("filesys_open: LOOKUP FAILED\n");
     return NULL;
@@ -279,7 +289,7 @@ do_format (void)
   {
     PANIC("ADDING . and .. TO ROOT FAILED");
   }
-  // dir_close(root);
+  dir_close(root);
   /* End driving */
 
   free_map_close ();

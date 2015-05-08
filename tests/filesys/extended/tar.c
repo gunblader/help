@@ -54,35 +54,36 @@ make_tar_archive (const char *archive_name, char *files[], size_t file_cnt)
   bool write_error = false;
   size_t i;
   
-  // printf("<<<<<Creating tar with archive name %s>>>>>\n", archive_name);
+  // printf("<<<<<Creating archive name %s>>>>>\n", archive_name);
   if (!create (archive_name, 0)) 
     {
       printf ("%s: create failed\n", archive_name);
       return false;
     }
+  // printf("<<<<<Opening archive name %s>>>>>\n", archive_name);
   archive_fd = open (archive_name);
+  // printf("archive_fd: %i\n", archive_fd);
   if (archive_fd < 0)
     {
       printf ("%s: open failed\n", archive_name);
       return false;
     }
-
   for (i = 0; i < file_cnt; i++) 
     {
       char file_name[128];
       
       strlcpy (file_name, files[i], sizeof file_name);
+      // printf("<<<<<Calling Archive File>>>>>\n");
       if (!archive_file (file_name, sizeof file_name,
                          archive_fd, &write_error))
         success = false;
     }
-
+      // printf("<<<<<Doing writes>>>>>\n");
   if (!do_write (archive_fd, zeros, 512, &write_error)
       || !do_write (archive_fd, zeros, 512, &write_error)) 
     success = false;
-
+      // printf("<<<<<Success = %i>>>>>\n", success);
   close (archive_fd);
-  // printf("Success: %i\n", success);
   return success;
 }
 
@@ -97,21 +98,21 @@ archive_file (char file_name[], size_t file_name_size,
 
       if (inumber (file_fd) != inumber (archive_fd)) 
         {
+          // printf("file_name %s\n", file_name);
           if (!isdir (file_fd))
             success = archive_ordinary_file (file_name, file_fd,
                                              archive_fd, write_error);
           else
             success = archive_directory (file_name, file_name_size, file_fd,
                                          archive_fd, write_error);      
+        
         }
       else
         {
           /* Nothing to do: don't try to archive the archive file. */
           success = true;
         }
-  
       close (file_fd);
-
       return success;
     }
   else
@@ -128,11 +129,9 @@ archive_ordinary_file (const char *file_name, int file_fd,
   bool read_error = false;
   bool success = true;
   int file_size = filesize (file_fd);
-
   if (!write_header (file_name, USTAR_REGULAR, file_size,
                      archive_fd, write_error))
     return false;
-
   while (file_size > 0) 
     {
       static char buf[512];
@@ -153,7 +152,7 @@ archive_ordinary_file (const char *file_name, int file_fd,
 
       file_size -= chunk_size;
     }
-
+    // printf("%d\n", success);
   return success;
 }
 

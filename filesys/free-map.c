@@ -198,6 +198,7 @@ free_map_indirect_allocate(size_t sectors, block_sector_t *direct_blocks,
     printf("Bitmap error\n");
     return false;
   }
+  //printf("got here\n");
   block_write(fs_device, *first_level, first);
   // free(first);
   // printf("first level indirection block stored at sector %u\n", *first_level);
@@ -250,12 +251,12 @@ append_to_free_map(size_t current_sectors,
   // printf("*** IN APPEND_TO_FREE_MAP ***\n");
   // printf("\t*first_level: %u\n", *first_level);
   // printf("\t*second_level: %u\n", *second_level);
-
+  // printf("\tcurrent sectors%u\n", current_sectors);
   if(first_level != NULL && first != NULL)
     block_read(fs_device, *first_level, first);
-  if(second_level != NULL && second != NULL)
+  if(second_level != NULL && second != NULL) {
     block_read(fs_device, *second_level, second);
-
+  }
   // allocated count sectors to this inode
   next_free = bitmap_scan_and_flip(free_map, 0, 1, false);
 
@@ -285,12 +286,29 @@ append_to_free_map(size_t current_sectors,
   {
     //put in second_level
     block_sector_t second_first[128];
+
+    if((current_sectors-138) % 128 == 0)
+    {
+      second[(current_sectors - 138)/128] = bitmap_scan_and_flip(free_map, 0, 1, false);
+      // printf("second[%u] = %u\n", (current_sectors - 138)/128, second[(current_sectors - 138)/128]);
+      block_sector_t first[128];
+      int i;
+      for(i = 0; i < 128; i++)
+      {
+        block_sector_t next = bitmap_scan_and_flip(free_map, 0, 1, false);
+        first[i] = next;
+        // printf("first[%u] = %u\n", i, first[i]);        
+      }
+      block_write(fs_device, second[(current_sectors - 138)/128], first);
+    }
     // second_level_offset = (current_sectors-138) % 128;
     // second[(current_sectors-138)/128].blocks[second_level_offset] = next_free;
+    // printf("(current_sectors - 138)/128 = %u\n", (current_sectors - 138)/128);
+    // printf("sector %u\n", second[(current_sectors - 138)/128]);
     block_read(fs_device, second[(current_sectors - 138)/128], second_first);
     // printf("Get first level from second[%u] = %u\n", (current_sectors - 138)/128, second[(current_sectors - 138)/128]);
     second_first[(current_sectors-138) % 128] = next_free;
-    // printf("second_first[%u] = %u\n", (current_sectors-138) % 128, second_first[(current_sectors-138) % 128]);
+     // printf("second_first[%u] = %u\n", (current_sectors-138) % 128, second_first[(current_sectors-138) % 128]);
     block_write(fs_device, second[(current_sectors - 138)/128], second_first);
     // set_second = true;
   }
@@ -333,9 +351,11 @@ free_map_indexed_release(block_sector_t *direct_blocks,
   block_sector_t first_level, block_sector_t second_level, size_t sectors)
 {
   // printf("*****IN FREE MAP RELEASE*****\n");
-  struct indirect_block *first = malloc(sizeof(struct indirect_block));
+  block_sector_t first[128];
+  block_sector_t second[128];
+  // struct indirect_block *first = malloc(sizeof(struct indirect_block));
   block_read(fs_device, first_level, first);
-  struct indirect_block *second = malloc(128 * sizeof(struct indirect_block));
+  // struct indirect_block *second = malloc(128 * sizeof(struct indirect_block));
   block_read(fs_device, second_level, second);
 
   size_t second_level_index = 0;
@@ -352,20 +372,22 @@ free_map_indexed_release(block_sector_t *direct_blocks,
     else if(count < 138)
     {
       // printf("previous setting: %i\n", bitmap_test(free_map, first->blocks[count - 10]));
-      bitmap_set(free_map, first->blocks[count - 10], false);
+      bitmap_set(free_map, first[count - 10], false);
     }
     else
     {
       // printf("previous setting: %i\n", bitmap_test(free_map, second[second_level_index].blocks[second_level_offset]));
-      bitmap_set(free_map, second[second_level_index].blocks[second_level_offset], false);
+      block_sector_t second_first[128];
+      block_read(fs_device, second[second_level_index], second_first);
+      bitmap_set(free_map, second_first[second_level_offset], false);
       second_level_offset++;
       second_level_index = (second_level_offset == 128) ? second_level_index++ : second_level_index;
       second_level_offset = second_level_offset % 128;
     }
   }
   bitmap_write(free_map, free_map_file);
-  free(first);
-  free(second);
+  // free(first);
+  // free(second);
 }
 
 /* Opens the free map file and reads it from disk. */

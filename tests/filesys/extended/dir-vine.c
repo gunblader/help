@@ -50,7 +50,7 @@ test_main (void)
           CHECK (remove (file_name), "remove \"%s\"", file_name);
           break; 
         }
-
+        // printf("file_name %s\n", file_name);
       /* Check for file and directory. */
       CHECK ((fd = open (".")) > 1, "open \".\"");
       CHECK (readdir (fd, name[0]), "readdir \".\"");

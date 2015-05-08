@@ -398,9 +398,11 @@ int open (const char *file_name)
   lock_acquire(&lock);
   
   struct file *file = NULL;
+  // struct file_info *f = malloc(sizeof(struct file_info));
   struct file_info *f = palloc_get_page(0);
   if(f == NULL) {
     lock_release(&lock);
+    printf("Here\n");
     return -1;
   }
   file = filesys_open(file_name);
@@ -542,6 +544,8 @@ void close (int fd){
   // list_remove(&cur_file_info->file_list_elem);
   list_remove(&cur_file_info->thread_file_list_elem);
 
+  // free(cur_file_info);
+
   lock_release(&lock);
 }
 
@@ -597,7 +601,7 @@ bool end_parse(char *path, struct inode **parent_inode, char **name)
       *parent_inode = dir_get_inode(cur_dir);
       // printf("\tparent_inode: %u\n", inode_get_inumber(*parent_inode));
       // printf("\t*****EXITING END_PARSE (FALSE)*****\n");
-      // dir_close(cur_dir);
+      dir_close(cur_dir);
       return false;
     }
     *name = token;
@@ -672,7 +676,7 @@ chdir (const char *dir)
   // printf("\tnew cwd: %u\n", inode_get_inumber(temp));
   thread_current()->curdir_sector = inode_get_inumber(temp);
   free(dir_cpy);
-  // dir_close(directory);
+  dir_close(directory);
   return true;
 
 }
@@ -764,6 +768,7 @@ readdir (int fd, char *name)
     struct inode *inode = file_get_inode(f->file);
     struct dir *dir = f->file;//dir_open(inode);
     bool success = dir_readdir(dir, name);
+    // printf("%s\n", name);
     // dir_close(dir);
     return success;
   }
@@ -774,10 +779,13 @@ bool
 isdir (int fd) 
 {
   struct file_info *temp = get_file_from_fd(fd);
+  // printf("Here\n");
   if(temp != NULL)
   {
     struct inode *inode = file_get_inode(temp->file);
-    return get_isdir(inode);
+    bool tmp = get_isdir(inode);
+    // printf("%d %d\n", tmp, inode_get_inumber(inode));
+    return tmp;
   }
   else
     return false;
