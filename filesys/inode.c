@@ -66,6 +66,12 @@ get_isdir(struct inode *inode)
 	return inode->isdir;
 }
 
+struct inode_disk *
+get_data(struct inode *inode)
+{
+	return &inode->data;
+}
+
 block_sector_t
 get_sector_from_index(struct inode *inode, block_sector_t sector)
 {
@@ -130,7 +136,7 @@ byte_to_sector (struct inode *inode, off_t pos, bool write)
 {
 	ASSERT (inode != NULL);
 
-	// printf("****BYTE_TO_SECTOR****:\n);
+	// printf("****BYTE_TO_SECTOR****:\n");
 	// printf("\tinode length is: %i\n", inode->data.length);
 	block_sector_t sector = pos / BLOCK_SECTOR_SIZE;
 	
@@ -171,6 +177,7 @@ byte_to_sector (struct inode *inode, off_t pos, bool write)
 			// printf("\tAppending a new sector to end of file: %u\n", next_free);
 
 		}
+		// block_write(fs_device, inode->sector, &inode->data);
 		// inode->data.length += (pos - inode->data.length);
 		// printf("\tUPDATED LENGTH: %d\n", inode->data.length);
 
@@ -241,54 +248,11 @@ inode_create (block_sector_t sector, off_t length)
 		if(free_map_indirect_allocate(sectors, disk_inode->direct_blocks,
 					&disk_inode->first_level, &disk_inode->second_level))
 		{
-			// if (sectors > 0) 
-			//   {
-			//     static char zeros[BLOCK_SECTOR_SIZE];
-			//     size_t i;
-
-			//     // for (i = 0; i < sectors; i++) 
-			//     //   block_write (fs_device, disk_inode->start + i, zeros);
-
-			//     //Write zeros to our sectors given by our fs
-			//     size_t sector_count = 0;
-			//     for(i = 0; (i < 10) && sector_count < sectors; i++)
-			//     {
-			//       printf("\tdirect_block[%i] sector allocated to: %u\n", i, disk_inode->direct_blocks[i]);
-			//       block_write(fs_device, disk_inode->direct_blocks[i], zeros);
-			//       sector_count++;
-			//     }
-			//     //first level
-			//     printf("\tsector_count: %u\n", sector_count);
-			//     for(i = 0; (i < 128) && sector_count < sectors; i++)
-			//     {
-			//       printf("\tfirst level block sector: %u\n", disk_inode->first_level->blocks[i]);
-			//       block_write(fs_device, disk_inode->first_level->blocks[i], zeros);
-			//       sector_count++;
-			//     }
-			//     //second level
-			//     printf("\tsector_count: %u\n", sector_count);
-			//     size_t idx = 0;
-			//     i = 0;
-			//     while(sector_count < sectors)
-			//     {
-			//       printf("\tsecond level indirect index: %u, second_level block sector\n", idx, disk_inode->second_level[idx].blocks[i]);
-			//       block_write(fs_device, disk_inode->second_level[idx].blocks[i], zeros);
-			//       sector_count++;
-			//       i++;
-			//       //if we reach the end of this indirection block, get the next one
-			//       if(i == 128)
-			//       {
-			//         idx++;
-			//         i = 0;
-			//       }
-			//     }
-			//     printf("\tLength at end of create: %u\n", disk_inode->length);
-			//   }
 			// printf("%d\n", sector);
-			block_write (fs_device, sector, disk_inode);
 			success = true;
 
 		} 
+		block_write (fs_device, sector, disk_inode);
 		// free(disk_inode->first_level);
 		// free(disk_inode->second_level);
 		free (disk_inode);

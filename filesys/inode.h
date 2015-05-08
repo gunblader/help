@@ -24,6 +24,7 @@ static const size_t MAX_FILE_SIZE = (1<<23);
 
 bool set_isdir(struct inode *inode, bool isdir);
 bool get_isdir(struct inode *inode);
+struct inode_disk * get_data(struct inode *inode);
 
 void inode_init (void);
 bool inode_create (block_sector_t, off_t);

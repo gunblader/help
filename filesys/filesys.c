@@ -80,7 +80,7 @@ filesys_create (const char *name, off_t initial_size)
     ROOT_DIR_SECTOR : thread_current()->curdir_sector;
   struct inode *cur_inode = inode_open(curdir_sector);
   
-  set_isdir(cur_inode, false);
+  set_isdir(inode_open(inode_sector), false);
 
   //parse the path
   char *path_cpy = malloc(strlen(name) + 1);
@@ -128,7 +128,7 @@ filesys_open (const char *name)
 
   // return file_open (inode);
 
-
+  // printf("FILESYS_OPEN\n");
   block_sector_t curdir_sector = (*name == '/') ? ROOT_DIR_SECTOR : thread_current()->curdir_sector;
   struct inode *cur_inode = inode_open(curdir_sector);
   
@@ -143,15 +143,22 @@ filesys_open (const char *name)
     return NULL;
   }
 
+  if(file_name == NULL)
+  {
+    //we know that we are trying to open root
+    return file_open(inode_open(ROOT_DIR_SECTOR));
+  }
   // printf("\tfile_name: %s\n", file_name);
   struct inode *temp = NULL;
   struct dir *dir = dir_open(cur_inode);
   if(!dir_lookup(dir, file_name, &temp)){
-    printf("LOOKUP FAILED\n");
+    // printf("filesys_open: LOOKUP FAILED\n");
     return NULL;
   }
+  // printf("\t\tinode to open: %u\n", inode_get_inumber(temp));
   // if(curdir_sector != ROOT_DIR_SECTOR)
   //     dir_close(dir);
+  // printf("END FILSYS_OPEN\n");
   free(path_cpy);
   return file_open (temp);
 }
@@ -205,6 +212,13 @@ filesys_remove (const char *name)
       // printf("This directory is not empty\n");
       return false;
     }
+    if(inode_get_inumber(inode) == thread_current()->curdir_sector)
+    {
+      //don't allow the removal of your cwd
+      // printf("Don't allow removal of cwd\n");
+      return false;
+    }
+    // 
   }
   
   // printf("file_name: %s\n", file_name);

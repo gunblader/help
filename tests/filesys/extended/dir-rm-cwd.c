@@ -40,7 +40,6 @@ test_main (void)
   if (remove ("/a"))
     {
       msg ("remove successful");
-
       CHECK (open ("/a") == -1, "open \"/a\" (must fail)");
       CHECK (open (".") == -1, "open \".\" (must fail)");
       CHECK (open ("..") == -1, "open \"..\" (must fail)");

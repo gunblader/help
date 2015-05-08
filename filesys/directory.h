@@ -12,6 +12,7 @@
 #define NAME_MAX 14
 
 struct inode;
+struct inode_disk;
 
 /* Opening and closing directories. */
 

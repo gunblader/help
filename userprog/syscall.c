@@ -495,10 +495,11 @@ int write (int fd, const void *buffer, unsigned size){
     lock_release(&lock);
     return 0;
   }
-  // if(get_isdir(file_get_inode(cur_file_info->file))){
-  //   lock_release(&lock);
-  //   return -1;
-  // }
+  if(get_isdir(file_get_inode(cur_file_info->file))){
+    // printf("Is a directory\n");
+    lock_release(&lock);
+    return -1;
+  }
   off_t bytes_written = file_write(cur_file_info->file, buffer, size);
   lock_release(&lock);
   // printf("\n***IN WRITE: bytes_written: %d\n", bytes_written);
@@ -572,7 +573,7 @@ void close (int fd){
 /*
   Returns true when we every member in the 'path' exists
   returns false if the last member in the 'path' doesn't exist
-  The caller should handle the false case.
+  The caller should handle the false case....
 */
 bool end_parse(char *path, struct inode **parent_inode, char **name)
 {
@@ -614,14 +615,16 @@ bool end_parse(char *path, struct inode **parent_inode, char **name)
 /* Directory System Calls */
 
 /* Changes the current working directory of the process to dir,
- which may be relative or absolute. Returns true if successful, false on failure.*/
+ which may be relative or absolute. Returns true if successful, false on failure*/
 bool
 chdir (const char *dir)
 {
   //check if the path is absolute or relative
   char *dir_name = NULL;
   char *save_ptr = NULL;
-  block_sector_t curdir_sector = (*dir == "/") ? ROOT_DIR_SECTOR : thread_current()->curdir_sector;
+  // printf("dir: %s, *dir: %c\n", dir, *dir);
+  block_sector_t curdir_sector = (*dir == '/') ? ROOT_DIR_SECTOR : thread_current()->curdir_sector;
+  // printf("curdir_sector: %u\n", curdir_sector);
   struct inode *cur_inode = inode_open(curdir_sector);
   
   //parse the path
@@ -640,6 +643,13 @@ chdir (const char *dir)
     return false;
   }
 
+  if(dir_name == NULL)
+  {
+    //trying to change to ROOT
+    thread_current()->curdir_sector = ROOT_DIR_SECTOR;
+    return true;
+  }
+
   // printf("\tcur_inode %u\n", inode_get_inumber(cur_inode));
   
   // //use that returned char* to find the changed directory
@@ -656,13 +666,13 @@ chdir (const char *dir)
   struct dir *directory = dir_open(cur_inode);
   if(!dir_lookup(directory, dir_name, &temp))
   {
-    printf("Something went wrong with the lookup\n");
+    // printf("Something went wrong with the lookup\n");
     return false;
   }
   // printf("\tnew cwd: %u\n", inode_get_inumber(temp));
   thread_current()->curdir_sector = inode_get_inumber(temp);
   free(dir_cpy);
-  dir_close(directory);
+  // dir_close(directory);
   return true;
 
 }
@@ -697,7 +707,7 @@ mkdir (const char *dir)
 
   // Adam drove here 
   // struct dir *cur = (*dir == "/") ? dir_open_root() : thread_current()->curdir;
-  block_sector_t curdir_sector = (*dir == "/") ? 
+  block_sector_t curdir_sector = (*dir == '/') ? 
     ROOT_DIR_SECTOR : thread_current()->curdir_sector;
   // struct inode *cur_inode = dir_get_inode(cur);
   struct inode *cur_inode = inode_open(curdir_sector);

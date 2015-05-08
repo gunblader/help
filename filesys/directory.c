@@ -140,8 +140,10 @@ dir_create (block_sector_t sector, size_t entry_cnt)
   {
     struct inode *inode = inode_open(sector);
     set_isdir(inode, true);
-    if(sector != ROOT_DIR_SECTOR)
+    if(sector != ROOT_DIR_SECTOR){
+      block_write(fs_device, sector, get_data(inode));
       inode_close(inode);
+    }
   }
   return result;
 }
@@ -291,6 +293,8 @@ dir_add (struct dir *dir, const char *name, block_sector_t inode_sector)
   strlcpy (e.name, name, sizeof e.name);
   e.inode_sector = inode_sector;
   success = inode_write_at (dir->inode, &e, sizeof e, ofs) == sizeof e;
+
+  block_write(fs_device, inode_get_inumber(dir->inode), get_data(dir->inode));
 
  done:
   return success;
